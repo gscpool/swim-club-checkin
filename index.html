@@ -208,8 +208,8 @@ body{font-family:'Inter',sans-serif;background:var(--sand);color:var(--tx);min-h
 <!-- APP -->
 <div id="app">
   <div class="topbar">
-    <div class="topbar-l"><span style="font-size:24px">&#x1F40A;</span><div><div class="topbar-title">Gibsonville Swim Club</div><div class="topbar-sub" id="today-lbl"></div><div style="font-size:9px;color:rgba(255,255,255,.28);letter-spacing:.5px;margin-top:1px">v1.0.0</div></div></div>
-    <div class="topbar-acts"><div id="sync-pill" style="display:none;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;align-items:center;gap:4px"></div><button class="ibtn" onclick="openSettings()">&#x2699;&#xFE0F;</button><button class="ibtn" onclick="lockApp()">&#x1F512;</button></div>
+    <div class="topbar-l"><span style="font-size:24px">&#x1F40A;</span><div><div class="topbar-title">Gibsonville Swim Club</div><div class="topbar-sub" id="today-lbl"></div><div style="font-size:10px;color:rgba(255,255,255,.6);letter-spacing:.5px;margin-top:2px;font-weight:600">v1.1.0</div></div></div>
+    <div class="topbar-acts"><div id="sync-pill" style="display:none;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;align-items:center;gap:4px"></div><button class="ibtn" onclick="openSettings()">&#x2699;&#xFE0F;</button></div>
   </div>
   <div class="tabs">
     <button class="tab on" id="tb-ci" onclick="switchTab('ci')">&#x2705; Check-In</button>
@@ -249,9 +249,9 @@ body{font-family:'Inter',sans-serif;background:var(--sand);color:var(--tx);min-h
 <!-- ADMIN PIN MODAL -->
 <div class="overlay" id="admin-overlay" onclick="if(event.target===this)closeAdmin()">
   <div class="sheet"><div class="mhandle"></div>
-    <div class="mhdr"><div class="mtitle">Admin Required</div><button class="mclose" onclick="closeAdmin()">&#x2715;</button></div>
+    <div class="mhdr"><div class="mtitle">PIN Required</div><button class="mclose" onclick="closeAdmin()">&#x2715;</button></div>
     <div class="admin-body">
-      <p style="color:rgba(255,255,255,.7);font-size:13px;text-align:center">Admin PIN required to change payment status.</p>
+      <p style="color:rgba(255,255,255,.7);font-size:13px;text-align:center">Enter the PIN to continue.</p>
       <div class="admin-dots"><div class="admin-dot" id="ad0"></div><div class="admin-dot" id="ad1"></div><div class="admin-dot" id="ad2"></div><div class="admin-dot" id="ad3"></div></div>
       <div class="admin-err" id="admin-err"></div>
       <div class="admin-pad">
@@ -281,7 +281,7 @@ var FIREBASE_CONFIG = {
 // ══════════════════════════════════════════════════════
 
 var GUEST_PASSES={Individual:5,Couples:7,Family:10,Board:20,Comp:0};
-var GUEST_PRICE=5,PIN_KEY='gsc_pin',DEFAULT_PIN='0738',ADMIN_PIN_VAL='6448';
+var GUEST_PRICE=5,PIN_KEY='gsc_pin',PROTECTED_PIN='6448';
 var members=[],visits=[],dirFilter='all',editingId=null,ciMemberId=null;
 var A={adults:0,children:0},ciGuests=0,gpMember=null,gpOver=0,csvParsed=[];
 var adminPinEntry='',adminPinCallback=null;
@@ -415,22 +415,14 @@ function seedDemo(){
 }
 
 var pinEntry='';
-function initPin(){
-  document.getElementById('pin-pad').addEventListener('click',function(e){
-    var k=e.target.closest('.pk');if(!k)return;var v=k.dataset.k;
-    if(v==='clear'){pinEntry='';updDots();document.getElementById('pin-err').textContent='';return;}
-    if(v==='back'){pinEntry=pinEntry.slice(0,-1);updDots();return;}
-    if(pinEntry.length>=4)return;
-    pinEntry+=v;updDots();if(pinEntry.length===4)setTimeout(checkPin,150);
-  });
-}
-function updDots(){for(var i=0;i<4;i++)document.getElementById('d'+i).classList.toggle('on',i<pinEntry.length);}
-function checkPin(){if(pinEntry===getPin()){document.getElementById('pin-screen').classList.add('hidden');pinEntry='';updDots();renderAll();}else{document.getElementById('pin-err').textContent='Incorrect PIN';pinEntry='';updDots();}}
-function lockApp(){document.getElementById('pin-screen').classList.remove('hidden');}
+function initPin(){} // no-op - app opens without PIN
+function updDots(){}
+function checkPin(){}
+function lockApp(){} // no-op
 
 function requireAdminPin(cb){adminPinCallback=cb;adminPinEntry='';for(var i=0;i<4;i++)document.getElementById('ad'+i).classList.remove('on');document.getElementById('admin-err').textContent='';document.getElementById('admin-overlay').classList.add('open');}
 function adminKeyPress(k){if(k==='back')adminPinEntry=adminPinEntry.slice(0,-1);else if(k==='clear')adminPinEntry='';else if(adminPinEntry.length<4)adminPinEntry+=k;for(var i=0;i<4;i++)document.getElementById('ad'+i).classList.toggle('on',i<adminPinEntry.length);if(adminPinEntry.length===4)setTimeout(checkAdminPin,150);}
-function checkAdminPin(){if(adminPinEntry===ADMIN_PIN_VAL){document.getElementById('admin-overlay').classList.remove('open');adminPinEntry='';if(adminPinCallback){adminPinCallback();adminPinCallback=null;}}else{document.getElementById('admin-err').textContent='Incorrect admin PIN.';adminPinEntry='';for(var i=0;i<4;i++)document.getElementById('ad'+i).classList.remove('on');}}
+function checkAdminPin(){if(adminPinEntry===getPin()){document.getElementById('admin-overlay').classList.remove('open');adminPinEntry='';if(adminPinCallback){adminPinCallback();adminPinCallback=null;}}else{document.getElementById('admin-err').textContent='Incorrect PIN.';adminPinEntry='';for(var i=0;i<4;i++)document.getElementById('ad'+i).classList.remove('on');}}
 function closeAdmin(){document.getElementById('admin-overlay').classList.remove('open');adminPinCallback=null;}
 
 function switchTab(name){['ci','dir','rep'].forEach(function(t){document.getElementById('pane-'+t).classList.toggle('on',t===name);document.getElementById('tb-'+t).classList.toggle('on',t===name);});document.getElementById('fab').classList.toggle('show',name==='dir');if(name==='rep')renderRep();}
@@ -572,7 +564,7 @@ function addKid(){var list=document.getElementById('kids-list');if(!list)return;
 function removeKid(btn){var row=btn.parentElement;row.parentElement.removeChild(row);}
 function closeEdit(){document.getElementById('ed-overlay').classList.remove('open');}
 function commitEdit(){var first=document.getElementById('ef-first').value.trim();var last=document.getElementById('ef-last').value.trim();if(!first||!last){showToast('Name required','warn');return;}var type=document.getElementById('ef-type').value;var gtotal=parseInt(document.getElementById('ef-gtotal').value);if(isNaN(gtotal))gtotal=GUEST_PASSES[type];var secRow=document.getElementById('sec-name-row');var secOk=secRow&&secRow.style.display!=='none';var kids=(function(){var inputs=document.querySelectorAll('.kid-input'),arr=[];inputs.forEach(function(i){var v=i.value.trim();if(v)arr.push(v);});return arr;})();var m={id:editingId||uid(),first:first,last:last,type:type,status:document.getElementById('ef-status').value,email:document.getElementById('ef-email').value.trim(),phone:formatPhone(document.getElementById('ef-phone').value),street:document.getElementById('ef-street').value.trim(),city:document.getElementById('ef-city').value.trim(),state:document.getElementById('ef-state').value.trim(),zip:document.getElementById('ef-zip').value.trim(),adults:parseInt(document.getElementById('ef-adults').value)||1,kids:kids,children:kids.length,guestsUsed:parseInt(document.getElementById('ef-gused').value)||0,guestsTotal:gtotal,secFirst:secOk&&document.getElementById('ef-sec-first')?document.getElementById('ef-sec-first').value.trim():'',secLast:secOk&&document.getElementById('ef-sec-last')?document.getElementById('ef-sec-last').value.trim():'',secPhone:secOk&&document.getElementById('ef-sec-phone')?formatPhone(document.getElementById('ef-sec-phone').value):'',secEmail:secOk&&document.getElementById('ef-sec-email')?document.getElementById('ef-sec-email').value.trim():'',notes:document.getElementById('ef-notes').value.trim(),nannyEnabled:document.getElementById('ef-nanny-enabled').checked,nannyName:document.getElementById('ef-nanny-name')?document.getElementById('ef-nanny-name').value.trim():'',nannyPhone:document.getElementById('ef-nanny-phone')?formatPhone(document.getElementById('ef-nanny-phone').value):'',nannyStreet:document.getElementById('ef-nanny-street')?document.getElementById('ef-nanny-street').value.trim():'',nannyCity:document.getElementById('ef-nanny-city')?document.getElementById('ef-nanny-city').value.trim():'',nannyState:document.getElementById('ef-nanny-state')?document.getElementById('ef-nanny-state').value.trim():'',nannyZip:document.getElementById('ef-nanny-zip')?document.getElementById('ef-nanny-zip').value.trim():'',nannyDob:document.getElementById('ef-nanny-dob')?document.getElementById('ef-nanny-dob').value:''};saveMember(m);closeEdit();showToast(m.first+' '+m.last+' '+(editingId?'updated':'added'),'ok');}
-function confirmDelete(id){if(!confirm('Delete this member? Cannot be undone.'))return;delMember(id);closeEdit();showToast('Member deleted','warn');}
+function confirmDelete(id){requireAdminPin(function(){delMember(id);closeEdit();showToast('Member deleted','warn');});}
 
 function renderRep(){var el=document.getElementById('rep-body');if(!el)return;var todayStr=new Date().toDateString();var todayV=visits.filter(function(v){return new Date(v.ts).toDateString()===todayStr;});var paid=members.filter(function(m){return m.status==='paid';}).length;var notPaid=members.filter(function(m){return m.status!=='paid';}).length;var totalPurchased=visits.reduce(function(s,v){return s+(v.passesPurchased||0);},0);var todayA=todayV.reduce(function(s,v){return s+(v.adults||0);},0);var todayC=todayV.reduce(function(s,v){return s+(v.children||0);},0);var unpaidList=members.filter(function(m){return m.status!=='paid';}).sort(function(a,b){return a.last.localeCompare(b.last);});
 var BUCKETS=[{label:'Morning',icon:'&#x1F305;',start:10,end:12,range:'10am-12pm'},{label:'Midday',icon:'&#x2600;',start:12,end:15,range:'12-3pm'},{label:'Afternoon',icon:'&#x1F3CA;',start:15,end:18,range:'3-6pm'},{label:'Evening',icon:'&#x1F306;',start:18,end:21,range:'6-9pm'}];
@@ -596,7 +588,7 @@ el.innerHTML='<div class="rcard"><h3>&#x1F40A; Season Summary</h3><div class="sg
 +'<div class="rcard"><h3>Today\'s Check-Ins</h3>'+(todayV.length?'<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px"><span style="font-size:13px;font-weight:600;color:var(--mu)">'+todayA+' adults</span><span style="font-size:13px;font-weight:600;color:var(--mu)">'+todayC+' children</span></div><div style="display:flex;flex-direction:column;gap:5px;max-height:200px;overflow-y:auto">'+todayV.map(function(v){var m=members.find(function(x){return x.id===v.memberId;})||{last:'',first:''};var p=[];if(v.adults>0)p.push(v.adults+'A');if(v.children>0)p.push(v.children+'C');if(v.guestPasses>0)p.push('&#x1F3AB;&times;'+v.guestPasses);return'<div class="trow"><span style="font-weight:600">'+m.last+', '+m.first+'</span><span style="color:var(--mu)">'+fmtTime(v.ts)+' &middot; '+p.join(' ')+'</span></div>';}).join('')+'</div>':'<p style="color:var(--mu);font-size:13px">No check-ins yet today.</p>')+'</div>'
 +staffHTML
 +(unpaidList.length?'<div class="rcard"><h3>&#x26A0;&#xFE0F; Unpaid / Pending</h3><div style="display:flex;flex-direction:column;gap:5px">'+unpaidList.map(function(m){return'<div class="urow"><span>'+m.last+', '+m.first+' <span style="color:var(--mu);font-size:11px">('+m.type+')</span></span>'+statusBadge(m.status)+'</div>';}).join('')+'</div></div>':'')
-+'<div class="rcard"><h3>Import / Export</h3><div style="display:flex;flex-direction:column;gap:8px"><button class="exp-btn" onclick="exportCSV(\'members\')">&#x1F4E5; Export Member List (CSV)</button><button class="exp-btn" onclick="exportCSV(\'visits\')">&#x1F4E5; Export Visit Log (CSV)</button><button class="imp-btn" onclick="openCSVImport()">&#x1F4E4; Import Members from CSV</button><button class="exp-btn" onclick="downloadTemplate()">&#x1F4CB; Download CSV Template</button></div></div>';}
++'<div class="rcard"><h3>Import / Export</h3><div style="display:flex;flex-direction:column;gap:8px"><button class="exp-btn" onclick="requireAdminPin(function(){exportCSV(\'members\');})">&#x1F4E5; Export Member List (CSV)</button><button class="exp-btn" onclick="requireAdminPin(function(){exportCSV(\'visits\');})">&#x1F4E5; Export Visit Log (CSV)</button><button class="imp-btn" onclick="requireAdminPin(function(){openCSVImport();})">&#x1F4E4; Import Members from CSV</button><button class="exp-btn" onclick="requireAdminPin(function(){downloadTemplate();})">&#x1F4CB; Download CSV Template</button></div></div>';}
 
 function exportCSV(type){var esc=function(v){return'"'+(v===null||v===undefined?'':String(v)).replace(/"/g,'""')+'"';};var csv,fn;if(type==='members'){var h=['Last','First','Type','Status','Adults','Children','Kids Names','Passes Used','Passes Total','Email','Phone','Street','City','State','Zip','2nd First','2nd Last','2nd Phone','2nd Email'];var r=members.map(function(m){return[m.last,m.first,m.type,m.status,m.adults||0,m.kids?m.kids.length:(m.children||0),m.kids?m.kids.join(';'):'',m.guestsUsed||0,m.guestsTotal,m.email,m.phone,m.street||'',m.city||'',m.state||'',m.zip||'',m.secFirst||'',m.secLast||'',m.secPhone||'',m.secEmail||''].map(esc);});csv=[h].concat(r).map(function(x){return x.join(',');}).join('\n');fn='gsc-members-'+new Date().toISOString().slice(0,10)+'.csv';}else{var h2=['Date','Time','Last','First','Type','Adults','Children','Guest Passes','Passes Purchased'];var r2=visits.map(function(v){var m=members.find(function(x){return x.id===v.memberId;})||{last:'',first:'',type:''};return[fmtDate(v.ts),fmtTime(v.ts),m.last,m.first,m.type,v.adults||0,v.children||0,v.guestPasses||0,v.passesPurchased||0].map(esc);});csv=[h2].concat(r2).map(function(x){return x.join(',');}).join('\n');fn='gsc-visits-'+new Date().toISOString().slice(0,10)+'.csv';}var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download=fn;a.click();showToast('Exported '+fn);}
 function downloadTemplate(){var csv='Last,First,Type,Status,Adults,Children,Kids Names,Passes Used,Passes Total,Email,Phone,Street,City,State,Zip\nSmith,John,Family,paid,2,3,"Emma;Liam;Olivia",0,10,jsmith@email.com,(336) 555-0100,123 Main St,Gibsonville,NC,27249';var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='gsc-member-template.csv';a.click();showToast('Template downloaded');}
@@ -610,7 +602,7 @@ function importCSVReplace(){if(!csvParsed.length){showToast('No data','warn');re
 if(fbReady&&window._delMemberFB){members.forEach(function(m){window._delMemberFB(m.id);});}// Save new ones
 csvParsed.forEach(function(m){saveMember(m);});if(!fbReady){members=csvParsed;lSet('gsc_members',members);renderAll();}closeCSV();showToast('Replaced with '+csvParsed.length+' members','ok');}
 
-function openSettings(){document.getElementById('st-body').innerHTML='<div class="sec-lbl">Change Staff PIN</div><div class="fg"><label class="fl">New PIN (4 digits)</label><input class="fi" id="np1" type="tel" maxlength="4" placeholder="New PIN"></div><div class="fg"><label class="fl">Confirm PIN</label><input class="fi" id="np2" type="tel" maxlength="4" placeholder="Confirm"></div><button class="btn-p" onclick="doChangePin()">&#x1F511; Update Staff PIN</button><div class="sec-lbl" style="margin-top:4px">Enable PIN Lock</div><p class="fnote">PIN lock is currently off for testing. Enable when ready.</p><button class="btn-o" onclick="enablePin()">&#x1F512; Enable PIN Lock</button><div class="sec-lbl" style="margin-top:4px">Season Reset</div><p class="fnote">Resets guest pass counts. Member profiles and visit history are kept.</p><button class="btn-d" onclick="doSeasonReset()">&#x1F504; Reset for New Season</button>';document.getElementById('st-overlay').classList.add('open');}
+function openSettings(){requireAdminPin(function(){document.getElementById('st-body').innerHTML='<div class="sec-lbl">Change PIN</div><p class="fnote">This PIN protects delete, payment status changes, and import/export.</p><div class="fg"><label class="fl">New PIN (4 digits)</label><input class="fi" id="np1" type="tel" maxlength="4" placeholder="New PIN"></div><div class="fg"><label class="fl">Confirm PIN</label><input class="fi" id="np2" type="tel" maxlength="4" placeholder="Confirm"></div><button class="btn-p" onclick="doChangePin()">&#x1F511; Update PIN</button><div class="sec-lbl" style="margin-top:4px">Season Reset</div><p class="fnote">Resets guest pass counts. Member profiles and visit history are kept.</p><button class="btn-d" onclick="doSeasonReset()">&#x1F504; Reset for New Season</button>';document.getElementById('st-overlay').classList.add('open');});}
 function closeSettings(){document.getElementById('st-overlay').classList.remove('open');}
 function doChangePin(){var p1=document.getElementById('np1').value;var p2=document.getElementById('np2').value;if(!/^\d{4}$/.test(p1)){showToast('PIN must be exactly 4 digits','warn');return;}if(p1!==p2){showToast('PINs do not match','warn');return;}setPin(p1);closeSettings();showToast('PIN updated');}
 function enablePin(){document.getElementById('pin-screen').classList.remove('hidden');closeSettings();showToast('PIN enabled');}
