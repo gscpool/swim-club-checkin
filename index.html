@@ -198,17 +198,17 @@ body{font-family:'Inter',sans-serif;background:var(--sand);color:var(--tx);min-h
   <div class="pin-dots"><div class="pin-dot" id="d0"></div><div class="pin-dot" id="d1"></div><div class="pin-dot" id="d2"></div><div class="pin-dot" id="d3"></div></div>
   <div class="pin-err" id="pin-err"></div>
   <div class="pin-pad" id="pin-pad">
-    <button class="pk" data-k="1">1</button><button class="pk" data-k="2">2</button><button class="pk" data-k="3">3</button>
-    <button class="pk" data-k="4">4</button><button class="pk" data-k="5">5</button><button class="pk" data-k="6">6</button>
-    <button class="pk" data-k="7">7</button><button class="pk" data-k="8">8</button><button class="pk" data-k="9">9</button>
-    <button class="pk" data-k="back">&#x232B;</button><button class="pk" data-k="0">0</button><button class="pk" data-k="clear" style="font-size:12px">CLR</button>
+    <button class="pk" onclick="pinKeyPress('1')">1</button><button class="pk" onclick="pinKeyPress('2')">2</button><button class="pk" onclick="pinKeyPress('3')">3</button>
+    <button class="pk" onclick="pinKeyPress('4')">4</button><button class="pk" onclick="pinKeyPress('5')">5</button><button class="pk" onclick="pinKeyPress('6')">6</button>
+    <button class="pk" onclick="pinKeyPress('7')">7</button><button class="pk" onclick="pinKeyPress('8')">8</button><button class="pk" onclick="pinKeyPress('9')">9</button>
+    <button class="pk" onclick="pinKeyPress('back')">&#x232B;</button><button class="pk" onclick="pinKeyPress('0')">0</button><button class="pk" onclick="pinKeyPress('clear')" style="font-size:12px">CLR</button>
   </div>
 </div>
 <div id="setup-banner">&#x26A0;&#xFE0F; Firebase not configured &mdash; <strong>local-only mode</strong>. See <strong>setup-guide.html</strong>.</div>
 <!-- APP -->
 <div id="app">
   <div class="topbar">
-    <div class="topbar-l"><span style="font-size:24px">&#x1F40A;</span><div><div class="topbar-title">Gibsonville Swim Club</div><div class="topbar-sub" id="today-lbl"></div><div style="font-size:10px;color:rgba(255,255,255,.6);letter-spacing:.5px;margin-top:2px;font-weight:600">v1.1.0</div></div></div>
+    <div class="topbar-l"><span style="font-size:24px">&#x1F40A;</span><div><div class="topbar-title">Gibsonville Swim Club</div><div class="topbar-sub" id="today-lbl"></div><div style="font-size:10px;color:rgba(255,255,255,.6);letter-spacing:.5px;margin-top:2px;font-weight:600">v1.2.0</div></div></div>
     <div class="topbar-acts"><div id="sync-pill" style="display:none;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;align-items:center;gap:4px"></div><button class="ibtn" onclick="openSettings()">&#x2699;&#xFE0F;</button></div>
   </div>
   <div class="tabs">
@@ -370,7 +370,7 @@ function setSyncPill(state){
 
 function lGet(k){try{return JSON.parse(localStorage.getItem(k));}catch(e){return null;}}
 function lSet(k,v){localStorage.setItem(k,JSON.stringify(v));}
-function getPin(){return localStorage.getItem(PIN_KEY)||DEFAULT_PIN;}
+function getPin(){return localStorage.getItem(PIN_KEY)||PROTECTED_PIN;}
 function setPin(p){localStorage.setItem(PIN_KEY,p);}
 function saveMember(m){
   if(fbReady&&window._saveMemberFB){window._saveMemberFB(m);}
@@ -425,7 +425,7 @@ function adminKeyPress(k){if(k==='back')adminPinEntry=adminPinEntry.slice(0,-1);
 function checkAdminPin(){if(adminPinEntry===getPin()){document.getElementById('admin-overlay').classList.remove('open');adminPinEntry='';if(adminPinCallback){adminPinCallback();adminPinCallback=null;}}else{document.getElementById('admin-err').textContent='Incorrect PIN.';adminPinEntry='';for(var i=0;i<4;i++)document.getElementById('ad'+i).classList.remove('on');}}
 function closeAdmin(){document.getElementById('admin-overlay').classList.remove('open');adminPinCallback=null;}
 
-function switchTab(name){['ci','dir','rep'].forEach(function(t){document.getElementById('pane-'+t).classList.toggle('on',t===name);document.getElementById('tb-'+t).classList.toggle('on',t===name);});document.getElementById('fab').classList.toggle('show',name==='dir');if(name==='rep')renderRep();}
+function switchTab(name){['ci','dir','rep'].forEach(function(t){document.getElementById('pane-'+t).classList.toggle('on',t===name);document.getElementById('tb-'+t).classList.toggle('on',t===name);});document.getElementById('fab').classList.toggle('show',name==='dir');if(name==='rep')renderRep();if(name==='dir')renderDir();}
 function setFilter(btn,f){dirFilter=f;document.querySelectorAll('.fbtn').forEach(function(b){b.classList.remove('on');});btn.classList.add('on');renderDir();}
 
 function cardHTML(m,ciMode){var chip=chipInfo(m);return'<div class="mcard '+cardCls(m)+'" onclick="openMember(\''+m.id+'\','+ciMode+')">'+'<div class="mavatar">'+(m.last||'?')[0]+'</div>'+'<div class="minfo"><div class="mname">'+m.last+', '+m.first+'</div><div class="mmeta">'+typeBadge(m.type)+' '+statusBadge(m.status)+'</div><div class="mroster">'+rosterStr(m)+'</div></div>'+'<div class="gchip '+chip.cls+'">'+chip.lbl+'</div></div>';}
