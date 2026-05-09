@@ -268,8 +268,6 @@ body{font-family:'Source Sans 3',sans-serif;background:var(--sand);color:var(--t
 <script>
 // ══════════════════════════════════════════════════════
 // FIREBASE CONFIG
-// Paste your Firebase values below to enable cross-device sync.
-// Leave as-is to run in local-only mode.
 // ══════════════════════════════════════════════════════
 var FIREBASE_CONFIG = {
   apiKey:            "AIzaSyAObzV_bXxsUvBzO-94cg7Ds_xd2u16fyU",
@@ -286,21 +284,108 @@ var GUEST_PRICE=5,PIN_KEY='gsc_pin',DEFAULT_PIN='0738',ADMIN_PIN_VAL='6448';
 var members=[],visits=[],dirFilter='all',editingId=null,ciMemberId=null;
 var A={adults:0,children:0},ciGuests=0,gpMember=null,gpOver=0,csvParsed=[];
 var adminPinEntry='',adminPinCallback=null;
+var db=null,fbReady=false;
 
-(function boot(){
+// Load Firebase SDK dynamically
+(function loadFirebase(){
+  var s1=document.createElement('script');
+  s1.type='module';
+  s1.textContent=[
+    "import{initializeApp}from'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';",
+    "import{getFirestore,collection,doc,setDoc,deleteDoc,onSnapshot,query,orderBy}from'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';",
+    "try{",
+    "  var app=initializeApp("+JSON.stringify(FIREBASE_CONFIG)+");",
+    "  window._db=getFirestore(app);",
+    "  window._fbFns={collection,doc,setDoc,deleteDoc,onSnapshot,query,orderBy};",
+    "  window._fbReady=true;",
+    "  document.getElementById('setup-banner').classList.remove('show');",
+    "  bootWithFirebase();",
+    "}catch(e){console.error('Firebase failed:',e);bootLocal();}"
+  ].join('');
+  document.head.appendChild(s1);
+})();
+
+function bootWithFirebase(){
+  db=window._db;
+  var fns=window._fbFns;
+  setSyncPill('online');
+  // Real-time listeners
+  fns.onSnapshot(fns.query(fns.collection(db,'members'),fns.orderBy('last')),function(snap){
+    members=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
+    renderAll();
+  },function(){setSyncPill('offline');});
+  fns.onSnapshot(fns.query(fns.collection(db,'visits'),fns.orderBy('ts','desc')),function(snap){
+    visits=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
+    renderRep();renderCI();
+  });
+  // Override save/delete to use Firestore
+  window._saveMemberFB=function(m){
+    var fns=window._fbFns;
+    var copy=Object.assign({},m);var id=copy.id;delete copy.id;
+    fns.setDoc(fns.doc(db,'members',id),copy).catch(function(e){console.error(e);});
+  };
+  window._delMemberFB=function(id){
+    var fns=window._fbFns;
+    fns.deleteDoc(fns.doc(db,'members',id)).catch(function(e){console.error(e);});
+  };
+  window._saveVisitFB=function(v){
+    var fns=window._fbFns;
+    var copy=Object.assign({},v);var id=copy.id;delete copy.id;
+    fns.setDoc(fns.doc(db,'visits',id),copy).catch(function(e){console.error(e);});
+  };
+  fbReady=true;
+  // Boot UI
   document.getElementById('today-lbl').textContent=new Date().toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+  initPin();
+}
+
+function bootLocal(){
+  document.getElementById('setup-banner').classList.add('show');
+  setSyncPill('offline');
   members=lGet('gsc_members')||[];visits=lGet('gsc_visits')||[];
   if(!members.length)seedDemo();
   renderAll();initPin();
+}
+
+function setSyncPill(state){
+  var p=document.getElementById('sync-pill');
+  if(!p){
+    p=document.createElement('div');p.id='sync-pill';
+    p.style.cssText='position:fixed;top:11px;right:10px;z-index:500;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;display:flex;align-items:center;gap:4px;pointer-events:none';
+    document.body.appendChild(p);
+  }
+  if(state==='online'){
+    p.style.background='var(--grl)';p.style.color='var(--gr)';
+    p.innerHTML='<div style="width:6px;height:6px;border-radius:50%;background:currentColor"></div>Live';
+  } else {
+    p.style.background='var(--rel)';p.style.color='var(--re)';
+    p.innerHTML='<div style="width:6px;height:6px;border-radius:50%;background:currentColor"></div>Offline';
+  }
+}
+
+(function boot(){
+  // Will be overridden by bootWithFirebase or bootLocal
+  // Just set up the date label if already in DOM
+  var lbl=document.getElementById('today-lbl');
+  if(lbl) lbl.textContent=new Date().toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
 })();
 
 function lGet(k){try{return JSON.parse(localStorage.getItem(k));}catch(e){return null;}}
 function lSet(k,v){localStorage.setItem(k,JSON.stringify(v));}
 function getPin(){return localStorage.getItem(PIN_KEY)||DEFAULT_PIN;}
 function setPin(p){localStorage.setItem(PIN_KEY,p);}
-function saveMember(m){var i=members.findIndex(function(x){return x.id===m.id;});if(i>=0)members[i]=m;else members.push(m);lSet('gsc_members',members);renderAll();}
-function delMember(id){members=members.filter(function(m){return m.id!==id;});lSet('gsc_members',members);renderAll();}
-function saveVisit(v){visits.unshift(v);lSet('gsc_visits',visits);renderRep();renderCI();}
+function saveMember(m){
+  if(fbReady&&window._saveMemberFB){window._saveMemberFB(m);}
+  else{var i=members.findIndex(function(x){return x.id===m.id;});if(i>=0)members[i]=m;else members.push(m);lSet('gsc_members',members);renderAll();}
+}
+function delMember(id){
+  if(fbReady&&window._delMemberFB){window._delMemberFB(id);}
+  else{members=members.filter(function(m){return m.id!==id;});lSet('gsc_members',members);renderAll();}
+}
+function saveVisit(v){
+  if(fbReady&&window._saveVisitFB){window._saveVisitFB(v);}
+  else{visits.unshift(v);lSet('gsc_visits',visits);renderRep();renderCI();}
+}
 function uid(){return 'm'+Date.now()+Math.random().toString(36).slice(2,5);}
 function fmtDate(ts){return new Date(ts).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});}
 function fmtTime(ts){return new Date(ts).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});}
