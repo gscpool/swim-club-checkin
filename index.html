@@ -208,7 +208,7 @@ body{font-family:'Source Sans 3',sans-serif;background:var(--sand);color:var(--t
 <div id="app">
   <div class="topbar">
     <div class="topbar-l"><span style="font-size:24px">&#x1F40A;</span><div><div class="topbar-title">Gibsonville Swim Club</div><div class="topbar-sub" id="today-lbl"></div></div></div>
-    <div class="topbar-acts"><button class="ibtn" onclick="openSettings()">&#x2699;&#xFE0F;</button><button class="ibtn" onclick="lockApp()">&#x1F512;</button></div>
+    <div class="topbar-acts"><div id="sync-pill" style="display:none;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;align-items:center;gap:4px"></div><button class="ibtn" onclick="openSettings()">&#x2699;&#xFE0F;</button><button class="ibtn" onclick="lockApp()">&#x1F512;</button></div>
   </div>
   <div class="tabs">
     <button class="tab on" id="tb-ci" onclick="switchTab('ci')">&#x2705; Check-In</button>
@@ -349,16 +349,13 @@ function bootLocal(){
 
 function setSyncPill(state){
   var p=document.getElementById('sync-pill');
-  if(!p){
-    p=document.createElement('div');p.id='sync-pill';
-    p.style.cssText='position:fixed;top:11px;right:10px;z-index:500;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;display:flex;align-items:center;gap:4px;pointer-events:none';
-    document.body.appendChild(p);
-  }
+  if(!p) return;
+  p.style.display='flex';
   if(state==='online'){
-    p.style.background='var(--grl)';p.style.color='var(--gr)';
+    p.style.background='rgba(220,243,220,0.2)';p.style.color='#86efac';
     p.innerHTML='<div style="width:6px;height:6px;border-radius:50%;background:currentColor"></div>Live';
   } else {
-    p.style.background='var(--rel)';p.style.color='var(--re)';
+    p.style.background='rgba(254,226,226,0.2)';p.style.color='#fca5a5';
     p.innerHTML='<div style="width:6px;height:6px;border-radius:50%;background:currentColor"></div>Offline';
   }
 }
