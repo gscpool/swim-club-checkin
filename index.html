@@ -483,16 +483,45 @@ function openMember(id,ciMode){
       if(nannyNote)rLines.push('<span style="color:#ffd4c8">Nanny: '+nannyNote+'</span>');
       var rSummary=rLines.length?'<div style="background:rgba(255,255,255,.08);border-radius:9px;padding:10px 12px;display:flex;flex-direction:column;gap:4px;font-size:13px;line-height:1.5">'+rLines.join('')+'</div>':'';
       html+=rSummary.length?'':'';//placeholder
+      // ── Build checklist ──────────────────────────────────────
+      var needsSecondName=(m.type==='Couples')&&!(m.secFirst||m.secLast);
+      var canAddSec=(m.type==='Family'||m.type==='Board'||m.type==='Comp')&&!(m.secFirst||m.secLast);
+      var adultsSection='<div class="ci-section-lbl">Adults</div><div class="ci-checklist" id="ci-adult-list">';
+      // Primary adult
+      adultsSection+='<div class="ci-check-item" id="ci-a0" onclick="ciToggle(\'ci-a0\')"><input type="checkbox" id="chk-a0" onchange="ciToggle(\'ci-a0\')"><label for="chk-a0">'+m.first+' '+m.last+' <span style="opacity:.5;font-size:11px">(primary)</span></label></div>';
+      // Secondary adult
+      if(m.secFirst||m.secLast){
+        adultsSection+='<div class="ci-check-item" id="ci-a1" onclick="ciToggle(\'ci-a1\')"><input type="checkbox" id="chk-a1" onchange="ciToggle(\'ci-a1\')"><label for="chk-a1">'+(m.secFirst||'')+' '+(m.secLast||'')+'</label></div>';
+      } else if(needsSecondName){
+        adultsSection+='<div class="ci-check-item missing-name"><span style="font-size:13px;color:#ffd4c8">&#x26A0; Second adult name required for Couples membership</span><button onclick="ciPromptSecondAdult(\''+m.id+'\')" style="margin-left:auto;padding:5px 10px;background:var(--or);border:none;color:#fff;border-radius:7px;font-size:12px;font-weight:700;font-family:Inter,sans-serif;cursor:pointer;white-space:nowrap">Add Name</button></div>';
+      } else if(canAddSec){
+        adultsSection+='<button class="ci-add-btn" onclick="ciPromptSecondAdult(\''+m.id+'\')" id="ci-add-sec-btn">&#xFF0B; Add second adult</button>';
+      }
+      adultsSection+='</div>';
+      // Children checklist
+      var kidsSection='';
+      if(kidNames.length||m.type==='Family'||m.type==='Board'||m.type==='Comp'){
+        kidsSection='<div class="ci-section-lbl" style="margin-top:4px">Children</div><div class="ci-checklist" id="ci-kids-list">';
+        kidNames.forEach(function(k,i){
+          kidsSection+='<div class="ci-check-item" id="ci-k'+i+'" onclick="ciToggle(\'ci-k'+i+'\')">'
+            +'<input type="checkbox" id="chk-k'+i+'" onchange="ciToggle(\'ci-k'+i+'\')">'
+            +'<label for="chk-k'+i+'">'+k+'</label></div>';
+        });
+        kidsSection+='<button class="ci-add-btn" onclick="ciAddKidInline()">&#xFF0B; Add child</button>';
+        kidsSection+='</div>';
+      }
+      // Guest passes counter
+      var gpSection=m.guestsTotal>0
+        ?'<div style="border-top:1px solid rgba(255,255,255,.15);padding-top:10px"><div class="gp-counter-row"><div><div class="ci-lbl">&#x1F3AB; Guest Passes</div><div class="ci-sub">'+m.guestsTotal+' allotted &middot; '+(m.guestsUsed||0)+' used &middot; '+rem+' remaining</div></div><div class="ctr"><button class="cbtn" onclick="adjGuests(-1)">&minus;</button><div class="cval" id="ci-guests">0</div><button class="cbtn" onclick="adjGuests(1)">+</button></div></div><div id="gp-live-status" style="margin-top:6px"></div></div>'
+        :'';
       html+='<div class="ci-panel">'
         +'<div class="ci-title">&#x1F40A; Today\'s Visit</div>'
         +(checkedToday?'<div class="ci-already">&#x2713; Already checked in today</div>':'')
-        +unpaidWarn+rSummary
-        +'<div style="display:flex;flex-direction:column;gap:9px">'
-        +'<div class="ci-row"><div><div class="ci-lbl">&#x1F469; Adults</div><div class="ci-sub">'+(adultNames.length?adultNames.join(', '):'None listed')+'</div></div><div class="ctr"><button class="cbtn" onclick="adjCI(\'adults\',-1)">&minus;</button><div class="cval" id="ci-adults">0</div><button class="cbtn" onclick="adjCI(\'adults\',1)">+</button></div></div>'
-        +'<div class="ci-row"><div><div class="ci-lbl">&#x1F466; Children</div><div class="ci-sub">'+(kidNames.length?kidNames.join(', '):'None listed')+'</div></div><div class="ctr"><button class="cbtn" onclick="adjCI(\'children\',-1)">&minus;</button><div class="cval" id="ci-children">0</div><button class="cbtn" onclick="adjCI(\'children\',1)">+</button></div></div>'
-        +'<div id="ci-new-kids"></div>'
-        +(m.guestsTotal>0?'<div style="border-top:1px solid rgba(255,255,255,.15);padding-top:10px"><div class="gp-counter-row"><div><div class="ci-lbl">&#x1F3AB; Guest Passes</div><div class="ci-sub">'+m.guestsTotal+' allotted &middot; '+(m.guestsUsed||0)+' used &middot; '+rem+' remaining</div></div><div class="ctr"><button class="cbtn" onclick="adjGuests(-1)">&minus;</button><div class="cval" id="ci-guests">0</div><button class="cbtn" onclick="adjGuests(1)">+</button></div></div><div id="gp-live-status" style="margin-top:6px"></div></div>':'')
-        +'</div><div id="ci-over-note"></div>'
+        +unpaidWarn
+        +adultsSection
+        +kidsSection
+        +gpSection
+        +'<div id="ci-over-note"></div>'
         +'<button class="ci-checkin-btn" onclick="doCheckin(\''+m.id+'\')">&#x2705; Check In'+(checkedToday?' Again':'')+'</button></div>';
     }
   }
@@ -505,14 +534,144 @@ function closeMM(){document.getElementById('mm-overlay').classList.remove('open'
 
 function saveMissingFields(id){var m=members.find(function(x){return x.id===id;});if(!m)return;var fields=['email','phone','street','city','zip','first','last'];var updated=Object.assign({},m),filled=0;fields.forEach(function(f){var el=document.getElementById('miss-'+f);if(el&&el.value.trim()){updated[f]=f==='phone'?formatPhone(el.value):el.value.trim();filled++;}});if(!filled){showToast('Enter at least one field','warn');return;}saveMember(updated);showToast('Record updated','ok');setTimeout(function(){openMember(id,true);},250);}
 
-function adjGuests(delta){var m=members.find(function(x){return x.id===ciMemberId;});if(!m)return;ciGuests=Math.max(0,ciGuests+delta);var el=document.getElementById('ci-guests');if(el)el.textContent=ciGuests;updateGPLiveStatus(m);}
-function updateGPLiveStatus(m){var el=document.getElementById('gp-live-status');if(!el)return;if(ciGuests===0){el.innerHTML='';return;}var rem=m.guestsTotal-(m.guestsUsed||0);if(ciGuests<=rem){el.innerHTML='<div class="gp-counter-status gp-status-ok">&#x2713; '+ciGuests+' pass'+(ciGuests>1?'es':'')+' &middot; '+(rem-ciGuests)+' remaining after</div>';}else{var over=ciGuests-rem;el.innerHTML='<div class="gp-counter-status gp-status-over">&#x26A0; '+(rem>0?rem+' from balance + ':'')+over+' to purchase &middot; $'+(over*GUEST_PRICE)+'</div>';}}
-function adjCI(field,delta){A[field]=Math.max(0,A[field]+delta);var el=document.getElementById('ci-'+field);if(el)el.textContent=A[field];updateOverNote();}
-function calcOverage(m){return Math.max(0,A.adults-(m.adults||0))+Math.max(0,A.children-(m.children||0));}
-function updateOverNote(){var m=members.find(function(x){return x.id===ciMemberId;});if(!m)return;var noteEl=document.getElementById('ci-over-note');if(!noteEl)return;var nke=document.getElementById('ci-new-kids');var knownKids=m.kids?m.kids.length:0;var extraKids=Math.max(0,A.children-knownKids);if(nke&&extraKids>0){var cur=nke.querySelectorAll('.new-kid-input').length;for(var i=cur;i<extraKids;i++){var w=document.createElement('div');w.style.cssText='display:flex;gap:6px;align-items:center;margin-top:4px';w.innerHTML='<input class="new-kid-input" placeholder="New child\'s name (optional)" style="flex:1;padding:8px 10px;border:1px solid rgba(255,255,255,.3);border-radius:8px;font-size:14px;background:rgba(255,255,255,.1);color:#fff;outline:none;font-family:Inter,sans-serif">';nke.appendChild(w);}nke.style.cssText='display:flex;flex-direction:column;gap:2px';}else if(nke&&extraKids===0){nke.innerHTML='';nke.style.display='none';}var over=calcOverage(m);noteEl.innerHTML=over>0?'<div class="ci-over-note">'+over+' person'+(over>1?'s':'')+' beyond roster &mdash; consider using guest passes.</div>':'';}
+// ── CHECKLIST HELPERS ────────────────────────────────────────────────────────
+function ciToggle(id){
+  var item=document.getElementById(id); if(!item) return;
+  var chk=item.querySelector('input[type=checkbox]');
+  if(chk) chk.checked=!chk.checked;
+  item.classList.toggle('checked',chk?chk.checked:false);
+}
 
-function doCheckin(id){var m=members.find(function(x){return x.id===id;});if(!m)return;if(m.status==='unpaid'&&getUnpaidDays(m.id)>=3){showToast('Check-in blocked &mdash; payment required','err');return;}if(A.adults===0&&A.children===0&&ciGuests===0){showToast('Enter how many people are checking in.','warn');return;}if(ciGuests>0){var rem=m.guestsTotal-(m.guestsUsed||0);if(ciGuests<=rem)commitCheckin(m,ciGuests,false);else if(rem>0)showGPModal(m,ciGuests,rem,'partial');else showGPModal(m,ciGuests,0,'purchase');}else commitCheckin(m,0,false);}
-function commitCheckin(m,passesUsed,purchased){var nki=document.querySelectorAll('.new-kid-input'),newKids=[];nki.forEach(function(inp){var v=inp.value.trim();if(v)newKids.push(v);});var updKids=(m.kids||[]).concat(newKids);var updated=Object.assign({},m,{guestsUsed:(m.guestsUsed||0)+passesUsed,kids:updKids,children:updKids.length});saveMember(updated);var v={id:uid(),memberId:m.id,ts:new Date().toISOString(),adults:A.adults,children:A.children,guestPasses:passesUsed,passesPurchased:purchased?passesUsed:0,whileUnpaid:(m.status==='unpaid')};saveVisit(v);ciGuests=0;closeMM();var p=[];if(A.adults>0)p.push(A.adults+' adult'+(A.adults>1?'s':''));if(A.children>0)p.push(A.children+' child'+(A.children>1?'ren':''));if(passesUsed>0)p.push(passesUsed+' guest pass'+(passesUsed>1?'es':'')+(purchased?' purchased':''));showToast(m.first+' '+m.last+' checked in'+(p.length?' &middot; '+p.join(', '):''),'ok');}
+function ciPromptSecondAdult(memberId){
+  var m=members.find(function(x){return x.id===memberId;}); if(!m) return;
+  // Replace the add/missing button with an inline input
+  var container=document.getElementById('ci-adult-list'); if(!container) return;
+  var btn=container.querySelector('#ci-add-sec-btn')||container.querySelector('.missing-name');
+  if(!btn) return;
+  var row=document.createElement('div');
+  row.className='ci-check-item';
+  row.style.gap='6px';
+  row.innerHTML='<input class="ci-inline-input" id="ci-sec-name-input" placeholder="Second adult first &amp; last name" autofocus>'
+    +'<button onclick="ciSaveSecondAdult(\''+memberId+'\')" style="padding:6px 10px;background:var(--or);border:none;color:#fff;border-radius:7px;font-size:12px;font-weight:700;font-family:Inter,sans-serif;cursor:pointer">Save</button>';
+  btn.parentNode.replaceChild(row,btn);
+  setTimeout(function(){var inp=document.getElementById('ci-sec-name-input');if(inp)inp.focus();},50);
+}
+
+function ciSaveSecondAdult(memberId){
+  var inp=document.getElementById('ci-sec-name-input'); if(!inp) return;
+  var val=inp.value.trim(); if(!val){showToast('Enter a name','warn');return;}
+  var parts=val.split(' ');
+  var first=parts[0];
+  var last=parts.slice(1).join(' ');
+  var m=members.find(function(x){return x.id===memberId;}); if(!m) return;
+  var updated=Object.assign({},m,{secFirst:first,secLast:last});
+  saveMember(updated);
+  showToast('Second adult saved','ok');
+  // Refresh the modal
+  setTimeout(function(){openMember(memberId,true);},300);
+}
+
+function ciAddKidInline(){
+  var list=document.getElementById('ci-kids-list'); if(!list) return;
+  var addBtn=list.querySelector('.ci-add-btn');
+  var row=document.createElement('div');
+  row.style.cssText='display:flex;gap:6px;align-items:center';
+  var newId='ci-k-new-'+Date.now();
+  row.innerHTML='<input class="ci-inline-input" id="'+newId+'" placeholder="Child\'s first name">'
+    +'<button onclick="ciConfirmNewKid(\''+newId+'\')" style="padding:6px 10px;background:var(--or);border:none;color:#fff;border-radius:7px;font-size:12px;font-weight:700;font-family:Inter,sans-serif;cursor:pointer;white-space:nowrap">Add</button>';
+  list.insertBefore(row,addBtn);
+  setTimeout(function(){var inp=document.getElementById(newId);if(inp)inp.focus();},50);
+}
+
+function ciConfirmNewKid(inputId){
+  var inp=document.getElementById(inputId); if(!inp) return;
+  var name=inp.value.trim(); if(!name){showToast('Enter a name','warn');return;}
+  // Add as a checked item in the list
+  var list=document.getElementById('ci-kids-list'); if(!list) return;
+  var row=inp.parentElement;
+  var idx='ci-k-added-'+Date.now();
+  var item=document.createElement('div');
+  item.className='ci-check-item checked';
+  item.id=idx;
+  item.setAttribute('onclick','ciToggle(''+idx+'')');
+  item.innerHTML='<input type="checkbox" id="chk-'+idx+'" checked onchange="ciToggle(''+idx+'')"><label for="chk-'+idx+'">'+name+' <span style="opacity:.5;font-size:11px">(new)</span></label>';
+  item.dataset.newKid=name;
+  list.replaceChild(item,row);
+}
+
+function adjGuests(delta){
+  var m=members.find(function(x){return x.id===ciMemberId;}); if(!m) return;
+  ciGuests=Math.max(0,ciGuests+delta);
+  var el=document.getElementById('ci-guests'); if(el) el.textContent=ciGuests;
+  updateGPLiveStatus(m);
+}
+function updateGPLiveStatus(m){
+  var el=document.getElementById('gp-live-status'); if(!el) return;
+  if(ciGuests===0){el.innerHTML='';return;}
+  var rem=m.guestsTotal-(m.guestsUsed||0);
+  if(ciGuests<=rem){el.innerHTML='<div class="gp-counter-status gp-status-ok">&#x2713; '+ciGuests+' pass'+(ciGuests>1?'es':'')+' &middot; '+(rem-ciGuests)+' remaining after</div>';}
+  else{var over=ciGuests-rem;el.innerHTML='<div class="gp-counter-status gp-status-over">&#x26A0; '+(rem>0?rem+' from balance + ':'')+over+' to purchase &middot; $'+(over*GUEST_PRICE)+'</div>';}
+}
+function adjCI(field,delta){} // legacy no-op
+function calcOverage(m){return 0;}
+function updateOverNote(){}
+
+function doCheckin(id){
+  var m=members.find(function(x){return x.id===id;}); if(!m) return;
+  if(m.status==='unpaid'&&getUnpaidDays(m.id)>=3){showToast('Check-in blocked &mdash; payment required','err');return;}
+  // Require second adult name for Couples if missing
+  if(m.type==='Couples'&&!(m.secFirst||m.secLast)){
+    showToast('Please add the second adult\'s name first','warn'); return;
+  }
+  // Collect checked adults
+  var checkedAdults=[];
+  var a0=document.getElementById('chk-a0');
+  if(a0&&a0.checked) checkedAdults.push(m.first+' '+m.last);
+  var a1=document.getElementById('chk-a1');
+  if(a1&&a1.checked) checkedAdults.push((m.secFirst||'')+' '+(m.secLast||''));
+  // Collect checked children (existing)
+  var checkedKids=[];
+  (m.kids||[]).forEach(function(k,i){
+    var chk=document.getElementById('chk-k'+i);
+    if(chk&&chk.checked) checkedKids.push(k);
+  });
+  // Collect newly added kids
+  var newKids=[];
+  var addedItems=document.querySelectorAll('[data-new-kid]');
+  addedItems.forEach(function(item){
+    var chk=item.querySelector('input[type=checkbox]');
+    if(chk&&chk.checked) newKids.push(item.dataset.newKid);
+    else if(item.dataset.newKid) newKids.push(item.dataset.newKid); // always save new kids to membership
+  });
+  if(checkedAdults.length===0&&checkedKids.length===0&&newKids.length===0&&ciGuests===0){
+    showToast('Select at least one person checking in','warn'); return;
+  }
+  if(ciGuests>0){
+    var rem=m.guestsTotal-(m.guestsUsed||0);
+    if(ciGuests<=rem) commitCheckin(m,checkedAdults,checkedKids,newKids,ciGuests,false);
+    else if(rem>0) showGPModal(m,ciGuests,rem,'partial');
+    else showGPModal(m,ciGuests,0,'purchase');
+  } else {
+    commitCheckin(m,checkedAdults,checkedKids,newKids,0,false);
+  }
+}
+
+function commitCheckin(m,checkedAdults,checkedKids,newKids,passesUsed,purchased){
+  var updKids=(m.kids||[]).concat(newKids);
+  var updated=Object.assign({},m,{guestsUsed:(m.guestsUsed||0)+passesUsed,kids:updKids,children:updKids.length});
+  saveMember(updated);
+  var v={id:uid(),memberId:m.id,ts:new Date().toISOString(),
+    adults:checkedAdults.length,children:checkedKids.length+newKids.length,
+    checkedAdults:checkedAdults,checkedKids:checkedKids.concat(newKids),
+    guestPasses:passesUsed,passesPurchased:purchased?passesUsed:0,
+    whileUnpaid:(m.status==='unpaid')};
+  saveVisit(v); ciGuests=0; closeMM();
+  var p=[];
+  if(checkedAdults.length) p.push(checkedAdults.join(', '));
+  if(checkedKids.length||newKids.length) p.push((checkedKids.concat(newKids)).join(', '));
+  if(passesUsed>0) p.push(passesUsed+' guest pass'+(passesUsed>1?'es':'')+(purchased?' purchased':''));
+  showToast(m.first+' '+m.last+' checked in'+(p.length?' &middot; '+p.join(' &middot; '):''),'ok');
+}
 
 function showGPModal(m,requested,rem,mode){gpMember=m;gpOver=requested;var toPurchase=mode==='purchase'?requested:requested-rem;var fromBal=mode==='purchase'?0:rem;var bd='<div class="gp-breakdown">';if(fromBal>0)bd+='<div class="gp-line"><span>From pass balance</span><span>'+fromBal+' pass'+(fromBal>1?'es':'')+'</span></div>';if(toPurchase>0)bd+='<div class="gp-line"><span>Purchase @ $'+GUEST_PRICE+' each</span><span>'+toPurchase+' pass'+(toPurchase>1?'es':'')+'</span></div>';bd+='<div class="gp-total"><span>Total</span><span>'+requested+' guests &middot; '+(toPurchase>0?'$'+(toPurchase*GUEST_PRICE)+' due':'no charge')+'</span></div></div>';var inner='<div class="gp-body"><div class="gp-icon">&#x1F3AB;</div>';if(mode==='purchase'){inner+='<div class="gp-headline">No Passes Remaining</div><div class="gp-detail">Purchase '+requested+' pass'+(requested>1?'es':'')+' at $'+GUEST_PRICE+' each?</div>'+bd+'<div class="gp-btns"><button class="gp-buy" onclick="gpPurchase('+requested+')">&#x1F4B3; Purchase &middot; $'+(toPurchase*GUEST_PRICE)+'</button><button class="gp-skip" onclick="gpSkip()">Check In Without Passes</button></div>';}else{inner+='<div class="gp-headline">Not Enough Passes</div><div class="gp-detail">'+rem+' remaining &mdash; use all + purchase '+toPurchase+' more?</div>'+bd+'<div class="gp-btns"><button class="gp-buy" onclick="gpBuyPartial('+fromBal+','+toPurchase+')">Use '+fromBal+' + Buy '+toPurchase+' &middot; $'+(toPurchase*GUEST_PRICE)+'</button><button class="gp-skip" onclick="gpSkip()">Check In Without Passes</button></div>';}inner+='</div>';document.getElementById('gp-inner').innerHTML=inner;document.getElementById('gp-overlay').classList.add('open');}
 function gpUseExisting(){closeGP();commitCheckin(gpMember,ciGuests,false);}
