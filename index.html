@@ -37,19 +37,19 @@ body{font-family:'Inter',sans-serif;background:var(--sand);color:var(--tx);min-h
 #app{display:flex;flex-direction:column;height:100dvh}
 .topbar{background:var(--bld);color:#fff;padding:11px 14px 9px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;border-bottom:3px solid var(--or)}
 .topbar-l{display:flex;align-items:center;gap:9px}
-.topbar-title{font-family:'Inter',sans-serif;font-size:16px;color:var(--or);line-height:1.2;font-weight:800;letter-spacing:-.3px}
+.topbar-title{font-family:'Inter',sans-serif;font-size:20px;color:var(--or);line-height:1.2;font-weight:600;letter-spacing:-.2px}
 .topbar-sub{font-size:10px;color:rgba(255,255,255,.45);letter-spacing:1.5px;text-transform:uppercase}
 .topbar-acts{display:flex;gap:5px}
 .ibtn{background:rgba(255,255,255,.1);border:none;color:#fff;width:35px;height:35px;border-radius:9px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px}
 .ibtn:active{background:var(--or)}
 .tabs{background:var(--bl);display:flex;flex-shrink:0}
-.tab{flex:1;padding:10px 4px;border:none;background:none;font-family:'Inter',sans-serif;font-size:11px;font-weight:700;color:rgba(255,255,255,.4);cursor:pointer;border-bottom:3px solid transparent;transition:color .14s,border-color .14s;letter-spacing:.4px;text-transform:uppercase}
-.tab.on{color:var(--or);border-bottom-color:var(--or)}
+.tab{flex:1;padding:13px 4px;border:none;background:none;font-family:'Inter',sans-serif;font-size:15px;font-weight:600;color:rgba(255,255,255,.55);cursor:pointer;border-bottom:3px solid transparent;transition:color .14s,border-color .14s;letter-spacing:.3px;text-transform:uppercase}
+.tab.on{color:var(--or);border-bottom-color:var(--or);font-weight:800;background:rgba(255,255,255,.06)}
 .pane{display:none;flex:1;overflow-y:auto;flex-direction:column}
 .pane.on{display:flex}
-.sbar{background:var(--wh);padding:11px 13px;border-bottom:1px solid var(--sand2);display:flex;gap:7px;align-items:center;flex-shrink:0}
-.sinput{flex:1;padding:10px 13px;border:2px solid var(--sand2);border-radius:10px;font-size:17px;font-family:'Inter',sans-serif;background:var(--sand);outline:none;color:var(--tx);transition:border-color .15s}
-.sinput:focus{border-color:var(--bl);background:var(--wh)}
+.sbar{background:var(--sand);padding:14px 13px;border-bottom:2px solid var(--sand2);display:flex;gap:7px;align-items:center;flex-shrink:0}
+.sinput{flex:1;padding:13px 15px;border:2.5px solid var(--bl);border-radius:11px;font-size:17px;font-family:'Inter',sans-serif;background:var(--wh);outline:none;color:var(--tx);transition:border-color .15s,box-shadow .15s;box-shadow:0 2px 8px rgba(0,48,135,.12)}
+.sinput:focus{border-color:var(--or);background:var(--wh);box-shadow:0 2px 12px rgba(250,70,22,.18)}
 .sclr{background:none;border:none;font-size:18px;color:var(--mu);cursor:pointer;padding:5px}
 .rlist{flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:7px}
 .mcard{background:var(--wh);border-radius:var(--r);padding:12px 13px;box-shadow:var(--sh);display:flex;align-items:center;gap:11px;cursor:pointer;transition:transform .1s;border-left:4px solid var(--bll)}
@@ -220,7 +220,7 @@ body{font-family:'Inter',sans-serif;background:var(--sand);color:var(--tx);min-h
 <!-- APP -->
 <div id="app">
   <div class="topbar">
-    <div class="topbar-l"><span style="font-size:24px">&#x1F40A;</span><div><div class="topbar-title">Gibsonville Swim Club</div><div class="topbar-sub" id="today-lbl"></div><div style="font-size:10px;color:rgba(255,255,255,.6);letter-spacing:.5px;margin-top:2px;font-weight:600">v1.2.0</div></div></div>
+    <div class="topbar-l"><span style="font-size:24px">&#x1F40A;</span><div><div class="topbar-title">Gibsonville Swim Club</div><div class="topbar-sub" id="today-lbl"></div><div style="font-size:10px;color:rgba(255,255,255,.6);letter-spacing:.5px;margin-top:2px;font-weight:600">v1.3.0</div></div></div>
     <div class="topbar-acts"><div id="sync-pill" style="display:none;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;align-items:center;gap:4px"></div><button class="ibtn" onclick="openSettings()">&#x2699;&#xFE0F;</button></div>
   </div>
   <div class="tabs">
@@ -229,19 +229,14 @@ body{font-family:'Inter',sans-serif;background:var(--sand);color:var(--tx);min-h
     <button class="tab" id="tb-rep" onclick="switchTab('rep')">&#x1F4CA; Reports</button>
   </div>
   <div id="pane-ci" class="pane on">
-    <div class="sbar"><input class="sinput" id="ci-search" type="text" placeholder="Last name search..." oninput="renderCI()" autocomplete="off" autocorrect="off" spellcheck="false"><button class="sclr" onclick="document.getElementById('ci-search').value='';renderCI()">&#x2715;</button></div>
+    <div class="sbar"><input class="sinput" id="ci-search" type="text" placeholder="&#x1F50D;  Search by last name..." oninput="renderCI()" autocomplete="off" autocorrect="off" spellcheck="false"><button class="sclr" onclick="document.getElementById('ci-search').value='';renderCI()">&#x2715;</button></div>
     <div class="rlist" id="ci-list"><div class="empty"><div class="ico">&#x1F40A;</div><p>Type a last name to find a member.</p></div></div>
   </div>
   <div id="pane-dir" class="pane">
     <div class="dir-controls">
       <div class="sbar" style="border:none;padding:0"><input class="sinput" id="dir-search" type="text" placeholder="Search name, email, phone..." oninput="renderDir()" autocomplete="off"><button class="sclr" onclick="document.getElementById('dir-search').value='';renderDir()">&#x2715;</button></div>
-      <div class="dir-filters">
+      <div class="dir-filters" id="dir-filter-btns">
         <button class="fbtn on" onclick="setFilter(this,'all')">All</button>
-        <button class="fbtn" onclick="setFilter(this,'Individual')">Individual</button>
-        <button class="fbtn" onclick="setFilter(this,'Couples')">Couples</button>
-        <button class="fbtn" onclick="setFilter(this,'Family')">Family</button>
-        <button class="fbtn" onclick="setFilter(this,'Board')">Board</button>
-        <button class="fbtn" onclick="setFilter(this,'Comp')">Comp</button>
         <button class="fbtn" onclick="setFilter(this,'unpaid')">Unpaid</button>
       </div>
     </div>
@@ -293,8 +288,41 @@ var FIREBASE_CONFIG = {
 };
 // ══════════════════════════════════════════════════════
 
-var GUEST_PASSES={Individual:5,Couples:7,Family:10,Board:20,Comp:0};
-var GUEST_PRICE=5,PIN_KEY='gsc_pin',PROTECTED_PIN='6448';
+// ── DEFAULT CONFIG (overridden by Firebase if available) ──
+var DEFAULT_CONFIG={
+  clubName:'Gibsonville Swim Club',
+  seasonYear: new Date().getFullYear(),
+  guestPrice:5,
+  graceDays:3,
+  notifyEmail:'jeff@gsrconline.com',
+  membershipTypes:[
+    {key:'Individual', label:'Individual',    adults:1, maxAdults:1, allowChildren:false, guestPasses:5,  requireSecond:false},
+    {key:'Couples',    label:'Couples',       adults:2, maxAdults:2, allowChildren:false, guestPasses:7,  requireSecond:true},
+    {key:'Family',     label:'Family',        adults:1, maxAdults:2, allowChildren:true,  guestPasses:10, requireSecond:false},
+    {key:'Board',      label:'Board Member',  adults:1, maxAdults:2, allowChildren:true,  guestPasses:20, requireSecond:false},
+    {key:'Comp',       label:'Comp',          adults:1, maxAdults:2, allowChildren:true,  guestPasses:0,  requireSecond:false}
+  ]
+};
+var CONFIG=JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+
+// Derived from CONFIG — rebuilt whenever config changes
+var GUEST_PASSES={};
+var GUEST_PRICE=CONFIG.guestPrice;
+var GRACE_DAYS=CONFIG.graceDays;
+var NOTIFY_EMAIL_ADDR=CONFIG.notifyEmail;
+
+function rebuildFromConfig(){
+  GUEST_PASSES={};
+  CONFIG.membershipTypes.forEach(function(t){GUEST_PASSES[t.key]=t.guestPasses;});
+  GUEST_PRICE=CONFIG.guestPrice;
+  GRACE_DAYS=CONFIG.graceDays;
+  NOTIFY_EMAIL_ADDR=CONFIG.notifyEmail;
+  // Update topbar club name
+  var tn=document.querySelector('.topbar-title');
+  if(tn) tn.textContent=CONFIG.clubName;
+}
+
+var PIN_KEY='gsc_pin',PROTECTED_PIN='6448';
 // EmailJS config - fill in after EmailJS setup
 var EMAILJS_PUBLIC_KEY='hSDfKoakQnUPd1Ts1';
 var EMAILJS_SERVICE_ID='service_j5ftlqw';
@@ -351,9 +379,22 @@ window.addEventListener('fbready', function(){
 });
 window.addEventListener('fbfail', function(){ bootLocal(); });
 
+function saveConfig(cfg){
+  CONFIG=cfg;
+  rebuildFromConfig();
+  if(fbReady&&db){
+    db.collection('config').doc('settings').set(cfg).catch(function(e){console.error('Config save error:',e);});
+  } else {
+    try{localStorage.setItem('gsc_config',JSON.stringify(cfg));}catch(e){}
+  }
+  showToast('Settings saved','ok');
+}
+
 function bootLocal(){
   document.getElementById('setup-banner').classList.add('show');
   setSyncPill('offline');
+  try{var saved=JSON.parse(localStorage.getItem('gsc_config'));if(saved){CONFIG=Object.assign({},DEFAULT_CONFIG,saved);if(!CONFIG.membershipTypes||!CONFIG.membershipTypes.length)CONFIG.membershipTypes=DEFAULT_CONFIG.membershipTypes;}}catch(e){}
+  rebuildFromConfig();
   members=lGet('gsc_members')||[];visits=lGet('gsc_visits')||[];
   if(!members.length)seedDemo();
   renderAll();initPin();
@@ -447,12 +488,22 @@ function adminKeyPress(k){if(k==='back')adminPinEntry=adminPinEntry.slice(0,-1);
 function checkAdminPin(){if(adminPinEntry===getPin()){document.getElementById('admin-overlay').classList.remove('open');adminPinEntry='';if(adminPinCallback){adminPinCallback();adminPinCallback=null;}}else{document.getElementById('admin-err').textContent='Incorrect PIN.';adminPinEntry='';for(var i=0;i<4;i++)document.getElementById('ad'+i).classList.remove('on');}}
 function closeAdmin(){document.getElementById('admin-overlay').classList.remove('open');adminPinCallback=null;}
 
-function switchTab(name){['ci','dir','rep'].forEach(function(t){document.getElementById('pane-'+t).classList.toggle('on',t===name);document.getElementById('tb-'+t).classList.toggle('on',t===name);});document.getElementById('fab').classList.toggle('show',name==='dir');if(name==='rep')renderRep();if(name==='dir')renderDir();}
+function switchTab(name){['ci','dir','rep'].forEach(function(t){document.getElementById('pane-'+t).classList.toggle('on',t===name);document.getElementById('tb-'+t).classList.toggle('on',t===name);});document.getElementById('fab').classList.toggle('show',name==='dir');if(name==='rep')renderRep();if(name==='dir'){rebuildFilterBtns();renderDir();}}
 function setFilter(btn,f){dirFilter=f;document.querySelectorAll('.fbtn').forEach(function(b){b.classList.remove('on');});btn.classList.add('on');renderDir();}
 
 function cardHTML(m,ciMode){var chip=chipInfo(m);return'<div class="mcard '+cardCls(m)+'" onclick="openMember(\''+m.id+'\','+ciMode+')">'+'<div class="mavatar">'+(m.last||'?')[0]+'</div>'+'<div class="minfo"><div class="mname">'+m.last+', '+m.first+'</div><div class="mmeta">'+typeBadge(m.type)+' '+statusBadge(m.status)+'</div><div class="mroster">'+rosterStr(m)+'</div></div>'+'<div class="gchip '+chip.cls+'">'+chip.lbl+'</div></div>';}
 
 function renderCI(){var q=(document.getElementById('ci-search')?document.getElementById('ci-search').value:'').trim().toLowerCase();var el=document.getElementById('ci-list');if(!el)return;if(!q){el.innerHTML='<div class="empty"><div class="ico">&#x1F40A;</div><p>Type a last name to find a member.</p></div>';return;}var res=members.filter(function(m){return m.last.toLowerCase().startsWith(q);}).sort(function(a,b){return a.last.localeCompare(b.last)||a.first.localeCompare(b.first);});el.innerHTML=res.length?res.map(function(m){return cardHTML(m,true);}).join(''):'<div class="empty"><div class="ico">&#x1F50D;</div><p>No members found.</p></div>';}
+
+function rebuildFilterBtns(){
+  var el=document.getElementById('dir-filter-btns'); if(!el) return;
+  var current=dirFilter;
+  el.innerHTML='<button class="fbtn'+(current==='all'?' on':'')+'" onclick="setFilter(this,&quot;all&quot;)">All</button>'
+    +CONFIG.membershipTypes.map(function(t){
+      return '<button class="fbtn'+(current===t.key?' on':'')+'" onclick="setFilter(this,&quot;'+t.key+'&quot;)">'+t.label+'</button>';
+    }).join('')
+    +'<button class="fbtn'+(current==='unpaid'?' on':'')+'" onclick="setFilter(this,&quot;unpaid&quot;)">Unpaid</button>';
+}
 
 function renderDir(){var q=(document.getElementById('dir-search')?document.getElementById('dir-search').value:'').trim().toLowerCase();var list=members.slice();if(dirFilter==='unpaid')list=list.filter(function(m){return m.status!=='paid';});else if(dirFilter!=='all')list=list.filter(function(m){return m.type===dirFilter;});if(q)list=list.filter(function(m){return(m.first+' '+m.last).toLowerCase().includes(q)||(m.email||'').toLowerCase().includes(q)||(m.phone||'').replace(/\D/g,'').includes(q.replace(/\D/g,''));});list.sort(function(a,b){return a.last.localeCompare(b.last)||a.first.localeCompare(b.first);});var el=document.getElementById('dir-list');if(!el)return;if(!list.length){el.innerHTML='<div class="empty" style="padding:40px 0"><div class="ico">&#x1F50D;</div><p>No members match.</p></div>';return;}var grp={};list.forEach(function(m){var l=m.last[0].toUpperCase();if(!grp[l])grp[l]=[];grp[l].push(m);});el.innerHTML=Object.keys(grp).sort().map(function(l){return'<div class="alpha-hdr">'+l+'</div>'+grp[l].map(function(m){return cardHTML(m,false);}).join('');}).join('');}
 
@@ -478,7 +529,7 @@ function openMember(id,ciMode){
   if(m.nannyEnabled&&m.nannyName){html+='<div class="nanny-card"><div class="nanny-title">&#x1F476; Authorized Nanny</div><div class="nanny-row"><span class="nanny-lbl">Name</span><span class="nanny-val">'+m.nannyName+'</span></div><div class="nanny-row"><span class="nanny-lbl">Phone</span><span class="nanny-val">'+(m.nannyPhone||'&mdash;')+'</span></div><div class="nanny-row"><span class="nanny-lbl">Age</span><span class="nanny-val">'+(m.nannyDob?calcAge(m.nannyDob)+' years old':'&mdash;')+'</span></div></div>';}
   if(ciMode){
     var unpaidDays=getUnpaidDays(m.id);
-    var hardBlock=(m.status==='unpaid'&&unpaidDays>=3);
+    var hardBlock=(m.status==='unpaid'&&unpaidDays>=GRACE_DAYS);
     if(hardBlock){
       html+='<div class="ci-blocked" style="display:flex;flex-direction:column;gap:8px;text-align:center"><div style="font-size:28px">&#x1F6AB;</div><div style="font-size:16px;font-weight:700">Check-In Blocked</div><div style="font-size:13px;font-weight:400;opacity:.85">This membership has checked in unpaid for '+unpaidDays+' days. Payment required before re-entry.</div></div>';
     } else {
@@ -494,7 +545,7 @@ function openMember(id,ciMode){
       var unpaidWarn='';
       if(m.status==='unpaid'){
         var mid=m.id;
-        unpaidWarn='<div class="unpaid-warning"><div class="unpaid-warning-title">&#x26A0;&#xFE0F; Payment Outstanding</div><p>This membership has not paid for the current season.</p><div class="unpaid-days">'+unpaidDays+' / 3 grace days used</div><p style="font-size:12px;color:var(--re);font-weight:600">Check-in blocked after day 3 without payment.</p><div id="pay-alert-container"><button id="pay-alert-btn" data-mid="'+mid+'" onclick="sendPaymentAlert(this.dataset.mid)" style="width:100%;margin-top:4px;padding:10px;background:var(--or);border:none;color:#fff;border-radius:9px;font-size:13px;font-weight:700;font-family:Inter,sans-serif;cursor:pointer">&#x1F4E7; Member has paid — Submit for Review</button></div></div>';
+        unpaidWarn='<div class="unpaid-warning"><div class="unpaid-warning-title">&#x26A0;&#xFE0F; Payment Outstanding</div><p>This membership has not paid for the current season.</p><div class="unpaid-days">'+unpaidDays+' / '+GRACE_DAYS+' grace days used</div><p style="font-size:12px;color:var(--re);font-weight:600">Check-in blocked after day 3 without payment.</p><div id="pay-alert-container"><button id="pay-alert-btn" data-mid="'+mid+'" onclick="sendPaymentAlert(this.dataset.mid)" style="width:100%;margin-top:4px;padding:10px;background:var(--or);border:none;color:#fff;border-radius:9px;font-size:13px;font-weight:700;font-family:Inter,sans-serif;cursor:pointer">&#x1F4E7; Member has paid — Submit for Review</button></div></div>';
       }
       else if(m.status==='pending'){unpaidWarn='<div style="background:var(--aml);border:2px solid var(--am);border-radius:10px;padding:10px 13px;font-size:13px;color:var(--am);font-weight:600;text-align:center">&#x23F3; Payment pending &mdash; please follow up</div>';}
       var adultNames=[];
@@ -509,8 +560,8 @@ function openMember(id,ciMode){
       var rSummary=rLines.length?'<div style="background:rgba(255,255,255,.08);border-radius:9px;padding:10px 12px;display:flex;flex-direction:column;gap:4px;font-size:13px;line-height:1.5">'+rLines.join('')+'</div>':'';
       html+=rSummary.length?'':'';//placeholder
       // ── Build checklist ──────────────────────────────────────
-      var needsSecondName=(m.type==='Couples')&&!(m.secFirst||m.secLast);
-      var canAddSec=(m.type==='Family'||m.type==='Board'||m.type==='Comp')&&!(m.secFirst||m.secLast);
+      var needsSecondName=getTypeConfig(m.type).requireSecond&&!(m.secFirst||m.secLast);
+      var canAddSec=getTypeConfig(m.type).maxAdults>1&&!getTypeConfig(m.type).requireSecond&&!(m.secFirst||m.secLast);
       var adultsSection='<div class="ci-section-lbl">Adults</div><div class="ci-checklist" id="ci-adult-list">';
       // Primary adult
       adultsSection+='<div class="ci-check-item" id="ci-a0" onclick="ciToggle(\'ci-a0\')"><input type="checkbox" id="chk-a0" onchange="ciToggle(\'ci-a0\')"><label for="chk-a0">'+m.first+' '+m.last+' <span style="opacity:.5;font-size:11px">(primary)</span></label></div>';
@@ -655,7 +706,7 @@ function doCheckin(id){
   var m=members.find(function(x){return x.id===id;}); if(!m) return;
   if(m.status==='unpaid'&&getUnpaidDays(m.id)>=3){showToast('Check-in blocked &mdash; payment required','err');return;}
   // Require second adult name for Couples if missing
-  if(m.type==='Couples'&&!(m.secFirst||m.secLast)){
+  if(getTypeConfig(m.type).requireSecond&&!(m.secFirst||m.secLast)){
     showToast('Please add the second adult\'s name first','warn'); return;
   }
   // Collect checked adults
@@ -724,7 +775,7 @@ document.getElementById('ed-body').innerHTML=
   +'<div class="fg"><label class="fl">Street Address</label><input class="fi" id="ef-street" value="'+(m.street||m.address||'')+'" placeholder="123 Main St"></div>'
   +'<div class="frow"><div class="fg"><label class="fl">City</label><input class="fi" id="ef-city" value="'+(m.city||'')+'" placeholder="Gibsonville"></div><div class="fg"><label class="fl">State</label><input class="fi" id="ef-state" value="'+(m.state||'NC')+'" placeholder="NC"></div></div>'
   +'<div class="fg"><label class="fl">Zip Code</label><input class="fi" id="ef-zip" value="'+(m.zip||'')+'" placeholder="27249" style="max-width:140px"></div>'
-  +'<div class="fg"><label class="fl">Membership Type</label><select class="fs" id="ef-type" onchange="typeChanged()"><option value="Individual"'+(m.type==='Individual'?' selected':'')+'>Individual (1 adult)</option><option value="Couples"'+(m.type==='Couples'?' selected':'')+'>Couples (2 adults)</option><option value="Family"'+(m.type==='Family'?' selected':'')+'>Family (adults + children)</option><option value="Board"'+(m.type==='Board'?' selected':'')+'>Board Member</option><option value="Comp"'+(m.type==='Comp'?' selected':'')+'>Comp</option></select></div>'
+  +'<div class="fg"><label class="fl">Membership Type</label><select class="fs" id="ef-type" onchange="typeChanged()">'+CONFIG.membershipTypes.map(function(t){return'<option value="'+t.key+'"'+(m.type===t.key?' selected':'')+'>'+t.label+(t.requireSecond?' (2 adults required)':t.maxAdults>1&&t.allowChildren?' (adults + children)':t.adults===1&&!t.allowChildren?' (1 adult)':t.maxAdults===2&&!t.allowChildren?' (2 adults)':'')+' &mdash; '+t.guestPasses+' passes'+'</option>';}).join('')+'</select></div>'
   +'<div class="fg"><label class="fl">Payment Status</label><div style="display:flex;gap:8px;align-items:center"><div style="flex:1;padding:11px 13px;border:2px solid var(--sand2);border-radius:10px;background:var(--sand);font-size:16px;color:var(--tx)" id="status-display">'+({paid:'Paid',pending:'Pending',unpaid:'Unpaid'}[m.status||'paid']||'Paid')+'</div><input type="hidden" id="ef-status" value="'+(m.status||'paid')+'"><button onclick="changePaymentStatus()" style="padding:11px 13px;background:var(--bl);border:none;color:#fff;border-radius:10px;font-size:13px;font-weight:700;font-family:Inter,sans-serif;cursor:pointer;white-space:nowrap">&#x1F511; Change</button></div></div>'
   +'<div class="sec-lbl">Guest Passes</div>'
   +'<div class="frow"><div class="fg"><label class="fl">Used</label><input class="fi" id="ef-gused" type="number" min="0" value="'+(m.guestsUsed||0)+'"></div><div class="fg"><label class="fl">Total Allotted</label><input class="fi" id="ef-gtotal" type="number" min="0" value="'+(m.guestsTotal!==undefined?m.guestsTotal:GUEST_PASSES[m.type||'Individual'])+'"></div></div>'
@@ -749,6 +800,9 @@ document.getElementById('ed-body').innerHTML=
 document.getElementById('ed-overlay').classList.add('open');updateSecVisibility();}
 
 function changePaymentStatus(){requireAdminPin(function(){var cur=document.getElementById('ef-status').value;var opts=['paid','pending','unpaid'];var labels={paid:'Paid',pending:'Pending',unpaid:'Unpaid'};var next=opts[(opts.indexOf(cur)+1)%opts.length];document.getElementById('ef-status').value=next;document.getElementById('status-display').textContent=labels[next];showToast('Status changed to '+labels[next],'ok');});}
+function getTypeConfig(key){
+  return CONFIG.membershipTypes.find(function(t){return t.key===key;})||{adults:1,maxAdults:1,guestPasses:0,requireSecond:false,allowChildren:false};
+}
 function typeChanged(){var type=document.getElementById('ef-type').value;var defAdults={Individual:1,Couples:2,Family:2,Board:2,Comp:1};if(!editingId){document.getElementById('ef-adults').value=defAdults[type]||1;document.getElementById('ef-gtotal').value=GUEST_PASSES[type];}if(type==='Couples')document.getElementById('ef-adults').value=2;if(type==='Individual')document.getElementById('ef-adults').value=1;updateSecVisibility();}
 function adultsChanged(){var type=document.getElementById('ef-type').value;if(type==='Couples')document.getElementById('ef-adults').value=2;if(type==='Individual')document.getElementById('ef-adults').value=1;updateSecVisibility();}
 function updateSecVisibility(){var type=document.getElementById('ef-type')?document.getElementById('ef-type').value:'';var adults=parseInt(document.getElementById('ef-adults')?document.getElementById('ef-adults').value:1)||1;var show=(type!=='Individual')&&(type==='Couples'||adults>=2);var row=document.getElementById('sec-name-row');if(row)row.style.display=show?'flex':'none';}
@@ -765,7 +819,7 @@ function sendPaymentAlert(memberId){
   var btn=document.getElementById('pay-alert-btn');
   if(btn){btn.disabled=true;btn.textContent='Sending...';}
   var params={
-    to_email:NOTIFY_EMAIL,
+    to_email:NOTIFY_EMAIL_ADDR,
     name:'Gibsonville Swim Club Check-In',
     member_name:m.first+' '+m.last,
     member_type:m.type,
@@ -827,7 +881,113 @@ function importCSVReplace(){if(!csvParsed.length){showToast('No data','warn');re
 if(fbReady&&window._delMemberFB){members.forEach(function(m){window._delMemberFB(m.id);});}// Save new ones
 csvParsed.forEach(function(m){saveMember(m);});if(!fbReady){members=csvParsed;lSet('gsc_members',members);renderAll();}closeCSV();showToast('Replaced with '+csvParsed.length+' members','ok');}
 
-function openSettings(){requireAdminPin(function(){document.getElementById('st-body').innerHTML='<div class="sec-lbl">Change PIN</div><p class="fnote">This PIN protects delete, payment status changes, and import/export.</p><div class="fg"><label class="fl">New PIN (4 digits)</label><input class="fi" id="np1" type="tel" maxlength="4" placeholder="New PIN"></div><div class="fg"><label class="fl">Confirm PIN</label><input class="fi" id="np2" type="tel" maxlength="4" placeholder="Confirm"></div><button class="btn-p" onclick="doChangePin()">&#x1F511; Update PIN</button><div class="sec-lbl" style="margin-top:4px">Season Reset</div><p class="fnote">Resets guest pass counts. Member profiles and visit history are kept.</p><button class="btn-d" onclick="doSeasonReset()">&#x1F504; Reset for New Season</button>';document.getElementById('st-overlay').classList.add('open');});}
+function openSettings(){requireAdminPin(function(){
+  var typesHTML=CONFIG.membershipTypes.map(function(t,i){
+    return '<div style="background:var(--sand);border-radius:9px;padding:10px 12px;display:flex;flex-direction:column;gap:6px;border:1px solid var(--sand2)">'
+      +'<div style="display:flex;align-items:center;gap:8px;justify-content:space-between">'
+      +'<input class="fi cfg-type-label" data-idx="'+i+'" value="'+t.label+'" style="flex:1;font-weight:700" placeholder="Type name">'
+      +'<button onclick="removeMemberType('+i+')" style="background:var(--rel);border:none;color:var(--re);width:28px;height:28px;border-radius:7px;cursor:pointer;font-size:14px;flex-shrink:0">&#x2715;</button>'
+      +'</div>'
+      +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">'
+      +'<div class="fg"><label class="fl">Guest Passes</label><input class="fi cfg-type-passes" data-idx="'+i+'" type="number" min="0" value="'+t.guestPasses+'"></div>'
+      +'<div class="fg"><label class="fl">Max Adults</label><input class="fi cfg-type-maxadults" data-idx="'+i+'" type="number" min="1" max="2" value="'+t.maxAdults+'"></div>'
+      +'</div>'
+      +'<div style="display:flex;gap:12px;font-size:12px">'
+      +'<label style="display:flex;align-items:center;gap:5px"><input type="checkbox" class="cfg-type-children" data-idx="'+i+'"'+(t.allowChildren?' checked':'')+'>Allow children</label>'
+      +'<label style="display:flex;align-items:center;gap:5px"><input type="checkbox" class="cfg-type-require2nd" data-idx="'+i+'"'+(t.requireSecond?' checked':'')+'>Require 2nd adult</label>'
+      +'</div>'
+      +'</div>';
+  }).join('');
+  document.getElementById('st-body').innerHTML=
+    '<div class="sec-lbl">Club Settings</div>'
+    +'<div class="fg"><label class="fl">Club Name</label><input class="fi" id="cfg-clubname" value="'+CONFIG.clubName+'"></div>'
+    +'<div class="fg"><label class="fl">Season Year</label><input class="fi" id="cfg-season" type="number" value="'+CONFIG.seasonYear+'"></div>'
+    +'<div class="sec-lbl" style="margin-top:4px">Guest Pass Settings</div>'
+    +'<div class="frow">'
+    +'<div class="fg"><label class="fl">Price per Pass ($)</label><input class="fi" id="cfg-price" type="number" min="0" step="0.50" value="'+CONFIG.guestPrice+'"></div>'
+    +'<div class="fg"><label class="fl">Unpaid Grace Days</label><input class="fi" id="cfg-grace" type="number" min="1" max="14" value="'+CONFIG.graceDays+'"></div>'
+    +'</div>'
+    +'<div class="sec-lbl" style="margin-top:4px">Notification Email</div>'
+    +'<div class="fg"><label class="fl">Send payment alerts to</label><input class="fi" id="cfg-email" type="email" value="'+CONFIG.notifyEmail+'"></div>'
+    +'<div class="sec-lbl" style="margin-top:4px">Membership Types</div>'
+    +'<p class="fnote">Edit names, pass allotments, and rules for each membership type.</p>'
+    +'<div id="cfg-types-list" style="display:flex;flex-direction:column;gap:8px">'+typesHTML+'</div>'
+    +'<button onclick="addMemberType()" class="btn-s" style="margin-top:6px">&#xFF0B; Add Membership Type</button>'
+    +'<button class="btn-p" style="margin-top:4px" onclick="saveAllConfig()">&#x1F4BE; Save All Settings</button>'
+    +'<div class="sec-lbl" style="margin-top:4px">Change PIN</div>'
+    +'<p class="fnote">This PIN protects delete, payment status changes, import/export, and settings.</p>'
+    +'<div class="fg"><label class="fl">New PIN (4 digits)</label><input class="fi" id="np1" type="tel" maxlength="4" placeholder="New PIN"></div>'
+    +'<div class="fg"><label class="fl">Confirm PIN</label><input class="fi" id="np2" type="tel" maxlength="4" placeholder="Confirm"></div>'
+    +'<button class="btn-p" onclick="doChangePin()">&#x1F511; Update PIN</button>'
+    +'<div class="sec-lbl" style="margin-top:4px">Season Reset</div>'
+    +'<p class="fnote">Resets guest pass counts to 0 for all members. Profiles and visit history are kept.</p>'
+    +'<button class="btn-d" onclick="doSeasonReset()">&#x1F504; Reset for New Season</button>';
+  document.getElementById('st-overlay').classList.add('open');
+});}
+
+function saveAllConfig(){
+  var newTypes=[];
+  var labels=document.querySelectorAll('.cfg-type-label');
+  labels.forEach(function(el){
+    var i=parseInt(el.dataset.idx);
+    var existing=CONFIG.membershipTypes[i]||{};
+    newTypes.push({
+      key: existing.key||el.value.replace(/\s+/g,''),
+      label: el.value.trim(),
+      adults: parseInt(document.querySelector('.cfg-type-maxadults[data-idx="'+i+'"]').value)||1,
+      maxAdults: parseInt(document.querySelector('.cfg-type-maxadults[data-idx="'+i+'"]').value)||1,
+      guestPasses: parseInt(document.querySelector('.cfg-type-passes[data-idx="'+i+'"]').value)||0,
+      allowChildren: document.querySelector('.cfg-type-children[data-idx="'+i+'"]').checked,
+      requireSecond: document.querySelector('.cfg-type-require2nd[data-idx="'+i+'"]').checked
+    });
+  });
+  var newCfg={
+    clubName: document.getElementById('cfg-clubname').value.trim()||CONFIG.clubName,
+    seasonYear: parseInt(document.getElementById('cfg-season').value)||new Date().getFullYear(),
+    guestPrice: parseFloat(document.getElementById('cfg-price').value)||CONFIG.guestPrice,
+    graceDays: parseInt(document.getElementById('cfg-grace').value)||CONFIG.graceDays,
+    notifyEmail: document.getElementById('cfg-email').value.trim()||CONFIG.notifyEmail,
+    membershipTypes: newTypes
+  };
+  saveConfig(newCfg);
+  closeSettings();
+}
+
+function addMemberType(){
+  var list=document.getElementById('cfg-types-list'); if(!list) return;
+  var i=document.querySelectorAll('.cfg-type-label').length;
+  var row=document.createElement('div');
+  row.style.cssText='background:var(--sand);border-radius:9px;padding:10px 12px;display:flex;flex-direction:column;gap:6px;border:1px solid var(--sand2)';
+  row.innerHTML='<div style="display:flex;align-items:center;gap:8px;justify-content:space-between">'
+    +'<input class="fi cfg-type-label" data-idx="'+i+'" value="New Type" style="flex:1;font-weight:700" placeholder="Type name">'
+    +'<button onclick="this.closest('div').parentElement.remove();renumberTypeInputs()" style="background:var(--rel);border:none;color:var(--re);width:28px;height:28px;border-radius:7px;cursor:pointer;font-size:14px;flex-shrink:0">&#x2715;</button>'
+    +'</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">'
+    +'<div class="fg"><label class="fl">Guest Passes</label><input class="fi cfg-type-passes" data-idx="'+i+'" type="number" min="0" value="0"></div>'
+    +'<div class="fg"><label class="fl">Max Adults</label><input class="fi cfg-type-maxadults" data-idx="'+i+'" type="number" min="1" max="2" value="1"></div>'
+    +'</div>'
+    +'<div style="display:flex;gap:12px;font-size:12px">'
+    +'<label style="display:flex;align-items:center;gap:5px"><input type="checkbox" class="cfg-type-children" data-idx="'+i+'">Allow children</label>'
+    +'<label style="display:flex;align-items:center;gap:5px"><input type="checkbox" class="cfg-type-require2nd" data-idx="'+i+'">Require 2nd adult</label>'
+    +'</div>';
+  list.appendChild(row);
+}
+
+function removeMemberType(idx){
+  var labels=document.querySelectorAll('.cfg-type-label');
+  if(labels.length<=1){showToast('Must have at least one membership type','warn');return;}
+  labels[idx].closest('div[style]').remove();
+  renumberTypeInputs();
+}
+
+function renumberTypeInputs(){
+  var labels=document.querySelectorAll('.cfg-type-label');
+  labels.forEach(function(el,i){
+    el.dataset.idx=i;
+    var parent=el.closest('div[style]');
+    parent.querySelectorAll('[data-idx]').forEach(function(inp){inp.dataset.idx=i;});
+  });
+}
 function closeSettings(){document.getElementById('st-overlay').classList.remove('open');}
 function doChangePin(){var p1=document.getElementById('np1').value;var p2=document.getElementById('np2').value;if(!/^\d{4}$/.test(p1)){showToast('PIN must be exactly 4 digits','warn');return;}if(p1!==p2){showToast('PINs do not match','warn');return;}setPin(p1);closeSettings();showToast('PIN updated');}
 function enablePin(){document.getElementById('pin-screen').classList.remove('hidden');closeSettings();showToast('PIN enabled');}
