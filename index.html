@@ -223,7 +223,7 @@ body{font-family:'Inter',sans-serif;background:var(--sand);color:var(--tx);min-h
 <!-- APP -->
 <div id="app">
   <div class="topbar">
-    <div class="topbar-l"><span style="font-size:24px">&#x1F40A;</span><div><div class="topbar-title">Gibsonville Swim Club</div><div class="topbar-sub" id="today-lbl"></div><div style="font-size:10px;color:rgba(255,255,255,.6);letter-spacing:.5px;margin-top:2px;font-weight:600">v1.3.2</div></div></div>
+    <div class="topbar-l"><span style="font-size:24px">&#x1F40A;</span><div><div class="topbar-title">Gibsonville Swim Club</div><div class="topbar-sub" id="today-lbl"></div><div style="font-size:10px;color:rgba(255,255,255,.6);letter-spacing:.5px;margin-top:2px;font-weight:600">v1.3.3</div></div></div>
     <div class="topbar-acts"><div id="sync-pill" style="display:none;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;align-items:center;gap:4px"></div><button class="ibtn" onclick="openSettings()">&#x2699;&#xFE0F;</button></div>
   </div>
   <div class="tabs">
@@ -237,7 +237,7 @@ body{font-family:'Inter',sans-serif;background:var(--sand);color:var(--tx);min-h
   </div>
   <div id="pane-dir" class="pane">
     <div class="dir-controls">
-      <div class="sbar" style="border:none;padding:0"><input class="sinput" id="dir-search" type="text" placeholder="Search name, email, phone..." autocomplete="off" autocorrect="off" spellcheck="false"><button class="sclr" onclick="document.getElementById('dir-search').value='';renderDir()">&#x2715;</button></div>
+      <div class="sbar" style="border:none;padding:0"><input class="sinput" id="dir-search" type="text" placeholder="Search name, email, phone..." autocomplete="off" autocorrect="off" spellcheck="false" oninput="dirFilter=dirFilter||'all';renderDir()" onkeyup="dirFilter=dirFilter||'all';renderDir()" onkeydown="setTimeout(renderDir,10)" onchange="renderDir()" onfocus="renderDir()"><button class="sclr" onclick="document.getElementById('dir-search').value='';renderDir()">&#x2715;</button></div>
       <div class="dir-filters" id="dir-filter-btns">
         <button class="fbtn on" onclick="setFilter(this,'all')">All</button>
         <button class="fbtn" onclick="setFilter(this,'unpaid')">Unpaid</button>
@@ -550,6 +550,8 @@ function rebuildFilterBtns(){
 function renderDir(){
   var searchEl=document.getElementById('dir-search');
   var q=searchEl?searchEl.value.trim().toLowerCase():'';
+  // Also sync the filter if it got reset
+  if(!dirFilter) dirFilter='all';
   var list=members.slice();
   if(dirFilter==='unpaid') list=list.filter(function(m){return m.status!=='paid';});
   else if(dirFilter!=='all') list=list.filter(function(m){return m.type===dirFilter;});
