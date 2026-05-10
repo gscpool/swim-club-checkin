@@ -234,7 +234,7 @@ body{font-family:'Inter',sans-serif;background:var(--sand);color:var(--tx);min-h
   </div>
   <div id="pane-dir" class="pane">
     <div class="dir-controls">
-      <div class="sbar" style="border:none;padding:0"><input class="sinput" id="dir-search" type="text" placeholder="Search name, email, phone..." oninput="renderDir()" autocomplete="off"><button class="sclr" onclick="document.getElementById('dir-search').value='';renderDir()">&#x2715;</button></div>
+      <div class="sbar" style="border:none;padding:0"><input class="sinput" id="dir-search" type="text" placeholder="Search name, email, phone..." oninput="renderDir()" onkeyup="renderDir()" autocomplete="off"><button class="sclr" onclick="document.getElementById('dir-search').value='';renderDir()">&#x2715;</button></div>
       <div class="dir-filters" id="dir-filter-btns">
         <button class="fbtn on" onclick="setFilter(this,'all')">All</button>
         <button class="fbtn" onclick="setFilter(this,'unpaid')">Unpaid</button>
@@ -512,7 +512,28 @@ function rebuildFilterBtns(){
     +'<button class="fbtn'+(current==='unpaid'?' on':'')+'" onclick="setFilter(this,&quot;unpaid&quot;)">Unpaid</button>';
 }
 
-function renderDir(){var q=(document.getElementById('dir-search')?document.getElementById('dir-search').value:'').trim().toLowerCase();var list=members.slice();if(dirFilter==='unpaid')list=list.filter(function(m){return m.status!=='paid';});else if(dirFilter!=='all')list=list.filter(function(m){return m.type===dirFilter;});if(q)list=list.filter(function(m){return(m.first+' '+m.last).toLowerCase().includes(q)||(m.email||'').toLowerCase().includes(q)||(m.phone||'').replace(/\D/g,'').includes(q.replace(/\D/g,''));});list.sort(function(a,b){return a.last.localeCompare(b.last)||a.first.localeCompare(b.first);});var el=document.getElementById('dir-list');if(!el)return;if(!list.length){el.innerHTML='<div class="empty" style="padding:40px 0"><div class="ico">&#x1F50D;</div><p>No members match.</p></div>';return;}var grp={};list.forEach(function(m){var l=m.last[0].toUpperCase();if(!grp[l])grp[l]=[];grp[l].push(m);});el.innerHTML=Object.keys(grp).sort().map(function(l){return'<div class="alpha-hdr">'+l+'</div>'+grp[l].map(function(m){return cardHTML(m,false);}).join('');}).join('');}
+function renderDir(){
+  var searchEl=document.getElementById('dir-search');
+  var q=searchEl?searchEl.value.trim().toLowerCase():'';
+  var list=members.slice();
+  if(dirFilter==='unpaid') list=list.filter(function(m){return m.status!=='paid';});
+  else if(dirFilter!=='all') list=list.filter(function(m){return m.type===dirFilter;});
+  if(q) list=list.filter(function(m){
+    var fullName=(m.last+' '+m.first).toLowerCase();
+    var fullName2=(m.first+' '+m.last).toLowerCase();
+    return fullName.includes(q)||fullName2.includes(q)
+      ||(m.email||'').toLowerCase().includes(q)
+      ||(m.phone||'').replace(/\D/g,'').includes(q.replace(/\D/g,''));
+  });
+  list.sort(function(a,b){return a.last.localeCompare(b.last)||a.first.localeCompare(b.first);});
+  var el=document.getElementById('dir-list');if(!el)return;
+  if(!list.length){el.innerHTML='<div class="empty" style="padding:40px 0"><div class="ico">&#x1F50D;</div><p>No members match.</p></div>';return;}
+  var grp={};
+  list.forEach(function(m){var l=(m.last||'?')[0].toUpperCase();if(!grp[l])grp[l]=[];grp[l].push(m);});
+  el.innerHTML=Object.keys(grp).sort().map(function(l){
+    return'<div class="alpha-hdr">'+l+'</div>'+grp[l].map(function(m){return cardHTML(m,false);}).join('');
+  }).join('');
+}
 
 function openMember(id,ciMode){
   var m=members.find(function(x){return x.id===id;});if(!m)return;
