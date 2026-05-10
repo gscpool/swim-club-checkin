@@ -100,6 +100,17 @@ body{font-family:'Inter',sans-serif;background:var(--sand);color:var(--tx);min-h
 .ci-checkin-btn{width:100%;padding:13px;border-radius:11px;background:var(--or);border:none;color:#fff;font-size:16px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer}
 .ci-checkin-btn:active{background:var(--ord)}
 .ci-over-note{background:rgba(250,70,22,.25);border-radius:8px;padding:8px 10px;font-size:12px;color:#ffd4c8;font-weight:600;line-height:1.4}
+.ci-checklist{display:flex;flex-direction:column;gap:6px}
+.ci-check-item{display:flex;align-items:center;gap:10px;padding:9px 11px;background:rgba(255,255,255,.12);border-radius:9px;cursor:pointer;border:1.5px solid rgba(255,255,255,.15);transition:all .12s}
+.ci-check-item:active{background:rgba(255,255,255,.2)}
+.ci-check-item.checked{background:rgba(134,239,172,.2);border-color:rgba(134,239,172,.5)}
+.ci-check-item input[type=checkbox]{width:20px;height:20px;accent-color:#FA4616;cursor:pointer;flex-shrink:0;border-radius:5px}
+.ci-check-item label{font-size:14px;color:#fff;font-weight:600;cursor:pointer;flex:1;line-height:1.3}
+.ci-check-item.missing-name{background:rgba(250,70,22,.2);border-color:rgba(250,70,22,.4)}
+.ci-section-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,.55);margin-top:2px}
+.ci-add-btn{display:flex;align-items:center;gap:6px;padding:8px 11px;background:rgba(255,255,255,.08);border:1.5px dashed rgba(255,255,255,.3);border-radius:9px;cursor:pointer;font-size:13px;color:rgba(255,255,255,.7);font-family:Inter,sans-serif;font-weight:600;width:100%;text-align:left}
+.ci-add-btn:active{background:rgba(255,255,255,.15)}
+.ci-inline-input{flex:1;padding:7px 10px;border:1.5px solid rgba(255,255,255,.4);border-radius:7px;font-size:13px;background:rgba(255,255,255,.15);color:#fff;outline:none;font-family:Inter,sans-serif}
 .incomplete-banner{background:var(--aml);border:2px solid var(--am);border-radius:11px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;margin-bottom:8px}
 .incomplete-banner-title{font-weight:700;font-size:13px;color:var(--am)}
 .incomplete-field{display:flex;align-items:center;gap:8px}
@@ -283,6 +294,11 @@ var FIREBASE_CONFIG = {
 
 var GUEST_PASSES={Individual:5,Couples:7,Family:10,Board:20,Comp:0};
 var GUEST_PRICE=5,PIN_KEY='gsc_pin',PROTECTED_PIN='6448';
+// EmailJS config - fill in after EmailJS setup
+var EMAILJS_PUBLIC_KEY='hSDfKoakQnUPd1Ts1';
+var EMAILJS_SERVICE_ID='service_j5ftlqw';
+var EMAILJS_TEMPLATE_ID='template_q3itk3t';
+var NOTIFY_EMAIL='jeff@gsrconline.com';
 var members=[],visits=[],dirFilter='all',editingId=null,ciMemberId=null;
 var A={adults:0,children:0},ciGuests=0,gpMember=null,gpOver=0,csvParsed=[];
 var adminPinEntry='',adminPinCallback=null;
@@ -469,7 +485,7 @@ function openMember(id,ciMode){
       if(!m.last)missing.push({key:'last',label:'Last',type:'text'});
       if(missing.length){html+='<div class="incomplete-banner"><div class="incomplete-banner-title">&#x26A0;&#xFE0F; Missing info &mdash; please collect before check-in</div>'+missing.map(function(f){return'<div class="incomplete-field"><span style="min-width:56px;font-size:11px;font-weight:700;text-transform:uppercase;color:var(--am)">'+f.label+'</span><input id="miss-'+f.key+'" type="'+f.type+'" placeholder="Enter '+f.label.toLowerCase()+'"></div>';}).join('')+'<button class="fill-btn" onclick="saveMissingFields(\''+m.id+'\')">&#x1F4BE; Save &amp; Continue</button></div>';}
       var unpaidWarn='';
-      if(m.status==='unpaid'){unpaidWarn='<div class="unpaid-warning"><div class="unpaid-warning-title">&#x26A0;&#xFE0F; Payment Outstanding</div><p>This membership has not paid for the current season.</p><div class="unpaid-days">'+unpaidDays+' / 3 grace days used</div><p style="font-size:12px;color:var(--re);font-weight:600">Check-in blocked after day 3 without payment.</p></div>';}
+      if(m.status==='unpaid'){unpaidWarn='<div class="unpaid-warning"><div class="unpaid-warning-title">&#x26A0;&#xFE0F; Payment Outstanding</div><p>This membership has not paid for the current season.</p><div class="unpaid-days">'+unpaidDays+' / 3 grace days used</div><p style="font-size:12px;color:var(--re);font-weight:600">Check-in blocked after day 3 without payment.</p><button onclick="sendPaymentAlert(members.find(function(x){return x.id===\''+m.id+'\';}))" style="width:100%;margin-top:4px;padding:10px;background:var(--or);border:none;color:#fff;border-radius:9px;font-size:13px;font-weight:700;font-family:Inter,sans-serif;cursor:pointer">&#x1F4E7; Member has paid &mdash; Submit for Review</button></div>';}
       else if(m.status==='pending'){unpaidWarn='<div style="background:var(--aml);border:2px solid var(--am);border-radius:10px;padding:10px 13px;font-size:13px;color:var(--am);font-weight:600;text-align:center">&#x23F3; Payment pending &mdash; please follow up</div>';}
       var adultNames=[];
       if(m.first)adultNames.push(m.first+(m.last?' '+m.last:''));
@@ -513,8 +529,17 @@ function openMember(id,ciMode){
       var gpSection=m.guestsTotal>0
         ?'<div style="border-top:1px solid rgba(255,255,255,.15);padding-top:10px"><div class="gp-counter-row"><div><div class="ci-lbl">&#x1F3AB; Guest Passes</div><div class="ci-sub">'+m.guestsTotal+' allotted &middot; '+(m.guestsUsed||0)+' used &middot; '+rem+' remaining</div></div><div class="ctr"><button class="cbtn" onclick="adjGuests(-1)">&minus;</button><div class="cval" id="ci-guests">0</div><button class="cbtn" onclick="adjGuests(1)">+</button></div></div><div id="gp-live-status" style="margin-top:6px"></div></div>'
         :'';
-      html+='<div class="ci-panel">'
+      var panelBg=m.status==='paid'
+        ?'linear-gradient(135deg,#064e3b,#065f46)'
+        :(m.status==='unpaid'?'linear-gradient(135deg,#7f1d1d,#991b1b)':'linear-gradient(135deg,#78350f,#92400e)');
+      var statusBar=m.status==='paid'
+        ?'<div style="background:rgba(134,239,172,.2);border:1.5px solid rgba(134,239,172,.4);color:#bbf7d0;font-weight:800;font-size:14px;padding:8px 12px;border-radius:9px;text-align:center">&#x2705; PAID &mdash; Good to go!</div>'
+        :(m.status==='unpaid'
+          ?'<div style="background:rgba(254,202,202,.2);border:1.5px solid rgba(254,202,202,.4);color:#fecaca;font-weight:800;font-size:14px;padding:8px 12px;border-radius:9px;text-align:center">&#x1F6AB; UNPAID &mdash; Payment required</div>'
+          :'<div style="background:rgba(253,230,138,.2);border:1.5px solid rgba(253,230,138,.4);color:#fde68a;font-weight:800;font-size:14px;padding:8px 12px;border-radius:9px;text-align:center">&#x23F3; PENDING &mdash; Follow up on payment</div>');
+      html+='<div class="ci-panel" style="background:'+panelBg+'">'
         +'<div class="ci-title">&#x1F40A; Today\'s Visit</div>'
+        +statusBar
         +(checkedToday?'<div class="ci-already">&#x2713; Already checked in today</div>':'')
         +unpaidWarn
         +adultsSection
@@ -724,6 +749,28 @@ function removeKid(btn){var row=btn.parentElement;row.parentElement.removeChild(
 function closeEdit(){document.getElementById('ed-overlay').classList.remove('open');}
 function commitEdit(){var first=document.getElementById('ef-first').value.trim();var last=document.getElementById('ef-last').value.trim();if(!first||!last){showToast('Name required','warn');return;}var type=document.getElementById('ef-type').value;var gtotal=parseInt(document.getElementById('ef-gtotal').value);if(isNaN(gtotal))gtotal=GUEST_PASSES[type];var secRow=document.getElementById('sec-name-row');var secOk=secRow&&secRow.style.display!=='none';var kids=(function(){var inputs=document.querySelectorAll('.kid-input'),arr=[];inputs.forEach(function(i){var v=i.value.trim();if(v)arr.push(v);});return arr;})();var m={id:editingId||uid(),first:first,last:last,type:type,status:document.getElementById('ef-status').value,email:document.getElementById('ef-email').value.trim(),phone:formatPhone(document.getElementById('ef-phone').value),street:document.getElementById('ef-street').value.trim(),city:document.getElementById('ef-city').value.trim(),state:document.getElementById('ef-state').value.trim(),zip:document.getElementById('ef-zip').value.trim(),adults:parseInt(document.getElementById('ef-adults').value)||1,kids:kids,children:kids.length,guestsUsed:parseInt(document.getElementById('ef-gused').value)||0,guestsTotal:gtotal,secFirst:secOk&&document.getElementById('ef-sec-first')?document.getElementById('ef-sec-first').value.trim():'',secLast:secOk&&document.getElementById('ef-sec-last')?document.getElementById('ef-sec-last').value.trim():'',secPhone:secOk&&document.getElementById('ef-sec-phone')?formatPhone(document.getElementById('ef-sec-phone').value):'',secEmail:secOk&&document.getElementById('ef-sec-email')?document.getElementById('ef-sec-email').value.trim():'',notes:document.getElementById('ef-notes').value.trim(),nannyEnabled:document.getElementById('ef-nanny-enabled').checked,nannyName:document.getElementById('ef-nanny-name')?document.getElementById('ef-nanny-name').value.trim():'',nannyPhone:document.getElementById('ef-nanny-phone')?formatPhone(document.getElementById('ef-nanny-phone').value):'',nannyStreet:document.getElementById('ef-nanny-street')?document.getElementById('ef-nanny-street').value.trim():'',nannyCity:document.getElementById('ef-nanny-city')?document.getElementById('ef-nanny-city').value.trim():'',nannyState:document.getElementById('ef-nanny-state')?document.getElementById('ef-nanny-state').value.trim():'',nannyZip:document.getElementById('ef-nanny-zip')?document.getElementById('ef-nanny-zip').value.trim():'',nannyDob:document.getElementById('ef-nanny-dob')?document.getElementById('ef-nanny-dob').value:''};saveMember(m);closeEdit();showToast(m.first+' '+m.last+' '+(editingId?'updated':'added'),'ok');}
 function confirmDelete(id){requireAdminPin(function(){delMember(id);closeEdit();showToast('Member deleted','warn');});}
+
+function sendPaymentAlert(m){
+  var params={
+    to_email: NOTIFY_EMAIL,
+    member_name: m.first+' '+m.last,
+    member_type: m.type,
+    member_email: m.email||'(not on file)',
+    member_phone: m.phone||'(not on file)',
+    member_address: (m.street||'')+(m.city?', '+m.city:'')+(m.state?' '+m.state:'')+(m.zip?' '+m.zip:''),
+    unpaid_days: getUnpaidDays(m.id),
+    checkin_date: new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'}),
+    checkin_time: new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})
+  };
+  if(EMAILJS_PUBLIC_KEY==='PASTE_PUBLIC_KEY'){
+    showToast('EmailJS not configured yet','warn');
+    return;
+  }
+  emailjs.init({publicKey:EMAILJS_PUBLIC_KEY});
+  emailjs.send(EMAILJS_SERVICE_ID,EMAILJS_TEMPLATE_ID,params)
+    .then(function(){showToast('Payment review request sent ✅','ok');})
+    .catch(function(e){console.error('EmailJS error:',e);showToast('Email failed — check console','err');});
+}
 
 function renderRep(){var el=document.getElementById('rep-body');if(!el)return;var todayStr=new Date().toDateString();var todayV=visits.filter(function(v){return new Date(v.ts).toDateString()===todayStr;});var paid=members.filter(function(m){return m.status==='paid';}).length;var notPaid=members.filter(function(m){return m.status!=='paid';}).length;var totalPurchased=visits.reduce(function(s,v){return s+(v.passesPurchased||0);},0);var todayA=todayV.reduce(function(s,v){return s+(v.adults||0);},0);var todayC=todayV.reduce(function(s,v){return s+(v.children||0);},0);var unpaidList=members.filter(function(m){return m.status!=='paid';}).sort(function(a,b){return a.last.localeCompare(b.last);});
 var BUCKETS=[{label:'Morning',icon:'&#x1F305;',start:10,end:12,range:'10am-12pm'},{label:'Midday',icon:'&#x2600;',start:12,end:15,range:'12-3pm'},{label:'Afternoon',icon:'&#x1F3CA;',start:15,end:18,range:'3-6pm'},{label:'Evening',icon:'&#x1F306;',start:18,end:21,range:'6-9pm'}];
