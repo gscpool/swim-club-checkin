@@ -7,7 +7,7 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐊</text></svg>">
 
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600;700&display=swap');display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 :root{
   --or:#FA4616;--ord:#c93a12;--orl:#fff0ec;
   --bl:#003087;--bld:#00205c;--bll:#dce6f7;
@@ -220,7 +220,7 @@ body{font-family:'Inter',sans-serif;background:var(--sand);color:var(--tx);min-h
 <!-- APP -->
 <div id="app">
   <div class="topbar">
-    <div class="topbar-l"><span style="font-size:24px">&#x1F40A;</span><div><div class="topbar-title">Gibsonville Swim Club</div><div class="topbar-sub" id="today-lbl"></div><div style="font-size:10px;color:rgba(255,255,255,.6);letter-spacing:.5px;margin-top:2px;font-weight:600">v1.3.0</div></div></div>
+    <div class="topbar-l"><span style="font-size:24px">&#x1F40A;</span><div><div class="topbar-title">Gibsonville Swim Club</div><div class="topbar-sub" id="today-lbl"></div><div style="font-size:10px;color:rgba(255,255,255,.6);letter-spacing:.5px;margin-top:2px;font-weight:600">v1.3.1</div></div></div>
     <div class="topbar-acts"><div id="sync-pill" style="display:none;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;align-items:center;gap:4px"></div><button class="ibtn" onclick="openSettings()">&#x2699;&#xFE0F;</button></div>
   </div>
   <div class="tabs">
@@ -374,7 +374,23 @@ window.addEventListener('fbready', function(){
       renderRep();renderCI();
     });
     document.getElementById('today-lbl').textContent=new Date().toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
-    initPin();
+    // Load config from Firebase then boot UI
+    _d.collection('config').doc('settings').get().then(function(doc){
+      if(doc.exists){
+        var saved=doc.data();
+        if(saved&&typeof saved==='object'){
+          CONFIG=Object.assign({},DEFAULT_CONFIG,saved);
+          if(!CONFIG.membershipTypes||!CONFIG.membershipTypes.length) CONFIG.membershipTypes=DEFAULT_CONFIG.membershipTypes;
+        }
+      }
+      rebuildFromConfig();
+      initPin();
+      renderAll();
+    }).catch(function(){
+      rebuildFromConfig();
+      initPin();
+      renderAll();
+    });
   }catch(e){console.error('fbready handler error:',e);bootLocal();}
 });
 window.addEventListener('fbfail', function(){ bootLocal(); });
