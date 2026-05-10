@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Gibsonville Swim Club</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐊</text></svg>">
+
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600;700&display=swap');display=swap');
 :root{
@@ -287,41 +288,51 @@ var A={adults:0,children:0},ciGuests=0,gpMember=null,gpOver=0,csvParsed=[];
 var adminPinEntry='',adminPinCallback=null;
 var db=null,fbReady=false;
 
-// Load Firebase SDK dynamically via compat scripts
-(function loadFirebase(){
-  var s1=document.createElement('script');
-  s1.src='https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js';
-  s1.onload=function(){
-    var s2=document.createElement('script');
-    s2.src='https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js';
-    s2.onload=function(){
-      try{
-        firebase.initializeApp(FIREBASE_CONFIG);
-        db=firebase.firestore();
-        window._saveMemberFB=function(m){var copy=Object.assign({},m);var id=copy.id;delete copy.id;db.collection('members').doc(id).set(copy).catch(function(e){console.error(e);});};
-        window._delMemberFB=function(id){db.collection('members').doc(id).delete().catch(function(e){console.error(e);});};
-        window._saveVisitFB=function(v){var copy=Object.assign({},v);var id=copy.id;delete copy.id;db.collection('visits').doc(id).set(copy).catch(function(e){console.error(e);});};
-        fbReady=true;
-        document.getElementById('setup-banner').classList.remove('show');
-        setSyncPill('online');
-        db.collection('members').orderBy('last').onSnapshot(function(snap){
-          members=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
-          renderAll();
-        },function(){setSyncPill('offline');});
-        db.collection('visits').orderBy('ts','desc').onSnapshot(function(snap){
-          visits=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
-          renderRep();renderCI();
-        });
-        document.getElementById('today-lbl').textContent=new Date().toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
-        initPin();
-      }catch(e){console.error('Firebase init failed:',e);bootLocal();}
-    };
-    s2.onerror=function(){bootLocal();};
-    document.head.appendChild(s2);
-  };
-  s1.onerror=function(){bootLocal();};
-  document.head.appendChild(s1);
+// Initialize Firebase via ES modules
+(function(){
+  var script = document.createElement('script');
+  script.type = 'module';
+  script.textContent = [
+    "import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';",
+    "import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, orderBy, query } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';",
+    "try {",
+    "  const cfg = " + JSON.stringify(FIREBASE_CONFIG) + ";",
+    "  const app = initializeApp(cfg);",
+    "  const db = getFirestore(app);",
+    "  window._db = db;",
+    "  window._fs = { collection, doc, setDoc, deleteDoc, onSnapshot, orderBy, query };",
+    "  window._fbOk = true;",
+    "  window.dispatchEvent(new Event('fbready'));",
+    "} catch(e) {",
+    "  console.error('FB module error:', e);",
+    "  window.dispatchEvent(new Event('fbfail'));",
+    "}"
+  ].join('\n');
+  document.head.appendChild(script);
 })();
+
+window.addEventListener('fbready', function(){
+  try{
+    var _d=window._db, _f=window._fs;
+    window._saveMemberFB=function(m){var c=Object.assign({},m);var id=c.id;delete c.id;_f.setDoc(_f.doc(_d,'members',id),c).catch(function(e){console.error(e);});};
+    window._delMemberFB=function(id){_f.deleteDoc(_f.doc(_d,'members',id)).catch(function(e){console.error(e);});};
+    window._saveVisitFB=function(v){var c=Object.assign({},v);var id=c.id;delete c.id;_f.setDoc(_f.doc(_d,'visits',id),c).catch(function(e){console.error(e);});};
+    fbReady=true;
+    document.getElementById('setup-banner').classList.remove('show');
+    setSyncPill('online');
+    _f.onSnapshot(_f.query(_f.collection(_d,'members'),_f.orderBy('last')),function(snap){
+      members=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
+      renderAll();
+    },function(e){console.error(e);setSyncPill('offline');});
+    _f.onSnapshot(_f.query(_f.collection(_d,'visits'),_f.orderBy('ts','desc')),function(snap){
+      visits=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
+      renderRep();renderCI();
+    });
+    document.getElementById('today-lbl').textContent=new Date().toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+    initPin();
+  }catch(e){console.error('fbready handler error:',e);bootLocal();}
+});
+window.addEventListener('fbfail', function(){ bootLocal(); });
 
 function bootLocal(){
   document.getElementById('setup-banner').classList.add('show');
@@ -581,8 +592,9 @@ function ciConfirmNewKid(inputId){
   var item=document.createElement('div');
   item.className='ci-check-item checked';
   item.id=idx;
-  item.setAttribute('onclick','ciToggle(''+idx+'')');
-  item.innerHTML='<input type="checkbox" id="chk-'+idx+'" checked onchange="ciToggle(''+idx+'')"><label for="chk-'+idx+'">'+name+' <span style="opacity:.5;font-size:11px">(new)</span></label>';
+  item.setAttribute('onclick','ciToggle(\"'+idx+'\")');
+
+  item.innerHTML='<input type="checkbox" id="chk-'+idx+'" checked onchange="ciToggle(\''+idx+'\')">'+'<label for="chk-'+idx+'">'+name+' <span style="opacity:.5;font-size:11px">(new)</span></label>';
   item.dataset.newKid=name;
   list.replaceChild(item,row);
 }
