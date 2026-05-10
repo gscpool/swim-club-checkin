@@ -287,22 +287,39 @@ var A={adults:0,children:0},ciGuests=0,gpMember=null,gpOver=0,csvParsed=[];
 var adminPinEntry='',adminPinCallback=null;
 var db=null,fbReady=false;
 
-// Load Firebase SDK dynamically
+// Load Firebase SDK dynamically via compat scripts
 (function loadFirebase(){
   var s1=document.createElement('script');
-  s1.type='module';
-  s1.textContent=[
-    "import{initializeApp}from'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';",
-    "import{getFirestore,collection,doc,setDoc,deleteDoc,onSnapshot,query,orderBy}from'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';",
-    "try{",
-    "  var app=initializeApp("+JSON.stringify(FIREBASE_CONFIG)+");",
-    "  window._db=getFirestore(app);",
-    "  window._fbFns={collection,doc,setDoc,deleteDoc,onSnapshot,query,orderBy};",
-    "  window._fbReady=true;",
-    "  document.getElementById('setup-banner').classList.remove('show');",
-    "  bootWithFirebase();",
-    "}catch(e){console.error('Firebase failed:',e);bootLocal();}"
-  ].join('');
+  s1.src='https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js';
+  s1.onload=function(){
+    var s2=document.createElement('script');
+    s2.src='https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js';
+    s2.onload=function(){
+      try{
+        firebase.initializeApp(FIREBASE_CONFIG);
+        db=firebase.firestore();
+        window._saveMemberFB=function(m){var copy=Object.assign({},m);var id=copy.id;delete copy.id;db.collection('members').doc(id).set(copy).catch(function(e){console.error(e);});};
+        window._delMemberFB=function(id){db.collection('members').doc(id).delete().catch(function(e){console.error(e);});};
+        window._saveVisitFB=function(v){var copy=Object.assign({},v);var id=copy.id;delete copy.id;db.collection('visits').doc(id).set(copy).catch(function(e){console.error(e);});};
+        fbReady=true;
+        document.getElementById('setup-banner').classList.remove('show');
+        setSyncPill('online');
+        db.collection('members').orderBy('last').onSnapshot(function(snap){
+          members=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
+          renderAll();
+        },function(){setSyncPill('offline');});
+        db.collection('visits').orderBy('ts','desc').onSnapshot(function(snap){
+          visits=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
+          renderRep();renderCI();
+        });
+        document.getElementById('today-lbl').textContent=new Date().toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+        initPin();
+      }catch(e){console.error('Firebase init failed:',e);bootLocal();}
+    };
+    s2.onerror=function(){bootLocal();};
+    document.head.appendChild(s2);
+  };
+  s1.onerror=function(){bootLocal();};
   document.head.appendChild(s1);
 })();
 
@@ -328,7 +345,7 @@ function setSyncPill(state){
 }
 
 (function boot(){
-  // Will be overridden by bootWithFirebase or bootLocal
+  // Firebase or local boot handles initialization
   // Just set up the date label if already in DOM
   var lbl=document.getElementById('today-lbl');
   if(lbl) lbl.textContent=new Date().toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
