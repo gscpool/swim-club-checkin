@@ -234,7 +234,7 @@ body{font-family:'Inter',sans-serif;background:var(--sand);color:var(--tx);min-h
   </div>
   <div id="pane-dir" class="pane">
     <div class="dir-controls">
-      <div class="sbar" style="border:none;padding:0"><input class="sinput" id="dir-search" type="text" placeholder="Search name, email, phone..." autocomplete="off"><button class="sclr" onclick="document.getElementById('dir-search').value='';renderDir()">&#x2715;</button></div>
+      <div class="sbar" style="border:none;padding:0"><input class="sinput" id="dir-search" type="text" placeholder="Search name, email, phone..." autocomplete="off" autocorrect="off" spellcheck="false"><button class="sclr" onclick="document.getElementById('dir-search').value='';renderDir()">&#x2715;</button></div>
       <div class="dir-filters" id="dir-filter-btns">
         <button class="fbtn on" onclick="setFilter(this,'all')">All</button>
         <button class="fbtn" onclick="setFilter(this,'unpaid')">Unpaid</button>
@@ -446,17 +446,16 @@ function saveVisit(v){
 function uid(){return 'm'+Date.now()+Math.random().toString(36).slice(2,5);}
 function fmtDate(ts){return new Date(ts).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});}
 function fmtTime(ts){return new Date(ts).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});}
-function renderAll(){
-  renderCI();renderDir();renderRep();
-  // Wire directory search if not already done
+function renderAll(){renderCI();renderDir();renderRep();}
+
+// Poll directory search input every 200ms - works on all browsers including iOS
+var _lastDirQ='';
+setInterval(function(){
   var ds=document.getElementById('dir-search');
-  if(ds&&!ds._wired){
-    ds._wired=true;
-    ['input','keyup','change'].forEach(function(evt){
-      ds.addEventListener(evt,function(){renderDir();});
-    });
-  }
-}
+  if(!ds)return;
+  var q=ds.value;
+  if(q!==_lastDirQ){_lastDirQ=q;renderDir();}
+},200);
 function formatPhone(r){var d=(r||'').replace(/\D/g,'');if(d.length===10)return '('+d.slice(0,3)+') '+d.slice(3,6)+'-'+d.slice(6);if(d.length===11&&d[0]==='1')return '('+d.slice(1,4)+') '+d.slice(4,7)+'-'+d.slice(7);return r||'';}
 function calcAge(dob){var t=new Date(),b=new Date(dob),a=t.getFullYear()-b.getFullYear();var m=t.getMonth()-b.getMonth();if(m<0||(m===0&&t.getDate()<b.getDate()))a--;return a;}
 function statusBadge(s){var map={paid:['b-paid','Paid'],pending:['b-pending','Pending'],unpaid:['b-unpaid','Unpaid']};var r=map[s]||['b-ind',s];return '<span class="badge '+r[0]+'">'+r[1]+'</span>';}
@@ -512,17 +511,7 @@ function switchTab(name){
   });
   document.getElementById('fab').classList.toggle('show',name==='dir');
   if(name==='rep') renderRep();
-  if(name==='dir'){
-    rebuildFilterBtns();renderDir();
-    var ds=document.getElementById('dir-search');
-    if(ds&&!ds._wired){
-      ds._wired=true;
-      ['input','keyup','change'].forEach(function(evt){
-        ds.addEventListener(evt,function(){renderDir();});
-      });
-    }
-    setTimeout(function(){if(ds)ds.focus();},100);
-  }
+  if(name==='dir'){rebuildFilterBtns();renderDir();}
 }
 function setFilter(btn,f){dirFilter=f;document.querySelectorAll('.fbtn').forEach(function(b){b.classList.remove('on');});btn.classList.add('on');renderDir();}
 
