@@ -751,25 +751,32 @@ function commitEdit(){var first=document.getElementById('ef-first').value.trim()
 function confirmDelete(id){requireAdminPin(function(){delMember(id);closeEdit();showToast('Member deleted','warn');});}
 
 function sendPaymentAlert(m){
+  var btn=document.getElementById('pay-alert-btn');
+  if(btn){btn.disabled=true;btn.textContent='Sending...';}
   var params={
-    to_email: NOTIFY_EMAIL,
-    member_name: m.first+' '+m.last,
-    member_type: m.type,
-    member_email: m.email||'(not on file)',
-    member_phone: m.phone||'(not on file)',
-    member_address: (m.street||'')+(m.city?', '+m.city:'')+(m.state?' '+m.state:'')+(m.zip?' '+m.zip:''),
-    unpaid_days: getUnpaidDays(m.id),
-    checkin_date: new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'}),
-    checkin_time: new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})
+    to_email:NOTIFY_EMAIL,
+    member_name:m.first+' '+m.last,
+    member_type:m.type,
+    member_email:m.email||'(not on file)',
+    member_phone:m.phone||'(not on file)',
+    member_address:(m.street||'')+(m.city?', '+m.city:'')+(m.state?' '+m.state:'')+(m.zip?' '+m.zip:''),
+    unpaid_days:getUnpaidDays(m.id),
+    checkin_date:new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'}),
+    checkin_time:new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})
   };
-  if(EMAILJS_PUBLIC_KEY==='PASTE_PUBLIC_KEY'){
-    showToast('EmailJS not configured yet','warn');
-    return;
-  }
+  if(EMAILJS_PUBLIC_KEY==='PASTE_PUBLIC_KEY'){showToast('EmailJS not configured yet','warn');return;}
   emailjs.init({publicKey:EMAILJS_PUBLIC_KEY});
   emailjs.send(EMAILJS_SERVICE_ID,EMAILJS_TEMPLATE_ID,params)
-    .then(function(){showToast('Payment review request sent ✅','ok');})
-    .catch(function(e){console.error('EmailJS error:',e);showToast('Email failed — check console','err');});
+    .then(function(){
+      var c=document.getElementById('pay-alert-container');
+      if(c){c.innerHTML='<div style="background:rgba(134,239,172,.2);border:1.5px solid rgba(134,239,172,.5);border-radius:9px;padding:10px 12px;text-align:center;display:flex;flex-direction:column;gap:3px"><div style="font-size:14px;font-weight:800;color:#bbf7d0">&#x2705; Sent for review</div><div style="font-size:11px;color:rgba(255,255,255,.6)">jeff@gsrconline.com has been notified</div></div>';}
+      showToast('Payment review request sent','ok');
+    })
+    .catch(function(e){
+      console.error('EmailJS:',e);
+      if(btn){btn.disabled=false;btn.innerHTML='&#x1F4E7; Member has paid — Submit for Review';}
+      showToast('Email failed — try again','err');
+    });
 }
 
 function renderRep(){var el=document.getElementById('rep-body');if(!el)return;var todayStr=new Date().toDateString();var todayV=visits.filter(function(v){return new Date(v.ts).toDateString()===todayStr;});var paid=members.filter(function(m){return m.status==='paid';}).length;var notPaid=members.filter(function(m){return m.status!=='paid';}).length;var totalPurchased=visits.reduce(function(s,v){return s+(v.passesPurchased||0);},0);var todayA=todayV.reduce(function(s,v){return s+(v.adults||0);},0);var todayC=todayV.reduce(function(s,v){return s+(v.children||0);},0);var unpaidList=members.filter(function(m){return m.status!=='paid';}).sort(function(a,b){return a.last.localeCompare(b.last);});
