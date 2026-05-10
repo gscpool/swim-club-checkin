@@ -274,6 +274,8 @@ body{font-family:'Inter',sans-serif;background:var(--sand);color:var(--tx);min-h
 <div class="overlay" id="csv-overlay" onclick="if(event.target===this)closeCSV()"><div class="sheet"><div class="mhandle"></div><div class="mhdr"><div class="mtitle">Import Members (CSV)</div><button class="mclose" onclick="closeCSV()">&#x2715;</button></div><div class="mbody" id="csv-body"></div></div></div>
 <div class="toast" id="toast"></div>
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script>
 // ══════════════════════════════════════════════════════
 // FIREBASE CONFIG
@@ -333,49 +335,26 @@ var A={adults:0,children:0},ciGuests=0,gpMember=null,gpOver=0,csvParsed=[];
 var adminPinEntry='',adminPinCallback=null;
 var db=null,fbReady=false;
 
-// Initialize Firebase via ES modules
-(function(){
-  var script = document.createElement('script');
-  script.type = 'module';
-  script.textContent = [
-    "import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';",
-    "import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, orderBy, query } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';",
-    "try {",
-    "  const cfg = " + JSON.stringify(FIREBASE_CONFIG) + ";",
-    "  const app = initializeApp(cfg);",
-    "  const db = getFirestore(app);",
-    "  window._db = db;",
-    "  window._fs = { collection, doc, setDoc, deleteDoc, onSnapshot, orderBy, query };",
-    "  window._fbOk = true;",
-    "  window.dispatchEvent(new Event('fbready'));",
-    "} catch(e) {",
-    "  console.error('FB module error:', e);",
-    "  window.dispatchEvent(new Event('fbfail'));",
-    "}"
-  ].join('\n');
-  document.head.appendChild(script);
-})();
-
-window.addEventListener('fbready', function(){
+// Initialize Firebase using compat SDK loaded in <head>
+// Polls until firebase global is available then initializes
+(function tryInitFirebase(attempts){
+  attempts = attempts || 0;
+  if(attempts > 50){ bootLocal(); return; } // give up after 5 seconds
+  if(typeof firebase === 'undefined'){
+    setTimeout(function(){ tryInitFirebase(attempts+1); }, 100);
+    return;
+  }
   try{
-    var _d=window._db, _f=window._fs;
-    window._saveMemberFB=function(m){var c=Object.assign({},m);var id=c.id;delete c.id;_f.setDoc(_f.doc(_d,'members',id),c).catch(function(e){console.error(e);});};
-    window._delMemberFB=function(id){_f.deleteDoc(_f.doc(_d,'members',id)).catch(function(e){console.error(e);});};
-    window._saveVisitFB=function(v){var c=Object.assign({},v);var id=c.id;delete c.id;_f.setDoc(_f.doc(_d,'visits',id),c).catch(function(e){console.error(e);});};
+    firebase.initializeApp(FIREBASE_CONFIG);
+    var _db = firebase.firestore();
+    window._saveMemberFB=function(m){var c=Object.assign({},m);var id=c.id;delete c.id;_db.collection('members').doc(id).set(c).catch(function(e){console.error(e);});};
+    window._delMemberFB=function(id){_db.collection('members').doc(id).delete().catch(function(e){console.error(e);});};
+    window._saveVisitFB=function(v){var c=Object.assign({},v);var id=c.id;delete c.id;_db.collection('visits').doc(id).set(c).catch(function(e){console.error(e);});};
     fbReady=true;
     document.getElementById('setup-banner').classList.remove('show');
     setSyncPill('online');
-    _f.onSnapshot(_f.query(_f.collection(_d,'members'),_f.orderBy('last')),function(snap){
-      members=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
-      renderAll();
-    },function(e){console.error(e);setSyncPill('offline');});
-    _f.onSnapshot(_f.query(_f.collection(_d,'visits'),_f.orderBy('ts','desc')),function(snap){
-      visits=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
-      renderRep();renderCI();
-    });
-    document.getElementById('today-lbl').textContent=new Date().toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
-    // Load config from Firebase then boot UI
-    _d.collection('config').doc('settings').get().then(function(doc){
+    // Load config first, then boot
+    _db.collection('config').doc('settings').get().then(function(doc){
       if(doc.exists){
         var saved=doc.data();
         if(saved&&typeof saved==='object'){
@@ -384,27 +363,39 @@ window.addEventListener('fbready', function(){
         }
       }
       rebuildFromConfig();
+      document.getElementById('today-lbl').textContent=new Date().toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
       initPin();
       renderAll();
+      // Set up real-time listeners after boot
+      _db.collection('members').orderBy('last').onSnapshot(function(snap){
+        members=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
+        renderAll();
+      },function(e){console.error(e);setSyncPill('offline');});
+      _db.collection('visits').orderBy('ts','desc').onSnapshot(function(snap){
+        visits=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
+        renderRep();renderCI();
+      });
     }).catch(function(){
       rebuildFromConfig();
+      document.getElementById('today-lbl').textContent=new Date().toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
       initPin();
       renderAll();
+      _db.collection('members').orderBy('last').onSnapshot(function(snap){
+        members=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
+        renderAll();
+      },function(e){console.error(e);setSyncPill('offline');});
+      _db.collection('visits').orderBy('ts','desc').onSnapshot(function(snap){
+        visits=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
+        renderRep();renderCI();
+      });
     });
-  }catch(e){console.error('fbready handler error:',e);bootLocal();}
-});
-window.addEventListener('fbfail', function(){ bootLocal(); });
-
-function saveConfig(cfg){
-  CONFIG=cfg;
-  rebuildFromConfig();
-  if(fbReady&&db){
-    db.collection('config').doc('settings').set(cfg).catch(function(e){console.error('Config save error:',e);});
-  } else {
-    try{localStorage.setItem('gsc_config',JSON.stringify(cfg));}catch(e){}
+    // Save/delete wired
+    db=_db;
+  }catch(e){
+    console.error('Firebase init failed:',e);
+    bootLocal();
   }
-  showToast('Settings saved','ok');
-}
+})();
 
 function bootLocal(){
   document.getElementById('setup-banner').classList.add('show');
@@ -976,7 +967,7 @@ function addMemberType(){
   row.style.cssText='background:var(--sand);border-radius:9px;padding:10px 12px;display:flex;flex-direction:column;gap:6px;border:1px solid var(--sand2)';
   row.innerHTML='<div style="display:flex;align-items:center;gap:8px;justify-content:space-between">'
     +'<input class="fi cfg-type-label" data-idx="'+i+'" value="New Type" style="flex:1;font-weight:700" placeholder="Type name">'
-    +'<button onclick="this.closest('div').parentElement.remove();renumberTypeInputs()" style="background:var(--rel);border:none;color:var(--re);width:28px;height:28px;border-radius:7px;cursor:pointer;font-size:14px;flex-shrink:0">&#x2715;</button>'
+    +'<button onclick="this.parentElement.parentElement.remove();renumberTypeInputs()" style="background:var(--rel);border:none;color:var(--re);width:28px;height:28px;border-radius:7px;cursor:pointer;font-size:14px;flex-shrink:0">&#x2715;</button>'
     +'</div>'
     +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">'
     +'<div class="fg"><label class="fl">Guest Passes</label><input class="fi cfg-type-passes" data-idx="'+i+'" type="number" min="0" value="0"></div>'
