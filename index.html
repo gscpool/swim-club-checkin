@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>Gibsonville Swim Club</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐊</text></svg>">
 
@@ -220,7 +223,7 @@ body{font-family:'Inter',sans-serif;background:var(--sand);color:var(--tx);min-h
 <!-- APP -->
 <div id="app">
   <div class="topbar">
-    <div class="topbar-l"><span style="font-size:24px">&#x1F40A;</span><div><div class="topbar-title">Gibsonville Swim Club</div><div class="topbar-sub" id="today-lbl"></div><div style="font-size:10px;color:rgba(255,255,255,.6);letter-spacing:.5px;margin-top:2px;font-weight:600">v1.3.1</div></div></div>
+    <div class="topbar-l"><span style="font-size:24px">&#x1F40A;</span><div><div class="topbar-title">Gibsonville Swim Club</div><div class="topbar-sub" id="today-lbl"></div><div style="font-size:10px;color:rgba(255,255,255,.6);letter-spacing:.5px;margin-top:2px;font-weight:600">v1.3.2</div></div></div>
     <div class="topbar-acts"><div id="sync-pill" style="display:none;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;align-items:center;gap:4px"></div><button class="ibtn" onclick="openSettings()">&#x2699;&#xFE0F;</button></div>
   </div>
   <div class="tabs">
@@ -448,14 +451,25 @@ function fmtDate(ts){return new Date(ts).toLocaleDateString('en-US',{month:'shor
 function fmtTime(ts){return new Date(ts).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});}
 function renderAll(){renderCI();renderDir();renderRep();}
 
-// Poll directory search input every 200ms - works on all browsers including iOS
+// Directory search - poll + direct binding for maximum compatibility
 var _lastDirQ='';
+function _bindDirSearch(){
+  var ds=document.getElementById('dir-search');
+  if(!ds||ds._bound)return;
+  ds._bound=true;
+  ds.addEventListener('input',function(){_lastDirQ=this.value;renderDir();});
+  ds.addEventListener('keyup',function(){_lastDirQ=this.value;renderDir();});
+  ds.addEventListener('change',function(){_lastDirQ=this.value;renderDir();});
+  ds.addEventListener('compositionend',function(){_lastDirQ=this.value;renderDir();});
+}
+// Poll as backup
 setInterval(function(){
+  _bindDirSearch();
   var ds=document.getElementById('dir-search');
   if(!ds)return;
   var q=ds.value;
   if(q!==_lastDirQ){_lastDirQ=q;renderDir();}
-},200);
+},150);
 function formatPhone(r){var d=(r||'').replace(/\D/g,'');if(d.length===10)return '('+d.slice(0,3)+') '+d.slice(3,6)+'-'+d.slice(6);if(d.length===11&&d[0]==='1')return '('+d.slice(1,4)+') '+d.slice(4,7)+'-'+d.slice(7);return r||'';}
 function calcAge(dob){var t=new Date(),b=new Date(dob),a=t.getFullYear()-b.getFullYear();var m=t.getMonth()-b.getMonth();if(m<0||(m===0&&t.getDate()<b.getDate()))a--;return a;}
 function statusBadge(s){var map={paid:['b-paid','Paid'],pending:['b-pending','Pending'],unpaid:['b-unpaid','Unpaid']};var r=map[s]||['b-ind',s];return '<span class="badge '+r[0]+'">'+r[1]+'</span>';}
@@ -511,7 +525,11 @@ function switchTab(name){
   });
   document.getElementById('fab').classList.toggle('show',name==='dir');
   if(name==='rep') renderRep();
-  if(name==='dir'){rebuildFilterBtns();renderDir();}
+  if(name==='dir'){
+    rebuildFilterBtns();
+    renderDir();
+    setTimeout(_bindDirSearch, 50);
+  }
 }
 function setFilter(btn,f){dirFilter=f;document.querySelectorAll('.fbtn').forEach(function(b){b.classList.remove('on');});btn.classList.add('on');renderDir();}
 
