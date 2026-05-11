@@ -205,6 +205,33 @@ body{font-family:'Inter',sans-serif;background:var(--sand);color:var(--tx);min-h
 .toast.ok{background:var(--gr)}.toast.warn{background:var(--am)}.toast.err{background:var(--re)}
 .empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--mu);gap:8px;padding:40px;text-align:center}
 .empty .ico{font-size:46px}.empty p{font-size:14px;font-weight:500}
+
+/* SWIPE TO CHECK IN */
+.mcard-ci{position:relative;overflow:hidden;touch-action:pan-y;}
+.mcard-ci .swipe-hint{position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:11px;font-weight:700;color:var(--bl);opacity:.35;pointer-events:none}
+
+/* QUICK CHECK-IN BUTTON ON CARD */
+.quick-ci-btn{padding:10px 14px;background:var(--or);border:none;color:#fff;border-radius:9px;font-size:13px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;flex-shrink:0;white-space:nowrap}
+.quick-ci-btn:active{background:var(--ord)}
+
+/* SUCCESS FLASH */
+#ci-success-flash{position:fixed;inset:0;z-index:9998;background:var(--gr);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;opacity:0;pointer-events:none;transition:opacity .15s}
+#ci-success-flash .flash-check{font-size:100px;line-height:1}
+#ci-success-flash .flash-name{font-size:22px;font-weight:800;color:#fff;font-family:'Inter',sans-serif;text-align:center;padding:0 20px}
+#ci-success-flash.show{opacity:1}
+
+/* LANDSCAPE LAYOUT */
+@media(orientation:landscape) and (min-width:700px){
+  #pane-ci{flex-direction:row}
+  #pane-ci > div:first-child{width:260px;flex-shrink:0;border-right:2px solid var(--sand2);overflow-y:auto}
+  #ci-list{flex:1}
+}
+
+/* LARGER CHECK-IN CARDS */
+#ci-list .mcard{padding:16px 14px;min-height:72px}
+#ci-list .mname{font-size:18px}
+#ci-list .mmeta{font-size:12px}
+
 /* CHECK-IN TAB QUICK FIND */
 .ci-section-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--mu);padding:10px 13px 5px;background:var(--sand)}
 .ci-alpha-row{display:flex;flex-wrap:wrap;gap:7px;padding:10px 13px 12px;background:var(--sand);border-bottom:1px solid var(--sand2)}
@@ -214,6 +241,31 @@ body{font-family:'Inter',sans-serif;background:var(--sand);color:var(--tx);min-h
 .predict-card{background:#fff;border-radius:var(--r);padding:14px 13px;box-shadow:var(--sh);display:flex;align-items:center;gap:10px;cursor:pointer;border-left:4px solid var(--or);transition:transform .1s;min-height:60px}
 .predict-card:active{transform:scale(.98)}
 .predict-meta{font-size:10px;color:var(--mu);margin-top:2px}
+
+/* SUCCESS FLASH */
+#ci-success-flash{position:fixed;inset:0;background:rgba(22,101,52,.92);z-index:9998;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;opacity:0;pointer-events:none;transition:opacity .2s}
+#ci-success-flash.show{opacity:1;pointer-events:all}
+#ci-success-flash .flash-check{font-size:100px;line-height:1}
+#ci-success-flash .flash-name{font-size:24px;font-weight:800;color:#fff;text-align:center;padding:0 24px}
+#ci-success-flash .flash-sub{font-size:15px;color:rgba(255,255,255,.75);text-align:center}
+
+/* QUICK CHECK-IN BUTTON ON CARD */
+.mcard-quick{display:flex;flex-direction:column;gap:0}
+.quick-ci-btn{width:100%;padding:10px;border:none;background:var(--or);color:#fff;font-size:13px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;border-radius:0 0 var(--r) var(--r);display:flex;align-items:center;justify-content:center;gap:5px}
+.quick-ci-btn:active{background:var(--ord)}
+
+/* LARGER CHECK-IN CARDS */
+#pane-ci .mcard{padding:16px 13px;min-height:72px}
+#pane-ci .mname{font-size:18px}
+#pane-ci .mmeta{font-size:12px}
+
+/* LANDSCAPE SUPPORT */
+@media(orientation:landscape) and (min-width:700px){
+  #pane-ci{flex-direction:row;flex-wrap:wrap}
+  #pane-ci .ci-alpha-row{width:100%}
+  #ci-list{flex:1;min-width:300px}
+  .mm-overlay .sheet{max-width:520px}
+}
 @media(min-width:600px){.sheet{max-width:560px;margin:0 auto;border-radius:20px;align-self:center}.overlay{align-items:center}}
 </style>
 </head>
@@ -235,7 +287,7 @@ body{font-family:'Inter',sans-serif;background:var(--sand);color:var(--tx);min-h
 <!-- APP -->
 <div id="app">
   <div class="topbar">
-    <div class="topbar-l"><span style="font-size:24px">&#x1F40A;</span><div><div class="topbar-title">Gibsonville Swim Club</div><div class="topbar-sub" id="today-lbl"></div><div style="font-size:10px;color:rgba(255,255,255,.6);letter-spacing:.5px;margin-top:2px;font-weight:600">v1.3.6</div></div></div>
+    <div class="topbar-l"><span style="font-size:24px">&#x1F40A;</span><div><div class="topbar-title">Gibsonville Swim Club</div><div class="topbar-sub" id="today-lbl"></div><div style="font-size:10px;color:rgba(255,255,255,.6);letter-spacing:.5px;margin-top:2px;font-weight:600">v1.4.0</div></div></div>
     <div class="topbar-acts"><div id="sync-pill" style="display:none;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;align-items:center;gap:4px"></div><button class="ibtn" onclick="openSettings()">&#x2699;&#xFE0F;</button></div>
   </div>
   <div class="tabs">
@@ -295,7 +347,13 @@ body{font-family:'Inter',sans-serif;background:var(--sand);color:var(--tx);min-h
 </div>
 <!-- CSV IMPORT MODAL -->
 <div class="overlay" id="csv-overlay" onclick="if(event.target===this)closeCSV()"><div class="sheet"><div class="mhandle"></div><div class="mhdr"><div class="mtitle">Import Members (CSV)</div><button class="mclose" onclick="closeCSV()">&#x2715;</button></div><div class="mbody" id="csv-body"></div></div></div>
+<div id="ci-success-flash">
+  <div class="flash-check">&#x2705;</div>
+  <div class="flash-name" id="flash-name"></div>
+  <div class="flash-sub" id="flash-sub"></div>
+</div>
 <div class="toast" id="toast"></div>
+<div id="ci-success-flash"><div class="flash-check">&#x2705;</div><div class="flash-name" id="flash-name"></div></div>
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
@@ -469,6 +527,66 @@ function saveVisit(v){
 function uid(){return 'm'+Date.now()+Math.random().toString(36).slice(2,5);}
 function fmtDate(ts){return new Date(ts).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});}
 function fmtTime(ts){return new Date(ts).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});}
+function getVisitCount(memberId){
+  return visits.filter(function(v){return v.memberId===memberId;}).length;
+}
+
+function canQuickCheckIn(m){
+  // Quick check-in only if: paid, all names on file, no missing fields
+  if(m.status!=='paid') return false;
+  if(!m.first||!m.last||!m.email||!m.phone||!m.street) return false;
+  if(m.type==='Couples'&&!(m.secFirst||m.secLast)) return false;
+  return true;
+}
+
+function quickCheckIn(memberId, event){
+  if(event) event.stopPropagation();
+  var m=members.find(function(x){return x.id===memberId;}); if(!m) return;
+  if(m.status==='unpaid'&&getUnpaidDays(m.id)>=GRACE_DAYS){showToast('Check-in blocked — payment required','err');return;}
+  // Check in all household members
+  var adults=[];
+  if(m.first) adults.push(m.first+' '+m.last);
+  if(m.secFirst||m.secLast) adults.push(((m.secFirst||'')+' '+(m.secLast||'')).trim());
+  var kidNames=m.kids||[];
+  var v={id:uid(),memberId:m.id,ts:new Date().toISOString(),
+    adults:adults.length,children:kidNames.length,
+    checkedAdults:adults,checkedKids:kidNames,
+    guestPasses:0,passesPurchased:0,whileUnpaid:false};
+  saveVisit(v);
+  showSuccessFlash(m.first+' '+m.last, adults.concat(kidNames).join(', '));
+  // Play chime
+  playChime();
+}
+
+function showSuccessFlash(name, members){
+  var el=document.getElementById('ci-success-flash');
+  var nameEl=document.getElementById('flash-name');
+  var subEl=document.getElementById('flash-sub');
+  if(!el) return;
+  if(nameEl) nameEl.textContent=name;
+  if(subEl) subEl.textContent=members||'';
+  el.classList.add('show');
+  setTimeout(function(){el.classList.remove('show');},2000);
+}
+
+function playChime(){
+  try{
+    var ctx=new (window.AudioContext||window.webkitAudioContext)();
+    var freqs=[523,659,784];
+    freqs.forEach(function(f,i){
+      var o=ctx.createOscillator();
+      var g=ctx.createGain();
+      o.connect(g);g.connect(ctx.destination);
+      o.frequency.value=f;o.type='sine';
+      g.gain.setValueAtTime(0,ctx.currentTime+i*0.12);
+      g.gain.linearRampToValueAtTime(0.18,ctx.currentTime+i*0.12+0.04);
+      g.gain.linearRampToValueAtTime(0,ctx.currentTime+i*0.12+0.25);
+      o.start(ctx.currentTime+i*0.12);
+      o.stop(ctx.currentTime+i*0.12+0.3);
+    });
+  }catch(e){}
+}
+
 function renderAll(){renderCI();renderDir();renderRep();}
 
 // Directory search - poll + direct binding for maximum compatibility
@@ -496,6 +614,30 @@ function typeBadge(t){var cls={Individual:'b-ind',Couples:'b-couples',Family:'b-
 function chipInfo(m){if(m.guestsTotal===0)return{cls:'none',lbl:'No passes'};var r=m.guestsTotal-(m.guestsUsed||0);return{cls:r<=0?'gone':r<=3?'low':'',lbl:'&#x1F3AB; '+r+' left'};}
 function cardCls(m){if(m.status==='unpaid')return'st-unpaid';if(m.status==='pending')return'st-pending';if(m.type==='Comp')return'st-comp';if(m.type==='Board')return'st-board';return'st-paid';}
 function rosterStr(m){var a=m.adults||0,c=m.kids?m.kids.length:(m.children||0),p=[];if(a>0)p.push(a+' adult'+(a>1?'s':''));if(c>0)p.push(c+' child'+(c>1?'ren':''));return p.length?p.join(' &middot; '):'Roster not set';}
+function playChime(){
+  try{
+    var ctx=new(window.AudioContext||window.webkitAudioContext)();
+    var osc=ctx.createOscillator();
+    var gain=ctx.createGain();
+    osc.connect(gain);gain.connect(ctx.destination);
+    osc.frequency.setValueAtTime(880,ctx.currentTime);
+    osc.frequency.setValueAtTime(1108,ctx.currentTime+0.1);
+    gain.gain.setValueAtTime(0.3,ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.4);
+    osc.start(ctx.currentTime);osc.stop(ctx.currentTime+0.4);
+  }catch(e){}
+}
+
+function showSuccessFlash(name){
+  var el=document.getElementById('ci-success-flash');
+  var nm=document.getElementById('flash-name');
+  if(!el)return;
+  if(nm) nm.textContent=name+' — Checked In!';
+  el.classList.add('show');
+  playChime();
+  setTimeout(function(){el.classList.remove('show');},1800);
+}
+
 function showToast(msg,type){type=type||'ok';var t=document.getElementById('toast');t.innerHTML=msg;t.className='toast '+type;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(function(){t.classList.remove('show');},2800);}
 function getUnpaidDays(mid){var uv=visits.filter(function(v){return v.memberId===mid&&v.whileUnpaid;});var d={};uv.forEach(function(v){d[new Date(v.ts).toDateString()]=true;});return Object.keys(d).length;}
 
@@ -552,9 +694,39 @@ function switchTab(name){
 }
 function setFilter(btn,f){dirFilter=f;document.querySelectorAll('.fbtn').forEach(function(b){b.classList.remove('on');});btn.classList.add('on');renderDir();}
 
-function cardHTML(m,ciMode){var chip=chipInfo(m);return'<div class="mcard '+cardCls(m)+'" onclick="openMember(\''+m.id+'\','+ciMode+')">'+'<div class="mavatar">'+(m.last||'?')[0]+'</div>'+'<div class="minfo"><div class="mname">'+m.last+', '+m.first+'</div><div class="mmeta">'+typeBadge(m.type)+' '+statusBadge(m.status)+'</div><div class="mroster">'+rosterStr(m)+'</div></div>'+'<div class="gchip '+chip.cls+'">'+chip.lbl+'</div></div>';}
+function getVisitCount(mid){return visits.filter(function(v){return v.memberId===mid;}).length;}
 
-// ── PREDICTIVE SUGGESTIONS ───────────────────────────────────────────────────
+function canQuickCI(m){
+  if(m.status!=='paid') return false;
+  if(!m.email||!m.phone||!m.street) return false;
+  if(!m.first||!m.last) return false;
+  return true;
+}
+
+function doQuickCI(mid,evt){
+  evt.stopPropagation();
+  var m=members.find(function(x){return x.id===mid;}); if(!m) return;
+  if(m.status==='unpaid'&&getUnpaidDays(m.id)>=GRACE_DAYS){showToast('Check-in blocked','err');return;}
+  var adultNames=[];
+  if(m.first) adultNames.push(m.first+' '+m.last);
+  if(m.secFirst||m.secLast) adultNames.push(((m.secFirst||'')+' '+(m.secLast||'')).trim());
+  commitCheckin(m,adultNames,m.kids||[],[],0,false);
+}
+
+function cardHTML(m,ciMode){
+  var chip=chipInfo(m);
+  var quick=ciMode&&canQuickCI(m)
+    ?'<button class="quick-ci-btn" onclick="doQuickCI(&quot;'+m.id+'&quot;,event)">&#x2705; Check In</button>'
+    :'<div class="gchip '+chip.cls+'">'+chip.lbl+'</div>';
+  return'<div class="mcard '+cardCls(m)+' '+(ciMode?'mcard-ci':'')+'" onclick="openMember(&quot;'+m.id+'&quot;,'+ciMode+')">'
+    +'<div class="mavatar">'+(m.last||'?')[0]+'</div>'
+    +'<div class="minfo">'
+    +'<div class="mname">'+m.last+', '+m.first+'</div>'
+    +'<div class="mmeta">'+typeBadge(m.type)+' '+statusBadge(m.status)+'</div>'
+    +'<div class="mroster">'+rosterStr(m)+'</div>'
+    +'</div>'+quick+'</div>';
+}
+
 function getPredictive(){
   var now=new Date();
   var hour=now.getHours();
@@ -599,7 +771,14 @@ function buildCiAlphaStrips(){
     fnSection.style.display='block';
     var fnLetters={};
     members.filter(function(m){return m.last&&m.last[0].toUpperCase()===ciLastAlpha&&!checkedToday[m.id];})
-      .forEach(function(m){if(m.first) fnLetters[m.first[0].toUpperCase()]=true;});
+      .forEach(function(m){
+        if(m.first&&m.first.length>=2){
+          var key=m.first[0].toUpperCase()+m.first[1].toLowerCase();
+          fnLetters[key]=true;
+        } else if(m.first&&m.first.length===1){
+          fnLetters[m.first[0].toUpperCase()]=true;
+        }
+      });
     fnStrip.innerHTML=Object.keys(fnLetters).sort().map(function(l){
       return '<button class="ci-alpha-btn'+(ciFirstAlpha===l?' on':'')+'" onclick="setCiFirstAlpha(&quot;'+l+'&quot;)">'+l+'</button>';
     }).join('');
@@ -610,6 +789,41 @@ function buildCiAlphaStrips(){
     fnSection.style.display='none';
   }
 }
+
+// Swipe to check in
+(function initSwipe(){
+  var startX=0,startY=0,target=null;
+  document.addEventListener('touchstart',function(e){
+    var card=e.target.closest('.mcard-ci');
+    if(!card)return;
+    startX=e.touches[0].clientX;
+    startY=e.touches[0].clientY;
+    target=card;
+  },{passive:true});
+  document.addEventListener('touchend',function(e){
+    if(!target)return;
+    var dx=e.changedTouches[0].clientX-startX;
+    var dy=e.changedTouches[0].clientY-startY;
+    if(dx>80&&Math.abs(dy)<40){
+      // Swiped right - get member id from onclick
+      var onclick=target.getAttribute('onclick');
+      var match=onclick&&onclick.match(/openMember\(['"]([^'"]+)['"]/);
+      if(match){
+        var mid=match[1];
+        var m=members.find(function(x){return x.id===mid;});
+        if(m&&canQuickCI(m)){
+          var adultNames=[];
+          if(m.first) adultNames.push(m.first+' '+m.last);
+          if(m.secFirst||m.secLast) adultNames.push(((m.secFirst||'')+' '+(m.secLast||'')).trim());
+          commitCheckin(m,adultNames,m.kids||[],[],0,false);
+        } else {
+          openMember(mid,true);
+        }
+      }
+    }
+    target=null;
+  },{passive:true});
+})();
 
 function setCiLastAlpha(l){
   if(ciLastAlpha===l){ciLastAlpha='';ciFirstAlpha='';}
@@ -652,8 +866,18 @@ function renderCI(){
   // Filter by last name initial
   var list=members.filter(function(m){return m.last&&m.last[0].toUpperCase()===ciLastAlpha;});
   // Filter by first name initial if selected
-  if(ciFirstAlpha) list=list.filter(function(m){return m.first&&m.first[0].toUpperCase()===ciFirstAlpha;});
-  list.sort(function(a,b){return a.last.localeCompare(b.last)||a.first.localeCompare(b.first);});
+  if(ciFirstAlpha){
+    list=list.filter(function(m){
+      if(!m.first) return false;
+      if(ciFirstAlpha.length===1) return m.first[0].toUpperCase()===ciFirstAlpha;
+      var key=m.first.length>=2?m.first[0].toUpperCase()+m.first[1].toLowerCase():m.first[0].toUpperCase();
+      return key===ciFirstAlpha;
+    });
+  }
+  list.sort(function(a,b){
+    var diff=getVisitCount(b.id)-getVisitCount(a.id);
+    return diff!==0?diff:a.last.localeCompare(b.last)||a.first.localeCompare(b.first);
+  });
 
   // Auto-open if exactly one match
   if(list.length===1){
@@ -822,6 +1046,17 @@ function openMember(id,ciMode){
   html+='<button class="btn-s" onclick="openEdit(\''+m.id+'\')">&#x270F;&#xFE0F; Edit Member</button>';
   document.getElementById('mm-body').innerHTML=html;
   document.getElementById('mm-overlay').classList.add('open');
+  // Swipe right to quick check-in (ciMode only)
+  if(ciMode){
+    var sheet=document.querySelector('#mm-overlay .sheet');
+    var swipeStartX=0,swipeStartY=0;
+    sheet.ontouchstart=function(e){swipeStartX=e.touches[0].clientX;swipeStartY=e.touches[0].clientY;};
+    sheet.ontouchend=function(e){
+      var dx=e.changedTouches[0].clientX-swipeStartX;
+      var dy=Math.abs(e.changedTouches[0].clientY-swipeStartY);
+      if(dx>80&&dy<40&&canQuickCheckIn(m)){quickCheckIn(m.id,null);}
+    };
+  }
 }
 function closeMM(){document.getElementById('mm-overlay').classList.remove('open');}
 
