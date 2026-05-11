@@ -38,9 +38,9 @@ body{font-family:'Inter',sans-serif;background:var(--sand);color:var(--tx);min-h
 #setup-banner{background:#fff8e1;border-bottom:3px solid var(--or);padding:9px 14px;font-size:12px;color:#7c4a00;display:none;text-align:center;line-height:1.5}
 #setup-banner.show{display:block}
 #app{display:flex;flex-direction:column;height:100dvh}
-.topbar{background:var(--bld);color:#fff;padding:11px 14px 9px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;border-bottom:3px solid var(--or)}
+.topbar{background:var(--bld);color:#fff;padding:9px 12px 8px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;border-bottom:3px solid var(--or)}
 .topbar-l{display:flex;align-items:center;gap:9px}
-.topbar-title{font-family:'Inter',sans-serif;font-size:20px;color:var(--or);line-height:1.2;font-weight:600;letter-spacing:-.2px}
+.topbar-title{font-family:'Inter',sans-serif;font-size:18px;color:var(--or);line-height:1.2;font-weight:600;letter-spacing:-.2px}
 .topbar-sub{font-size:10px;color:rgba(255,255,255,.45);letter-spacing:1.5px;text-transform:uppercase}
 .topbar-acts{display:flex;gap:5px}
 .ibtn{background:rgba(255,255,255,.1);border:none;color:#fff;width:44px;height:44px;border-radius:9px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px}
@@ -287,7 +287,7 @@ body{font-family:'Inter',sans-serif;background:var(--sand);color:var(--tx);min-h
 <!-- APP -->
 <div id="app">
   <div class="topbar">
-    <div class="topbar-l"><span style="font-size:24px">&#x1F40A;</span><div><div class="topbar-title">Gibsonville Swim Club</div><div class="topbar-sub" id="today-lbl"></div><div style="font-size:10px;color:rgba(255,255,255,.6);letter-spacing:.5px;margin-top:2px;font-weight:600">v1.4.0</div></div></div>
+    <div class="topbar-l"><span style="font-size:24px">&#x1F40A;</span><div><div class="topbar-title">Gibsonville Swim Club</div><div class="topbar-sub" id="today-lbl"></div><div style="font-size:10px;color:rgba(255,255,255,.6);letter-spacing:.5px;margin-top:2px;font-weight:600">v1.4.1</div></div></div>
     <div class="topbar-acts"><div id="sync-pill" style="display:none;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;align-items:center;gap:4px"></div><button class="ibtn" onclick="openSettings()">&#x2699;&#xFE0F;</button></div>
   </div>
   <div class="tabs">
@@ -301,7 +301,7 @@ body{font-family:'Inter',sans-serif;background:var(--sand);color:var(--tx);min-h
     <div class="ci-alpha-row" id="ci-ln-strip"></div>
     <!-- First name alpha strip (shown after last name selected) -->
     <div id="ci-fn-section" style="display:none">
-      <div class="ci-section-title" id="ci-fn-label">Step 2 — Tap member's first name initial</div>
+      <div class="ci-section-title" id="ci-fn-label">Step 2 — First name (last name: ?)</div>
       <div class="ci-alpha-row" id="ci-fn-strip"></div>
     </div>
     <!-- Results / predictive list -->
@@ -784,7 +784,7 @@ function buildCiAlphaStrips(){
     }).join('');
     // Update label
     var fnLabel=document.getElementById('ci-fn-label');
-    if(fnLabel) fnLabel.textContent='Step 2 — First name initial (last name starts with '+ciLastAlpha+')';
+    if(fnLabel) fnLabel.textContent='Step 2 — First name (last name: '+ciLastAlpha+')';
   } else if(fnSection){
     fnSection.style.display='none';
   }
