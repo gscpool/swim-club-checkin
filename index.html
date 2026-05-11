@@ -250,9 +250,7 @@ body{font-family:'Inter',sans-serif;background:var(--sand);color:var(--tx);min-h
 #ci-success-flash .flash-sub{font-size:15px;color:rgba(255,255,255,.75);text-align:center}
 
 /* QUICK CHECK-IN BUTTON ON CARD */
-.mcard-quick{display:flex;flex-direction:column;gap:0}
-.quick-ci-btn{width:100%;padding:10px;border:none;background:var(--or);color:#fff;font-size:13px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;border-radius:0 0 var(--r) var(--r);display:flex;align-items:center;justify-content:center;gap:5px}
-.quick-ci-btn:active{background:var(--ord)}
+
 
 /* LARGER CHECK-IN CARDS */
 #pane-ci .mcard{padding:16px 13px;min-height:72px}
@@ -287,7 +285,7 @@ body{font-family:'Inter',sans-serif;background:var(--sand);color:var(--tx);min-h
 <!-- APP -->
 <div id="app">
   <div class="topbar">
-    <div class="topbar-l"><span style="font-size:24px">&#x1F40A;</span><div><div class="topbar-title">Gibsonville Swim Club</div><div class="topbar-sub" id="today-lbl"></div><div style="font-size:10px;color:rgba(255,255,255,.6);letter-spacing:.5px;margin-top:2px;font-weight:600">v1.4.1</div></div></div>
+    <div class="topbar-l"><span style="font-size:24px">&#x1F40A;</span><div><div class="topbar-title">Gibsonville Swim Club</div><div class="topbar-sub" id="today-lbl"></div><div style="font-size:10px;color:rgba(255,255,255,.6);letter-spacing:.5px;margin-top:2px;font-weight:600">v1.4.3</div></div></div>
     <div class="topbar-acts"><div id="sync-pill" style="display:none;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;align-items:center;gap:4px"></div><button class="ibtn" onclick="openSettings()">&#x2699;&#xFE0F;</button></div>
   </div>
   <div class="tabs">
@@ -716,7 +714,7 @@ function doQuickCI(mid,evt){
 function cardHTML(m,ciMode){
   var chip=chipInfo(m);
   var quick=ciMode&&canQuickCI(m)
-    ?'<button class="quick-ci-btn" onclick="doQuickCI(&quot;'+m.id+'&quot;,event)">&#x2705; Check In</button>'
+    ?''
     :'<div class="gchip '+chip.cls+'">'+chip.lbl+'</div>';
   return'<div class="mcard '+cardCls(m)+' '+(ciMode?'mcard-ci':'')+'" onclick="openMember(&quot;'+m.id+'&quot;,'+ciMode+')">'
     +'<div class="mavatar">'+(m.last||'?')[0]+'</div>'
@@ -1039,6 +1037,7 @@ function openMember(id,ciMode){
         +kidsSection
         +gpSection
         +'<div id="ci-over-note"></div>'
+        +(canQuickCheckIn(m)?'<button class="quick-ci-btn" style="border-radius:9px;margin-bottom:4px;font-size:15px;padding:13px" onclick="quickCheckIn(\''+m.id+'\',event)">&#x26A1; Quick Check In All &nbsp;&mdash;&nbsp; one tap</button>':'')
         +'<button class="ci-checkin-btn" onclick="doCheckin(\''+m.id+'\')">&#x2705; Check In'+(checkedToday?' Again':'')+'</button></div>';
     }
   }
