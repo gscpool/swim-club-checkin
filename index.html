@@ -285,7 +285,7 @@ body{font-family:'Inter',sans-serif;background:var(--sand);color:var(--tx);min-h
 <!-- APP -->
 <div id="app">
   <div class="topbar">
-    <div class="topbar-l"><span style="font-size:24px">&#x1F40A;</span><div><div class="topbar-title">Gibsonville Swim Club</div><div class="topbar-sub" id="today-lbl"></div><div style="font-size:10px;color:rgba(255,255,255,.6);letter-spacing:.5px;margin-top:2px;font-weight:600">v1.4.4</div></div></div>
+    <div class="topbar-l"><span style="font-size:24px">&#x1F40A;</span><div><div class="topbar-title">Gibsonville Swim Club</div><div class="topbar-sub" id="today-lbl"></div><div style="font-size:10px;color:rgba(255,255,255,.6);letter-spacing:.5px;margin-top:2px;font-weight:600">v1.4.5</div></div></div>
     <div class="topbar-acts"><div id="sync-pill" style="display:none;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;align-items:center;gap:4px"></div><button class="ibtn" onclick="openSettings()">&#x2699;&#xFE0F;</button></div>
   </div>
   <div class="tabs">
@@ -1289,189 +1289,114 @@ function sendPaymentAlert(memberId){
 
 function renderRep(){
   var el=document.getElementById('rep-body');if(!el)return;
-  var isLandscape=window.innerWidth>window.innerHeight&&window.innerWidth>600;
-  var todayStr=new Date().toDateString();
   var now=new Date();
-
-  // ── Data helpers ────────────────────────────────────────────────────────
-  // Season start: Jan 1 of current year (or after last reset if stored)
+  var todayStr=now.toDateString();
   var seasonStart=new Date(now.getFullYear(),0,1);
+  var d7=new Date(now);d7.setDate(d7.getDate()-6);d7.setHours(0,0,0,0);
 
   var todayV=visits.filter(function(v){return new Date(v.ts).toDateString()===todayStr;});
-
-  // Last 7 days
-  var d7=new Date(now); d7.setDate(d7.getDate()-6); d7.setHours(0,0,0,0);
   var last7V=visits.filter(function(v){return new Date(v.ts)>=d7;});
-
-  // This season
   var seasonV=visits.filter(function(v){return new Date(v.ts)>=seasonStart;});
 
-  // KPIs
   var paid=members.filter(function(m){return m.status==='paid';}).length;
-  var notPaid=members.filter(function(m){return m.status!=='paid';}).length;
+  var unpaidCount=members.filter(function(m){return m.status==='unpaid';}).length;
+  var pendingCount=members.filter(function(m){return m.status==='pending';}).length;
   var totalPurchased=seasonV.reduce(function(s,v){return s+(v.passesPurchased||0);},0);
+  var totalGPUsed=seasonV.reduce(function(s,v){return s+(v.guestPasses||0);},0);
+
   var todayHeads=todayV.reduce(function(s,v){return s+(v.adults||0)+(v.children||0);},0);
   var todayHH=new Set(todayV.map(function(v){return v.memberId;})).size;
+  var todayGP=todayV.reduce(function(s,v){return s+(v.guestPasses||0);},0);
+
+  var sevenHeads=last7V.reduce(function(s,v){return s+(v.adults||0)+(v.children||0);},0);
+  var sevenHH=new Set(last7V.map(function(v){return v.memberId;})).size;
+  var avgPerDay=Math.round(last7V.length/7*10)/10;
+
+  var seasonHeads=seasonV.reduce(function(s,v){return s+(v.adults||0)+(v.children||0);},0);
+  var seasonHH=new Set(seasonV.map(function(v){return v.memberId;})).size;
+
+  // Peak hour
+  var hourCounts=[];
+  for(var h=0;h<24;h++){
+    hourCounts[h]=seasonV.filter(function(v){return new Date(v.ts).getHours()===h;})
+      .reduce(function(s,v){return s+(v.adults||0)+(v.children||0);},0);
+  }
+  var peakH=hourCounts.indexOf(Math.max.apply(null,hourCounts.slice(10,23))+0);
+  // re-find properly
+  var maxHV=0;peakH=10;
+  for(var h=10;h<=22;h++){if(hourCounts[h]>maxHV){maxHV=hourCounts[h];peakH=h;}}
+  var peakHLabel=peakH<12?peakH+'am':peakH===12?'12pm':(peakH-12)+'pm';
+
+  // Busiest day
+  var dowCounts=[0,0,0,0,0,0,0];
+  seasonV.forEach(function(v){dowCounts[new Date(v.ts).getDay()]++;});
+  var DNAMES=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  var busiestDow=DNAMES[dowCounts.indexOf(Math.max.apply(null,dowCounts))];
 
   // Unpaid list
   var unpaidList=members.filter(function(m){return m.status!=='paid';}).sort(function(a,b){return a.last.localeCompare(b.last);});
 
-  // ── Chart helpers ────────────────────────────────────────────────────────
-  function barChart(data, labels, color, title, yLabel, height){
-    if(!data.length) return '<div class="rep-empty">No data yet</div>';
-    var max=Math.max.apply(null,data)||1;
-    var barW=Math.max(18,Math.floor((isLandscape?680:320)/data.length)-4);
-    var svgW=(barW+4)*data.length+60;
-    var svgH=height||200;
-    var plotH=svgH-50;
-    var bars=data.map(function(v,i){
-      var h=Math.round((v/max)*plotH);
-      var x=60+i*(barW+4);
-      var y=svgH-30-h;
-      var lbl=labels[i]||'';
-      var col=Array.isArray(color)?color[i]:color;
-      return '<rect x="'+x+'" y="'+y+'" width="'+barW+'" height="'+Math.max(h,1)+'" rx="3" fill="'+col+'" opacity="0.9"/>'
-        +'<text x="'+(x+barW/2)+'" y="'+(svgH-14)+'" text-anchor="middle" font-size="9" fill="#666" font-family="Inter,sans-serif">'+lbl+'</text>'
-        +(v>0?'<text x="'+(x+barW/2)+'" y="'+(y-4)+'" text-anchor="middle" font-size="9" fill="#333" font-family="Inter,sans-serif" font-weight="600">'+v+'</text>':'');
-    }).join('');
-    // Y axis gridlines
-    var grids=[0,0.25,0.5,0.75,1].map(function(f){
-      var y=svgH-30-Math.round(f*plotH);
-      var val=Math.round(f*max);
-      return '<line x1="55" y1="'+y+'" x2="'+(svgW-5)+'" y2="'+y+'" stroke="#e5e7eb" stroke-width="1"/>'
-        +'<text x="50" y="'+(y+4)+'" text-anchor="end" font-size="9" fill="#999" font-family="Inter,sans-serif">'+val+'</text>';
-    }).join('');
-    return '<div class="chart-wrap"><div class="chart-title">'+title+'</div>'
-      +'<div style="overflow-x:auto;-webkit-overflow-scrolling:touch">'
-      +'<svg width="'+Math.max(svgW,300)+'" height="'+svgH+'" style="display:block">'
-      +grids+bars
-      +'<line x1="55" y1="'+(svgH-30)+'" x2="'+(svgW-5)+'" y2="'+(svgH-30)+'" stroke="#d1d5db" stroke-width="1.5"/>'
-      +'<text x="12" y="'+(svgH/2)+'" text-anchor="middle" font-size="9" fill="#999" font-family="Inter,sans-serif" transform="rotate(-90,12,'+(svgH/2)+')">'+yLabel+'</text>'
-      +'</svg></div></div>';
+  // ── KPI card builder ───────────────────────────────────────────────────
+  function kpi(val,lbl,accent,chartId){
+    var btn=chartId?'<button onclick="showRepChart(\''+chartId+'\')" style="margin-top:6px;background:none;border:none;color:'+accent+';font-size:11px;font-weight:700;cursor:pointer;font-family:\'Inter\',sans-serif;opacity:.8;padding:0">&#x1F4CA; View Chart</button>':'';
+    return'<div class="kpi2" style="border-top:3px solid '+accent+'">'
+      +'<div class="kpi2-val" style="color:'+accent+'">'+val+'</div>'
+      +'<div class="kpi2-lbl">'+lbl+'</div>'
+      +btn+'</div>';
   }
 
-  // ── TODAY: hourly bar chart ──────────────────────────────────────────────
-  var todayHours=[],todayHourLabels=[],todayHourColors=[];
-  for(var h=10;h<=22;h++){
-    var hVisits=todayV.filter(function(v){return new Date(v.ts).getHours()===h;});
-    var heads=hVisits.reduce(function(s,v){return s+(v.adults||0)+(v.children||0);},0);
-    todayHours.push(heads);
-    var lbl=h<=12?h+'am':(h===12?'12pm':(h-12)+'pm');
-    todayHourLabels.push(lbl);
-    todayHourColors.push(heads>0?'#FA4616':'#e5e7eb');
-  }
+  var OR='#FA4616',BL='#003087',GR='#166534',RE='#991b1b',AM='#92400e',TL='#0e7490';
 
-  // ── LAST 7 DAYS: daily headcount & households ────────────────────────────
-  var d7labels=[],d7heads=[],d7hh=[];
-  var DNAMES=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-  for(var i=6;i>=0;i--){
-    var d=new Date(now); d.setDate(d.getDate()-i); var ds=d.toDateString();
-    var dv=visits.filter(function(v){return new Date(v.ts).toDateString()===ds;});
-    d7labels.push(DNAMES[d.getDay()]);
-    d7heads.push(dv.reduce(function(s,v){return s+(v.adults||0)+(v.children||0);},0));
-    d7hh.push(new Set(dv.map(function(v){return v.memberId;})).size);
-  }
-
-  // ── SEASON: hourly pattern (10am-10pm) ───────────────────────────────────
-  var seasonHours=[],seasonHourLabels=[],seasonHourColors=[];
-  for(var h=10;h<=22;h++){
-    var hVisits=seasonV.filter(function(v){return new Date(v.ts).getHours()===h;});
-    var heads=hVisits.reduce(function(s,v){return s+(v.adults||0)+(v.children||0);},0);
-    seasonHours.push(heads);
-    var lbl=h<=12?h+'am':(h===12?'12pm':(h-12)+'pm');
-    seasonHourLabels.push(lbl);
-    // Color gradient: orange for peak, blue for low
-    seasonHourColors.push('#003087');
-  }
-  // Highlight peak hour
-  var peakIdx=seasonHours.indexOf(Math.max.apply(null,seasonHours));
-  seasonHourColors[peakIdx]='#FA4616';
-
-  // ── SEASON: day of week ───────────────────────────────────────────────────
-  var dowCounts=[0,0,0,0,0,0,0];
-  seasonV.forEach(function(v){dowCounts[new Date(v.ts).getDay()]++;});
-  var dowLabels=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-  var dowColors=dowCounts.map(function(v,i){return i===dowCounts.indexOf(Math.max.apply(null,dowCounts))?'#FA4616':'#003087';});
-
-  // ── SEASON: daily guest pass usage ───────────────────────────────────────
-  var gpByDay={},gpDayLabels=[],gpDayVals=[];
-  seasonV.forEach(function(v){
-    if(!v.guestPasses&&!v.passesPurchased) return;
-    var ds=new Date(v.ts).toLocaleDateString('en-US',{month:'short',day:'numeric'});
-    gpByDay[ds]=(gpByDay[ds]||0)+(v.guestPasses||0);
-  });
-  Object.keys(gpByDay).slice(-14).forEach(function(d){gpDayLabels.push(d);gpDayVals.push(gpByDay[d]);});
-
-  // ── BUILD HTML ────────────────────────────────────────────────────────────
   var html='';
 
-  // Portrait mode notice
-  if(!isLandscape){
-    html+='<div style="background:var(--bllt);border:1.5px solid var(--bl);border-radius:10px;padding:10px 13px;font-size:12px;color:var(--bl);font-weight:600;margin-bottom:10px;text-align:center">'
-      +'&#x1F4F1; Rotate to landscape for full charts</div>';
-  }
-
-  // ── KPI CARDS ──────────────────────────────────────────────────────────
-  html+='<div class="rep-section"><div class="rep-shead">Season Overview</div>';
-  html+='<div class="kpi-grid">'
-    +'<div class="kpi-card"><div class="kpi-val">'+members.length+'</div><div class="kpi-lbl">Members</div></div>'
-    +'<div class="kpi-card kpi-green"><div class="kpi-val">'+paid+'</div><div class="kpi-lbl">Paid</div></div>'
-    +'<div class="kpi-card kpi-red"><div class="kpi-val">'+notPaid+'</div><div class="kpi-lbl">Unpaid/Pending</div></div>'
-    +'<div class="kpi-card"><div class="kpi-val">'+seasonV.length+'</div><div class="kpi-lbl">Total Visits</div></div>'
-    +'<div class="kpi-card"><div class="kpi-val">'+seasonV.reduce(function(s,v){return s+(v.adults||0)+(v.children||0);},0)+'</div><div class="kpi-lbl">Total Headcount</div></div>'
-    +'<div class="kpi-card kpi-orange"><div class="kpi-val">$'+(totalPurchased*GUEST_PRICE)+'</div><div class="kpi-lbl">Pass Revenue</div></div>'
+  // ── TODAY ──────────────────────────────────────────────────────────────
+  html+='<div class="rep2-block">'
+    +'<div class="rep2-hdr" style="background:'+OR+'">&#x1F305; Today &mdash; '+now.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})+'</div>'
+    +'<div class="kpi2-grid">'
+    +kpi(todayV.length,'Check-Ins',OR,'today-hourly')
+    +kpi(todayHH,'Households',BL,'today-hourly')
+    +kpi(todayHeads,'Headcount',TL,'today-hourly')
+    +kpi(todayGP,'Guest Passes',AM)
     +'</div></div>';
 
-  // ── TODAY ──────────────────────────────────────────────────────────────
-  html+='<div class="rep-section"><div class="rep-shead">Today &mdash; '+new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})+'</div>';
-  html+='<div class="kpi-grid">'
-    +'<div class="kpi-card"><div class="kpi-val">'+todayV.length+'</div><div class="kpi-lbl">Check-Ins</div></div>'
-    +'<div class="kpi-card"><div class="kpi-val">'+todayHH+'</div><div class="kpi-lbl">Households</div></div>'
-    +'<div class="kpi-card"><div class="kpi-val">'+todayHeads+'</div><div class="kpi-lbl">Headcount</div></div>'
-    +'<div class="kpi-card"><div class="kpi-val">'+todayV.reduce(function(s,v){return s+(v.guestPasses||0);},0)+'</div><div class="kpi-lbl">Guest Passes</div></div>'
-    +'</div>';
-  if(isLandscape){
-    html+=barChart(todayHours,todayHourLabels,todayHourColors,'Check-Ins by Hour — Today','Headcount',180);
-  }
-  html+='</div>';
-
   // ── LAST 7 DAYS ────────────────────────────────────────────────────────
-  html+='<div class="rep-section"><div class="rep-shead">Last 7 Days</div>';
-  html+='<div class="kpi-grid">'
-    +'<div class="kpi-card"><div class="kpi-val">'+last7V.length+'</div><div class="kpi-lbl">Visits</div></div>'
-    +'<div class="kpi-card"><div class="kpi-val">'+Math.round(last7V.length/7*10)/10+'</div><div class="kpi-lbl">Avg/Day</div></div>'
-    +'<div class="kpi-card"><div class="kpi-val">'+last7V.reduce(function(s,v){return s+(v.adults||0)+(v.children||0);},0)+'</div><div class="kpi-lbl">Total Headcount</div></div>'
-    +'</div>';
-  if(isLandscape){
-    html+=barChart(d7heads,d7labels,'#003087','Daily Headcount — Last 7 Days','People',180);
-    html+=barChart(d7hh,d7labels,'#FA4616','Unique Households — Last 7 Days','Households',180);
-  }
-  html+='</div>';
+  html+='<div class="rep2-block">'
+    +'<div class="rep2-hdr" style="background:'+BL+'">&#x1F4C5; Last 7 Days</div>'
+    +'<div class="kpi2-grid">'
+    +kpi(last7V.length,'Total Visits',BL,'seven-daily-heads')
+    +kpi(avgPerDay,'Avg Visits/Day',BL,'seven-daily-heads')
+    +kpi(sevenHH,'Unique Households',TL,'seven-daily-hh')
+    +kpi(sevenHeads,'Total Headcount',OR,'seven-daily-heads')
+    +'</div></div>';
 
   // ── THIS SEASON ────────────────────────────────────────────────────────
-  html+='<div class="rep-section"><div class="rep-shead">This Season</div>';
-  if(isLandscape){
-    html+=barChart(seasonHours,seasonHourLabels,seasonHourColors,'Check-Ins by Hour of Day — Full Season (orange = peak hour)','Headcount',200);
-    html+=barChart(dowCounts,dowLabels,dowColors,'Busiest Days of the Week (orange = busiest)','Visits',180);
-    if(gpDayVals.length){
-      html+=barChart(gpDayVals,gpDayLabels,'#FA4616','Guest Pass Usage by Day (last 14 active days)','Passes Used',180);
-    }
-  } else {
-    // Portrait: KPI style with peak hour and busiest day callouts
-    var peakHour=seasonHourLabels[peakIdx]||'—';
-    var busiestDow=dowLabels[dowCounts.indexOf(Math.max.apply(null,dowCounts))]||'—';
-    html+='<div class="kpi-grid">'
-      +'<div class="kpi-card kpi-orange"><div class="kpi-val">'+peakHour+'</div><div class="kpi-lbl">Peak Hour</div></div>'
-      +'<div class="kpi-card kpi-orange"><div class="kpi-val">'+busiestDow+'</div><div class="kpi-lbl">Busiest Day</div></div>'
-      +'<div class="kpi-card"><div class="kpi-val">'+seasonV.reduce(function(s,v){return s+(v.guestPasses||0);},0)+'</div><div class="kpi-lbl">Guest Passes Used</div></div>'
-      +'<div class="kpi-card kpi-green"><div class="kpi-val">$'+(totalPurchased*GUEST_PRICE)+'</div><div class="kpi-lbl">Pass Revenue</div></div>'
-      +'</div>';
-  }
-  html+='</div>';
+  html+='<div class="rep2-block">'
+    +'<div class="rep2-hdr" style="background:'+GR+'">&#x1F3CA; This Season</div>'
+    +'<div class="kpi2-grid">'
+    +kpi(seasonV.length,'Total Visits',GR,'season-hourly')
+    +kpi(seasonHH,'Unique Households',GR,'season-hh-daily')
+    +kpi(seasonHeads,'Total Headcount',OR,'season-hourly')
+    +kpi(peakHLabel,'Peak Hour',OR,'season-hourly')
+    +kpi(busiestDow,'Busiest Day',BL,'season-dow')
+    +kpi(totalGPUsed,'Guest Passes Used',AM,'season-gp')
+    +kpi('$'+(totalPurchased*GUEST_PRICE),'Pass Revenue',AM,'season-gp')
+    +'</div></div>';
+
+  // ── MEMBERSHIP ─────────────────────────────────────────────────────────
+  var paidPct=members.length?Math.round(paid/members.length*100):0;
+  html+='<div class="rep2-block">'
+    +'<div class="rep2-hdr" style="background:'+BL+'">&#x1F465; Membership</div>'
+    +'<div class="kpi2-grid">'
+    +kpi(members.length,'Total Members',BL)
+    +kpi(paid,'Paid ('+paidPct+'%)',GR)
+    +kpi(unpaidCount,'Unpaid',RE)
+    +kpi(pendingCount,'Pending',AM)
+    +'</div></div>';
 
   // ── UNPAID LIST ────────────────────────────────────────────────────────
   if(unpaidList.length){
-    html+='<div class="rep-section"><div class="rep-shead">Unpaid / Pending ('+unpaidList.length+')</div>'
+    html+='<div class="rep2-block">'
+      +'<div class="rep2-hdr" style="background:'+RE+'">&#x26A0;&#xFE0F; Unpaid &amp; Pending ('+unpaidList.length+')</div>'
       +'<div class="rep-list">'+unpaidList.map(function(m){
         return'<div class="rep-row"><div><span class="rep-name">'+m.last+', '+m.first+'</span> '+typeBadge(m.type)+' '+statusBadge(m.status)+'</div>'
           +'<div style="font-size:11px;color:var(--mu)">'+(m.email||'')+'</div></div>';
@@ -1479,8 +1404,9 @@ function renderRep(){
   }
 
   // ── DATA MANAGEMENT ────────────────────────────────────────────────────
-  html+='<div class="rep-section"><div class="rep-shead">Data Management</div>'
-    +'<div style="display:flex;flex-direction:column;gap:8px">'
+  html+='<div class="rep2-block">'
+    +'<div class="rep2-hdr" style="background:'+BL+'">&#x1F4BE; Data Management</div>'
+    +'<div style="display:flex;flex-direction:column;gap:8px;padding:4px 0">'
     +'<button class="exp-btn" onclick="requireAdminPin(function(){exportCSV(\'members\');})">&#x1F4E5; Export Member List (CSV)</button>'
     +'<button class="exp-btn" onclick="requireAdminPin(function(){exportCSV(\'visits\');})">&#x1F4E5; Export Visit Log (CSV)</button>'
     +'<button class="imp-btn" onclick="requireAdminPin(function(){openCSVImport();})">&#x1F4E4; Import Members from CSV</button>'
@@ -1488,6 +1414,128 @@ function renderRep(){
     +'</div></div>';
 
   el.innerHTML=html;
+}
+
+function showRepChart(chartId){
+  var now=new Date();
+  var seasonStart=new Date(now.getFullYear(),0,1);
+  var todayStr=now.toDateString();
+  var d7=new Date(now);d7.setDate(d7.getDate()-6);d7.setHours(0,0,0,0);
+  var todayV=visits.filter(function(v){return new Date(v.ts).toDateString()===todayStr;});
+  var last7V=visits.filter(function(v){return new Date(v.ts)>=d7;});
+  var seasonV=visits.filter(function(v){return new Date(v.ts)>=seasonStart;});
+  var DNAMES=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+  var title='',labels=[],data=[],data2=null,label2='',colors=[];
+
+  if(chartId==='today-hourly'){
+    title='Today — Check-Ins by Hour';
+    for(var h=10;h<=22;h++){
+      var hv=todayV.filter(function(v){return new Date(v.ts).getHours()===h;});
+      data.push(hv.reduce(function(s,v){return s+(v.adults||0)+(v.children||0);},0));
+      labels.push(h<12?h+'am':h===12?'12pm':(h-12)+'pm');
+      colors.push(data[data.length-1]>0?'#FA4616':'#dbeafe');
+    }
+  } else if(chartId==='seven-daily-heads'){
+    title='Last 7 Days — Daily Headcount';
+    for(var i=6;i>=0;i--){
+      var d=new Date(now);d.setDate(d.getDate()-i);var ds=d.toDateString();
+      var dv=visits.filter(function(v){return new Date(v.ts).toDateString()===ds;});
+      labels.push(DNAMES[d.getDay()]+' '+(d.getMonth()+1)+'/'+d.getDate());
+      data.push(dv.reduce(function(s,v){return s+(v.adults||0)+(v.children||0);},0));
+      colors.push('#003087');
+    }
+  } else if(chartId==='seven-daily-hh'){
+    title='Last 7 Days — Unique Households';
+    for(var i=6;i>=0;i--){
+      var d=new Date(now);d.setDate(d.getDate()-i);var ds=d.toDateString();
+      var dv=visits.filter(function(v){return new Date(v.ts).toDateString()===ds;});
+      labels.push(DNAMES[d.getDay()]+' '+(d.getMonth()+1)+'/'+d.getDate());
+      data.push(new Set(dv.map(function(v){return v.memberId;})).size);
+      colors.push('#0e7490');
+    }
+  } else if(chartId==='season-hourly'){
+    title='This Season — Check-Ins by Hour of Day';
+    var maxV=0;
+    for(var h=10;h<=22;h++){
+      var hv=seasonV.filter(function(v){return new Date(v.ts).getHours()===h;});
+      var total=hv.reduce(function(s,v){return s+(v.adults||0)+(v.children||0);},0);
+      data.push(total);
+      labels.push(h<12?h+'am':h===12?'12pm':(h-12)+'pm');
+      if(total>maxV) maxV=total;
+    }
+    data.forEach(function(v){colors.push(v===maxV&&maxV>0?'#FA4616':'#003087');});
+  } else if(chartId==='season-dow'){
+    title='This Season — Busiest Days of the Week';
+    var dowC=[0,0,0,0,0,0,0];
+    seasonV.forEach(function(v){dowC[new Date(v.ts).getDay()]++;});
+    labels=DNAMES.slice();data=dowC.slice();
+    var maxD=Math.max.apply(null,dowC);
+    data.forEach(function(v){colors.push(v===maxD&&maxD>0?'#FA4616':'#003087');});
+  } else if(chartId==='season-hh-daily'){
+    title='This Season — Households by Day (last 14 visit days)';
+    var dayMap={};
+    seasonV.forEach(function(v){
+      var ds=new Date(v.ts).toLocaleDateString('en-US',{month:'short',day:'numeric'});
+      if(!dayMap[ds]) dayMap[ds]=new Set();
+      dayMap[ds].add(v.memberId);
+    });
+    var days=Object.keys(dayMap).slice(-14);
+    labels=days;data=days.map(function(d){return dayMap[d].size;});
+    data.forEach(function(){colors.push('#0e7490');});
+  } else if(chartId==='season-gp'){
+    title='This Season — Guest Pass Usage by Day';
+    var gpMap={};
+    seasonV.forEach(function(v){
+      if(!(v.guestPasses||v.passesPurchased)) return;
+      var ds=new Date(v.ts).toLocaleDateString('en-US',{month:'short',day:'numeric'});
+      gpMap[ds]=(gpMap[ds]||0)+(v.guestPasses||0);
+    });
+    var days=Object.keys(gpMap).slice(-14);
+    labels=days;data=days.map(function(d){return gpMap[d];});
+    data.forEach(function(){colors.push('#92400e');});
+  }
+
+  if(!data.length){showToast('No data yet for this chart','warn');return;}
+
+  // Build SVG bar chart
+  var max=Math.max.apply(null,data)||1;
+  var W=window.screen.width>window.screen.height?window.screen.width-60:window.screen.height-60;
+  var H=260;var plotH=H-60;var barW=Math.max(24,Math.floor((W-70)/data.length)-5);
+  var svgW=Math.max(W,(barW+5)*data.length+70);
+
+  var gridLines=[0,0.25,0.5,0.75,1].map(function(f){
+    var y=H-30-Math.round(f*plotH);
+    return'<line x1="55" y1="'+y+'" x2="'+(svgW-5)+'" y2="'+y+'" stroke="rgba(255,255,255,.15)" stroke-width="1"/>'
+      +'<text x="50" y="'+(y+4)+'" text-anchor="end" font-size="10" fill="rgba(255,255,255,.5)" font-family="Inter,sans-serif">'+Math.round(f*max)+'</text>';
+  }).join('');
+
+  var bars=data.map(function(v,i){
+    var h=Math.max(Math.round((v/max)*plotH),v>0?2:0);
+    var x=60+i*(barW+5);var y=H-30-h;
+    return'<rect x="'+x+'" y="'+y+'" width="'+barW+'" height="'+h+'" rx="4" fill="'+colors[i]+'"/>'
+      +(v>0?'<text x="'+(x+barW/2)+'" y="'+(y-5)+'" text-anchor="middle" font-size="10" fill="#fff" font-family="Inter,sans-serif" font-weight="700">'+v+'</text>':'')
+      +'<text x="'+(x+barW/2)+'" y="'+(H-12)+'" text-anchor="middle" font-size="'+(barW<30?8:10)+'" fill="rgba(255,255,255,.7)" font-family="Inter,sans-serif">'+labels[i]+'</text>';
+  }).join('');
+
+  var svg='<svg width="'+svgW+'" height="'+H+'" style="display:block">'+gridLines+bars
+    +'<line x1="55" y1="'+(H-30)+'" x2="'+(svgW-5)+'" y2="'+(H-30)+'" stroke="rgba(255,255,255,.3)" stroke-width="1.5"/>'
+    +'</svg>';
+
+  var overlay=document.getElementById('chart-overlay');
+  if(!overlay){
+    overlay=document.createElement('div');
+    overlay.id='chart-overlay';
+    overlay.style.cssText='position:fixed;inset:0;z-index:9990;background:#00205C;display:flex;flex-direction:column;padding:0';
+    document.body.appendChild(overlay);
+  }
+  overlay.innerHTML='<div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:2px solid #FA4616;flex-shrink:0">'
+    +'<div style="font-size:15px;font-weight:800;color:#fff;font-family:\'Inter\',sans-serif">'+title+'</div>'
+    +'<button onclick="document.getElementById(\'chart-overlay\').remove()" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:36px;height:36px;border-radius:8px;font-size:18px;cursor:pointer;font-family:\'Inter\',sans-serif;display:flex;align-items:center;justify-content:center">&#x2715;</button>'
+    +'</div>'
+    +'<div style="flex:1;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;padding:16px 0 16px 0;display:flex;align-items:center">'+svg+'</div>'
+    +'<div style="padding:8px 16px;font-size:11px;color:rgba(255,255,255,.4);text-align:center;font-family:\'Inter\',sans-serif">Tap ✕ to close &nbsp;&#x2022;&nbsp; Scroll horizontally for more</div>';
+  overlay.style.display='flex';
 }
 
 function exportCSV(type){var esc=function(v){return'"'+(v===null||v===undefined?'':String(v)).replace(/"/g,'""')+'"';};var csv,fn;if(type==='members'){var h=['Last','First','Type','Status','Adults','Children','Kids Names','Passes Used','Passes Total','Email','Phone','Street','City','State','Zip','2nd First','2nd Last','2nd Phone','2nd Email'];var r=members.map(function(m){return[m.last,m.first,m.type,m.status,m.adults||0,m.kids?m.kids.length:(m.children||0),m.kids?m.kids.join(';'):'',m.guestsUsed||0,m.guestsTotal,m.email,m.phone,m.street||'',m.city||'',m.state||'',m.zip||'',m.secFirst||'',m.secLast||'',m.secPhone||'',m.secEmail||''].map(esc);});csv=[h].concat(r).map(function(x){return x.join(',');}).join('\n');fn='gsc-members-'+new Date().toISOString().slice(0,10)+'.csv';}else{var h2=['Date','Time','Last','First','Type','Adults','Children','Guest Passes','Passes Purchased'];var r2=visits.map(function(v){var m=members.find(function(x){return x.id===v.memberId;})||{last:'',first:'',type:''};return[fmtDate(v.ts),fmtTime(v.ts),m.last,m.first,m.type,v.adults||0,v.children||0,v.guestPasses||0,v.passesPurchased||0].map(esc);});csv=[h2].concat(r2).map(function(x){return x.join(',');}).join('\n');fn='gsc-visits-'+new Date().toISOString().slice(0,10)+'.csv';}var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download=fn;a.click();showToast('Exported '+fn);}
