@@ -205,6 +205,14 @@ body{font-family:'Inter',sans-serif;background:var(--sand);color:var(--tx);min-h
 .toast.ok{background:var(--gr)}.toast.warn{background:var(--am)}.toast.err{background:var(--re)}
 .empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--mu);gap:8px;padding:40px;text-align:center}
 .empty .ico{font-size:46px}.empty p{font-size:14px;font-weight:500}
+/* CHECK-IN TAB QUICK FIND */
+.ci-section-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--mu);padding:10px 13px 4px;background:var(--sand)}
+.ci-alpha-row{display:flex;flex-wrap:wrap;gap:5px;padding:6px 13px 10px;background:var(--sand);border-bottom:1px solid var(--sand2)}
+.ci-alpha-btn{min-width:32px;height:32px;padding:0 6px;border-radius:8px;border:1.5px solid var(--sand2);background:#fff;font-size:13px;font-weight:700;color:var(--bl);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .12s}
+.ci-alpha-btn.on{background:var(--or);border-color:var(--or);color:#fff}
+.predict-card{background:#fff;border-radius:var(--r);padding:11px 13px;box-shadow:var(--sh);display:flex;align-items:center;gap:10px;cursor:pointer;border-left:4px solid var(--or);transition:transform .1s}
+.predict-card:active{transform:scale(.98)}
+.predict-meta{font-size:10px;color:var(--mu);margin-top:2px}
 @media(min-width:600px){.sheet{max-width:560px;margin:0 auto;border-radius:20px;align-self:center}.overlay{align-items:center}}
 </style>
 </head>
@@ -226,7 +234,7 @@ body{font-family:'Inter',sans-serif;background:var(--sand);color:var(--tx);min-h
 <!-- APP -->
 <div id="app">
   <div class="topbar">
-    <div class="topbar-l"><span style="font-size:24px">&#x1F40A;</span><div><div class="topbar-title">Gibsonville Swim Club</div><div class="topbar-sub" id="today-lbl"></div><div style="font-size:10px;color:rgba(255,255,255,.6);letter-spacing:.5px;margin-top:2px;font-weight:600">v1.3.4</div></div></div>
+    <div class="topbar-l"><span style="font-size:24px">&#x1F40A;</span><div><div class="topbar-title">Gibsonville Swim Club</div><div class="topbar-sub" id="today-lbl"></div><div style="font-size:10px;color:rgba(255,255,255,.6);letter-spacing:.5px;margin-top:2px;font-weight:600">v1.3.5</div></div></div>
     <div class="topbar-acts"><div id="sync-pill" style="display:none;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;align-items:center;gap:4px"></div><button class="ibtn" onclick="openSettings()">&#x2699;&#xFE0F;</button></div>
   </div>
   <div class="tabs">
@@ -235,8 +243,16 @@ body{font-family:'Inter',sans-serif;background:var(--sand);color:var(--tx);min-h
     <button class="tab" id="tb-rep" onclick="switchTab('rep')">&#x1F4CA; Reports</button>
   </div>
   <div id="pane-ci" class="pane on">
-    <div class="sbar"><input class="sinput" id="ci-search" type="text" placeholder="&#x1F50D;  Search by last name..." oninput="renderCI()" autocomplete="off" autocorrect="off" spellcheck="false"><button class="sclr" onclick="document.getElementById('ci-search').value='';renderCI()">&#x2715;</button></div>
-    <div class="rlist" id="ci-list"><div class="empty"><div class="ico">&#x1F40A;</div><p>Type a last name to find a member.</p></div></div>
+    <!-- Last name alpha strip -->
+    <div class="ci-section-title" id="ci-ln-label">Quick Find — tap a letter</div>
+    <div class="ci-alpha-row" id="ci-ln-strip"></div>
+    <!-- First name alpha strip (shown after last name selected) -->
+    <div id="ci-fn-section" style="display:none">
+      <div class="ci-section-title" id="ci-fn-label">Now tap first name initial</div>
+      <div class="ci-alpha-row" id="ci-fn-strip"></div>
+    </div>
+    <!-- Results / predictive list -->
+    <div class="rlist" id="ci-list"></div>
   </div>
   <div id="pane-dir" class="pane">
     <div class="dir-controls">
@@ -455,7 +471,7 @@ function fmtTime(ts){return new Date(ts).toLocaleTimeString('en-US',{hour:'numer
 function renderAll(){renderCI();renderDir();renderRep();}
 
 // Directory search - poll + direct binding for maximum compatibility
-var _lastDirQ='',_dirQ='',dirAlpha='';
+var _lastDirQ='',_dirQ='',dirAlpha='',ciLastAlpha='',ciFirstAlpha='';
 function _bindDirSearch(){
   var ds=document.getElementById('dir-search');
   if(!ds||ds._bound)return;
@@ -537,7 +553,118 @@ function setFilter(btn,f){dirFilter=f;document.querySelectorAll('.fbtn').forEach
 
 function cardHTML(m,ciMode){var chip=chipInfo(m);return'<div class="mcard '+cardCls(m)+'" onclick="openMember(\''+m.id+'\','+ciMode+')">'+'<div class="mavatar">'+(m.last||'?')[0]+'</div>'+'<div class="minfo"><div class="mname">'+m.last+', '+m.first+'</div><div class="mmeta">'+typeBadge(m.type)+' '+statusBadge(m.status)+'</div><div class="mroster">'+rosterStr(m)+'</div></div>'+'<div class="gchip '+chip.cls+'">'+chip.lbl+'</div></div>';}
 
-function renderCI(){var q=(document.getElementById('ci-search')?document.getElementById('ci-search').value:'').trim().toLowerCase();var el=document.getElementById('ci-list');if(!el)return;if(!q){el.innerHTML='<div class="empty"><div class="ico">&#x1F40A;</div><p>Type a last name to find a member.</p></div>';return;}var res=members.filter(function(m){return m.last.toLowerCase().startsWith(q);}).sort(function(a,b){return a.last.localeCompare(b.last)||a.first.localeCompare(b.first);});el.innerHTML=res.length?res.map(function(m){return cardHTML(m,true);}).join(''):'<div class="empty"><div class="ico">&#x1F50D;</div><p>No members found.</p></div>';}
+// ── PREDICTIVE SUGGESTIONS ───────────────────────────────────────────────────
+function getPredictive(){
+  var now=new Date();
+  var hour=now.getHours();
+  var dow=now.getDay();
+  var todayStr=now.toDateString();
+  // Members already checked in today
+  var checkedToday={};
+  visits.forEach(function(v){
+    if(new Date(v.ts).toDateString()===todayStr) checkedToday[v.memberId]=true;
+  });
+  // Score each member by how many times they checked in during this hour±1 on this day of week
+  var scores={};
+  visits.forEach(function(v){
+    if(checkedToday[v.memberId]) return; // skip already checked in today
+    var d=new Date(v.ts);
+    if(d.getDay()===dow && Math.abs(d.getHours()-hour)<=1){
+      scores[v.memberId]=(scores[v.memberId]||0)+1;
+    }
+  });
+  // Sort members by score descending, take top 8
+  return members
+    .filter(function(m){return scores[m.id]&&!checkedToday[m.id];})
+    .sort(function(a,b){return (scores[b.id]||0)-(scores[a.id]||0);})
+    .slice(0,8);
+}
+
+function buildCiAlphaStrips(){
+  // Last name strip - only letters with members not checked in today
+  var todayStr=new Date().toDateString();
+  var checkedToday={};
+  visits.forEach(function(v){if(new Date(v.ts).toDateString()===todayStr) checkedToday[v.memberId]=true;});
+  var lnLetters={};
+  members.forEach(function(m){if(m.last&&!checkedToday[m.id]) lnLetters[m.last[0].toUpperCase()]=true;});
+  var lnStrip=document.getElementById('ci-ln-strip'); if(!lnStrip) return;
+  lnStrip.innerHTML=Object.keys(lnLetters).sort().map(function(l){
+    return '<button class="ci-alpha-btn'+(ciLastAlpha===l?' on':'')+'" onclick="setCiLastAlpha(&quot;'+l+'&quot;)">'+l+'</button>';
+  }).join('');
+  // First name strip - only if last name selected
+  var fnSection=document.getElementById('ci-fn-section');
+  var fnStrip=document.getElementById('ci-fn-strip');
+  if(ciLastAlpha&&fnSection&&fnStrip){
+    fnSection.style.display='block';
+    var fnLetters={};
+    members.filter(function(m){return m.last&&m.last[0].toUpperCase()===ciLastAlpha&&!checkedToday[m.id];})
+      .forEach(function(m){if(m.first) fnLetters[m.first[0].toUpperCase()]=true;});
+    fnStrip.innerHTML=Object.keys(fnLetters).sort().map(function(l){
+      return '<button class="ci-alpha-btn'+(ciFirstAlpha===l?' on':'')+'" onclick="setCiFirstAlpha(&quot;'+l+'&quot;)">'+l+'</button>';
+    }).join('');
+    // Update label
+    var fnLabel=document.getElementById('ci-fn-label');
+    if(fnLabel) fnLabel.textContent='Last name: '+ciLastAlpha+' — now tap first name initial';
+  } else if(fnSection){
+    fnSection.style.display='none';
+  }
+}
+
+function setCiLastAlpha(l){
+  if(ciLastAlpha===l){ciLastAlpha='';ciFirstAlpha='';}
+  else{ciLastAlpha=l;ciFirstAlpha='';}
+  renderCI();
+}
+function setCiFirstAlpha(l){
+  ciFirstAlpha=ciFirstAlpha===l?'':l;
+  renderCI();
+}
+
+function renderCI(){
+  var el=document.getElementById('ci-list'); if(!el) return;
+  buildCiAlphaStrips();
+  var todayStr=new Date().toDateString();
+  var checkedToday={};
+  visits.forEach(function(v){if(new Date(v.ts).toDateString()===todayStr) checkedToday[v.memberId]=true;});
+
+  if(!ciLastAlpha){
+    // Show predictive suggestions
+    var predicted=getPredictive();
+    if(predicted.length){
+      var nowH=new Date().getHours();
+      var timeLabel=nowH<12?'this morning':nowH<17?'this afternoon':'this evening';
+      el.innerHTML='<div class="ci-section-title" style="background:var(--sand)">&#x1F52E; Likely here '+timeLabel+' (based on history)</div>'
+        +predicted.map(function(m){
+          return '<div class="predict-card" onclick="openMember(&quot;'+m.id+'&quot;,true)">'
+            +'<div class="mavatar">'+(m.last||'?')[0]+'</div>'
+            +'<div class="minfo"><div class="mname">'+m.last+', '+m.first+'</div>'
+            +'<div class="predict-meta">'+m.type+' &middot; '+(m.status==='paid'?'<span style="color:var(--gr);font-weight:700">Paid</span>':'<span style="color:var(--re);font-weight:700">'+m.status+'</span>')+'</div>'
+            +'</div></div>';
+        }).join('')
+        +'<div class="ci-section-title" style="background:var(--sand);margin-top:6px">&#x1F4CB; Or tap a letter above to find anyone</div>';
+    } else {
+      el.innerHTML='<div class="empty"><div class="ico">&#x1F40A;</div><p>Tap a letter above to find a member.</p></div>';
+    }
+    return;
+  }
+
+  // Filter by last name initial
+  var list=members.filter(function(m){return m.last&&m.last[0].toUpperCase()===ciLastAlpha;});
+  // Filter by first name initial if selected
+  if(ciFirstAlpha) list=list.filter(function(m){return m.first&&m.first[0].toUpperCase()===ciFirstAlpha;});
+  list.sort(function(a,b){return a.last.localeCompare(b.last)||a.first.localeCompare(b.first);});
+
+  // Auto-open if exactly one match
+  if(list.length===1){
+    el.innerHTML='';
+    setTimeout(function(){openMember(list[0].id,true);},50);
+    return;
+  }
+
+  el.innerHTML=list.length
+    ?list.map(function(m){return cardHTML(m,true);}).join('')
+    :'<div class="empty"><div class="ico">&#x1F50D;</div><p>No members found.</p></div>';
+}
 
 function rebuildFilterBtns(){
   var el=document.getElementById('dir-filter-btns'); if(!el) return;
