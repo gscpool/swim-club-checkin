@@ -234,6 +234,12 @@ body{font-family:'Inter',sans-serif;background:var(--sand);color:var(--tx);min-h
 
 /* CHECK-IN TAB QUICK FIND */
 .ci-section-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--mu);padding:10px 13px 5px;background:var(--sand)}
+.miss-step-title{font-size:15px;font-weight:800;color:var(--bld);margin-bottom:4px}
+.miss-step-sub{font-size:12px;color:var(--mu);margin-bottom:14px}
+.miss-adult-choice{display:flex;gap:10px;margin:10px 0}
+.miss-adult-btn{flex:1;padding:16px;border:2.5px solid var(--sand2);border-radius:12px;background:var(--sand);font-size:18px;font-weight:800;color:var(--bld);cursor:pointer;font-family:'Inter',sans-serif;text-align:center;transition:all .15s}
+.miss-adult-btn.selected{border-color:var(--or);background:var(--orl);color:var(--or)}
+.miss-child-row{display:flex;gap:8px;align-items:center;margin-bottom:6px}
 .ci-alpha-row{display:flex;flex-wrap:wrap;gap:7px;padding:10px 13px 12px;background:var(--sand);border-bottom:1px solid var(--sand2)}
 .ci-alpha-btn{min-width:44px;height:44px;padding:0 8px;border-radius:10px;border:2px solid var(--sand2);background:#fff;font-size:16px;font-weight:700;color:var(--bl);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .12s;box-shadow:0 1px 4px rgba(0,0,0,.07)}
 .ci-alpha-btn.on{background:var(--or);border-color:var(--or);color:#fff;box-shadow:0 2px 8px rgba(250,70,22,.3)}
@@ -285,7 +291,7 @@ body{font-family:'Inter',sans-serif;background:var(--sand);color:var(--tx);min-h
 <!-- APP -->
 <div id="app">
   <div class="topbar">
-    <div class="topbar-l"><span style="font-size:24px">&#x1F40A;</span><div><div class="topbar-title">Gibsonville Swim Club</div><div class="topbar-sub" id="today-lbl"></div><div style="font-size:10px;color:rgba(255,255,255,.6);letter-spacing:.5px;margin-top:2px;font-weight:600">v1.4.5</div></div></div>
+    <div class="topbar-l"><span style="font-size:24px">&#x1F40A;</span><div><div class="topbar-title">Gibsonville Swim Club</div><div class="topbar-sub" id="today-lbl"></div><div style="font-size:10px;color:rgba(255,255,255,.6);letter-spacing:.5px;margin-top:2px;font-weight:600">v1.5.0</div></div></div>
     <div class="topbar-acts"><div id="sync-pill" style="display:none;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;align-items:center;gap:4px"></div><button class="ibtn" onclick="openSettings()">&#x2699;&#xFE0F;</button></div>
   </div>
   <div class="tabs">
@@ -525,6 +531,224 @@ function saveVisit(v){
 function uid(){return 'm'+Date.now()+Math.random().toString(36).slice(2,5);}
 function fmtDate(ts){return new Date(ts).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});}
 function fmtTime(ts){return new Date(ts).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});}
+// ══════════════════════════════════════════════════════
+// MISSING MEMBER INFO MODAL
+// ══════════════════════════════════════════════════════
+var _missId=null, _missStep=0, _missSteps=[], _missData={};
+
+function needsInfoCollection(m){
+  // Returns true if any required info is missing for first checkin this season
+  if(!m.email||!m.phone||!m.street||!m.city||!m.state||!m.zip) return true;
+  var tc=getTypeConfig(m.type);
+  // For types that allow 2 adults, if no adult count recorded
+  if(tc.maxAdults>1&&!m.adults) return true;
+  // If 2 adults recorded or Couples, second adult name required
+  if((m.adults>=2||tc.requireSecond)&&!(m.secFirst||m.secLast)) return true;
+  // For types that allow children, if children field is null/undefined (not 0)
+  if(tc.allowChildren&&m.kids===undefined) return true;
+  return false;
+}
+
+function buildMissSteps(m){
+  var steps=[];
+  var tc=getTypeConfig(m.type);
+  // Contact info step
+  if(!m.email||!m.phone){
+    steps.push({id:'contact',title:'Contact Information',sub:'We need your contact details on file.'});
+  }
+  // Address step
+  if(!m.street||!m.city||!m.state||!m.zip){
+    steps.push({id:'address',title:'Home Address',sub:'Please provide your mailing address.'});
+  }
+  // Adults step (Family/Board/Comp only - not Couples which requires 2)
+  if(tc.maxAdults>1&&!tc.requireSecond&&!m.adults){
+    steps.push({id:'adults',title:'How Many Adults',sub:'How many adults are in this household?'});
+  }
+  // Second adult name step
+  var needSec=(tc.requireSecond||(_missData.adults===2)||(m.adults>=2))&&!(m.secFirst||m.secLast);
+  if(needSec||((tc.requireSecond)&&!(m.secFirst||m.secLast))){
+    steps.push({id:'secadult',title:'Second Adult Name',sub:'Please provide the second adult name.'});
+  }
+  // Children step (Family/Board/Comp)
+  if(tc.allowChildren&&m.kids===undefined){
+    steps.push({id:'children',title:'Children Names',sub:'Please add each child. Tap Add Child for each one.'});
+  }
+  return steps;
+}
+
+function openMissModal(memberId){
+  var m=members.find(function(x){return x.id===memberId;}); if(!m) return;
+  _missId=memberId;
+  _missStep=0;
+  _missData={};
+  _missSteps=buildMissSteps(m);
+  if(!_missSteps.length){openMember(memberId,true);return;}
+  document.getElementById('miss-member-name').textContent=m.first+' '+m.last;
+  document.getElementById('miss-overlay').style.display='flex';
+  renderMissStep();
+}
+
+function renderMissStep(){
+  var m=members.find(function(x){return x.id===_missId;}); if(!m) return;
+  var step=_missSteps[_missStep];
+  var total=_missSteps.length;
+  document.getElementById('miss-step-indicator').textContent='Step '+(_missStep+1)+' of '+total;
+  document.getElementById('miss-back-btn').style.display=_missStep>0?'':'none';
+
+  var html='<div class="miss-step-title">'+step.title+'</div>'
+    +'<div class="miss-step-sub">'+step.sub+'</div>';
+
+  if(step.id==='contact'){
+    html+='<div class="fg"><label class="fl">Email Address</label>'
+      +'<input class="fi" id="miss-email" type="email" value="'+(m.email||'')+'" placeholder="email@example.com"></div>'
+      +'<div class="fg"><label class="fl">Phone Number</label>'
+      +'<input class="fi" id="miss-phone" type="tel" value="'+(m.phone||'')+'" placeholder="(336) 555-1234"></div>';
+  } else if(step.id==='address'){
+    html+='<div class="fg"><label class="fl">Street Address</label>'
+      +'<input class="fi" id="miss-street" value="'+(m.street||'')+'" placeholder="123 Main St"></div>'
+      +'<div class="fg"><label class="fl">City</label>'
+      +'<input class="fi" id="miss-city" value="'+(m.city||'')+'" placeholder="Gibsonville"></div>'
+      +'<div class="frow">'
+      +'<div class="fg"><label class="fl">State</label><input class="fi" id="miss-state" value="'+(m.state||'NC')+'" placeholder="NC" style="text-transform:uppercase" maxlength="2"></div>'
+      +'<div class="fg"><label class="fl">Zip</label><input class="fi" id="miss-zip" type="tel" value="'+(m.zip||'')+'" placeholder="27249" maxlength="5"></div>'
+      +'</div>';
+  } else if(step.id==='adults'){
+    var sel=_missData.adults||m.adults||0;
+    html+='<div class="miss-adult-choice">'
+      +'<button class="miss-adult-btn'+(sel===1?' selected':'')+'" id="miss-a1" onclick="selectAdultCount(1)">1 Adult</button>'
+      +'<button class="miss-adult-btn'+(sel===2?' selected':'')+'" id="miss-a2" onclick="selectAdultCount(2)">2 Adults</button>'
+      +'</div>';
+  } else if(step.id==='secadult'){
+    html+='<div class="fg"><label class="fl">First Name</label>'
+      +'<input class="fi" id="miss-sec-first" value="'+(m.secFirst||'')+'" placeholder="First name"></div>'
+      +'<div class="fg"><label class="fl">Last Name</label>'
+      +'<input class="fi" id="miss-sec-last" value="'+(m.secLast||'')+'" placeholder="Last name"></div>'
+      +'<div class="fg"><label class="fl">Phone (optional)</label>'
+      +'<input class="fi" id="miss-sec-phone" type="tel" value="'+(m.secPhone||'')+'" placeholder="(336) 555-1234"></div>'
+      +'<div class="fg"><label class="fl">Email (optional)</label>'
+      +'<input class="fi" id="miss-sec-email" type="email" value="'+(m.secEmail||'')+'" placeholder="email@example.com"></div>';
+  } else if(step.id==='children'){
+    var kids=_missData.kids||(m.kids&&m.kids.length?m.kids.slice():[]);
+    html+='<div id="miss-kids-list">';
+    kids.forEach(function(k,i){
+      html+='<div class="miss-child-row">'
+        +'<input class="fi" id="miss-kid-'+i+'" value="'+k+'" placeholder="Child first name" style="flex:1">'
+        +'<button onclick="removeMissKid('+i+')" style="width:36px;height:44px;background:var(--rel);border:none;color:var(--re);border-radius:9px;font-size:16px;cursor:pointer;flex-shrink:0">&#x2715;</button>'
+        +'</div>';
+    });
+    html+='</div>'
+      +'<button class="btn-s" onclick="addMissKid()" style="margin-top:6px">&#xFF0B; Add Child</button>'
+      +'<div style="font-size:11px;color:var(--mu);margin-top:8px">Tap “Next” when all children are added. If there are no children, tap “Next” without adding any.</div>';
+    _missData.kids=kids;
+  }
+
+  document.getElementById('miss-step-body').innerHTML=html;
+  // Update Next button label
+  document.getElementById('miss-next-btn').textContent=
+    (_missStep===_missSteps.length-1)?'Save & Check In ✓':'Next →';
+}
+
+function selectAdultCount(n){
+  _missData.adults=n;
+  document.getElementById('miss-a1').classList.toggle('selected',n===1);
+  document.getElementById('miss-a2').classList.toggle('selected',n===2);
+  // If 2 adults chosen, add secadult step if not already there
+  var hasSec=_missSteps.some(function(s){return s.id==='secadult';});
+  var m=members.find(function(x){return x.id===_missId;});
+  if(n===2&&!hasSec&&!(m.secFirst||m.secLast)){
+    _missSteps.splice(_missStep+1,0,{id:'secadult',title:'Second Adult Name',sub:'Please provide the second adult name.'});
+  } else if(n===1){
+    _missSteps=_missSteps.filter(function(s){return s.id!=='secadult';});
+  }
+  document.getElementById('miss-step-indicator').textContent='Step '+(_missStep+1)+' of '+_missSteps.length;
+}
+
+function addMissKid(){
+  if(!_missData.kids) _missData.kids=[];
+  _missData.kids.push('');
+  renderMissStep();
+  // Focus the new input
+  setTimeout(function(){
+    var inp=document.getElementById('miss-kid-'+(_missData.kids.length-1));
+    if(inp) inp.focus();
+  },50);
+}
+
+function removeMissKid(idx){
+  if(!_missData.kids) return;
+  _missData.kids.splice(idx,1);
+  renderMissStep();
+}
+
+function collectMissStepData(){
+  var step=_missSteps[_missStep];
+  if(step.id==='contact'){
+    var email=document.getElementById('miss-email').value.trim();
+    var phone=document.getElementById('miss-phone').value.trim();
+    if(!email||!phone){showToast('Please fill in both fields','warn');return false;}
+    _missData.email=email;_missData.phone=phone;
+  } else if(step.id==='address'){
+    var street=document.getElementById('miss-street').value.trim();
+    var city=document.getElementById('miss-city').value.trim();
+    var state=document.getElementById('miss-state').value.trim();
+    var zip=document.getElementById('miss-zip').value.trim();
+    if(!street||!city||!state||!zip){showToast('Please fill in all address fields','warn');return false;}
+    _missData.street=street;_missData.city=city;_missData.state=state;_missData.zip=zip;
+  } else if(step.id==='adults'){
+    if(!_missData.adults){showToast('Please select 1 or 2 adults','warn');return false;}
+  } else if(step.id==='secadult'){
+    var sf=document.getElementById('miss-sec-first').value.trim();
+    var sl=document.getElementById('miss-sec-last').value.trim();
+    if(!sf||!sl){showToast('Please enter the second adult full name','warn');return false;}
+    _missData.secFirst=sf;_missData.secLast=sl;
+    var sp=document.getElementById('miss-sec-phone');if(sp) _missData.secPhone=sp.value.trim();
+    var se=document.getElementById('miss-sec-email');if(se) _missData.secEmail=se.value.trim();
+  } else if(step.id==='children'){
+    var kids=[];
+    var inputs=document.querySelectorAll('[id^="miss-kid-"]');
+    inputs.forEach(function(inp){var v=inp.value.trim();if(v) kids.push(v);});
+    _missData.kids=kids;
+  }
+  return true;
+}
+
+function missNext(){
+  if(!collectMissStepData()) return;
+  if(_missStep<_missSteps.length-1){
+    _missStep++;
+    renderMissStep();
+  } else {
+    // Save all collected data to member record
+    var m=members.find(function(x){return x.id===_missId;}); if(!m) return;
+    var updates=Object.assign({},m);
+    if(_missData.email) updates.email=_missData.email;
+    if(_missData.phone) updates.phone=formatPhone(_missData.phone);
+    if(_missData.street) updates.street=_missData.street;
+    if(_missData.city) updates.city=_missData.city;
+    if(_missData.state) updates.state=_missData.state.toUpperCase();
+    if(_missData.zip) updates.zip=_missData.zip;
+    if(_missData.adults) updates.adults=_missData.adults;
+    if(_missData.secFirst){updates.secFirst=_missData.secFirst;updates.secLast=_missData.secLast||'';}
+    if(_missData.secPhone) updates.secPhone=_missData.secPhone;
+    if(_missData.secEmail) updates.secEmail=_missData.secEmail;
+    if(_missData.kids!==undefined){updates.kids=_missData.kids;updates.children=_missData.kids.length;}
+    saveMember(updates);
+    closeMissModal();
+    showToast('Info saved ✓','ok');
+    // Now open check-in panel
+    setTimeout(function(){openMember(_missId,true);},300);
+  }
+}
+
+function missBack(){
+  if(_missStep>0){_missStep--;renderMissStep();}
+}
+
+function closeMissModal(){
+  document.getElementById('miss-overlay').style.display='none';
+  _missId=null;_missStep=0;_missSteps=[];_missData={};
+}
+
 function getVisitCount(memberId){
   return visits.filter(function(v){return v.memberId===memberId;}).length;
 }
@@ -540,6 +764,8 @@ function canQuickCheckIn(m){
 function quickCheckIn(memberId, event){
   if(event) event.stopPropagation();
   var m=members.find(function(x){return x.id===memberId;}); if(!m) return;
+  var missing=getMissingSteps(m);
+  if(missing.length){checkMissingBeforeCI(m,function(){quickCheckIn(memberId,null);});return;}
   if(m.status==='unpaid'&&getUnpaidDays(m.id)>=GRACE_DAYS){showToast('Check-in blocked — payment required','err');return;}
   // Check in all household members
   var adults=[];
@@ -583,6 +809,189 @@ function playChime(){
       o.stop(ctx.currentTime+i*0.12+0.3);
     });
   }catch(e){}
+}
+
+// ── MISSING MEMBER INFO MODAL ─────────────────────────────────────────────
+var miMemberId=null, miStep=0, miSteps=[], miData={};
+
+function getMissingSteps(m){
+  var steps=[];
+  var tc=getTypeConfig(m.type);
+  var needsContact=!m.email||!m.phone||!m.street||!m.city||!m.state||!m.zip;
+  var needsAdults=(tc.maxAdults>1||tc.allowChildren)&&(!m.adults||m.adults===0);
+  var needsSec=tc.requireSecond&&!(m.secFirst&&m.secLast);
+  var needsSecOptional=!tc.requireSecond&&tc.maxAdults>1&&m.adults===2&&!(m.secFirst&&m.secLast);
+  var needsKids=tc.allowChildren&&(!m.kids||m.kids.length===0);
+  if(needsContact) steps.push('contact');
+  if(needsAdults) steps.push('adults');
+  if(needsSec||needsSecOptional) steps.push('second-adult');
+  if(needsKids) steps.push('children');
+  return steps;
+}
+
+function checkMissingBeforeCI(m, onComplete){
+  var steps=getMissingSteps(m);
+  if(!steps.length){onComplete();return;}
+  miMemberId=m.id;
+  miSteps=steps;
+  miStep=0;
+  miData={};
+  window._miOnComplete=onComplete;
+  renderMiStep();
+  var ov=document.getElementById('mi-overlay');
+  ov.style.display='flex';
+}
+
+function renderMiStep(){
+  var m=members.find(function(x){return x.id===miMemberId;}); if(!m) return;
+  var step=miSteps[miStep];
+  var prog=document.getElementById('mi-progress');
+  var body=document.getElementById('mi-step-body');
+  var backBtn=document.getElementById('mi-back-btn');
+  var nextBtn=document.getElementById('mi-next-btn');
+  if(prog) prog.textContent='Step '+(miStep+1)+' of '+miSteps.length;
+  if(backBtn) backBtn.style.display=miStep>0?'block':'none';
+  var isLast=miStep===miSteps.length-1;
+  if(nextBtn) nextBtn.textContent=isLast?'Save & Check In ✓':'Next →';
+
+  if(step==='contact'){
+    body.innerHTML='<div style="font-size:13px;font-weight:700;color:var(--bld);margin-bottom:10px">Contact Information</div>'
+      +'<div class="frow"><div class="fg"><label class="fl">Email</label><input class="fi" id="mi-email" type="email" value="'+(m.email||'')+'" placeholder="email@example.com"></div></div>'
+      +'<div class="frow"><div class="fg"><label class="fl">Phone</label><input class="fi" id="mi-phone" type="tel" value="'+(m.phone||'')+'" placeholder="(336) 555-0100" oninput="this.value=formatPhone(this.value)"></div></div>'
+      +'<div class="fg" style="margin-top:6px"><label class="fl">Street Address</label><input class="fi" id="mi-street" value="'+(m.street||'')+'" placeholder="123 Main St"></div>'
+      +'<div class="frow">'
+      +'<div class="fg"><label class="fl">City</label><input class="fi" id="mi-city" value="'+(m.city||'')+'" placeholder="Burlington"></div>'
+      +'<div class="fg" style="max-width:80px"><label class="fl">State</label><input class="fi" id="mi-state" value="'+(m.state||'NC')+'" maxlength="2"></div>'
+      +'<div class="fg" style="max-width:100px"><label class="fl">Zip</label><input class="fi" id="mi-zip" type="tel" value="'+(m.zip||'')+'" maxlength="5" placeholder="27249"></div>'
+      +'</div>';
+  } else if(step==='adults'){
+    var tc=getTypeConfig(m.type);
+    body.innerHTML='<div style="font-size:13px;font-weight:700;color:var(--bld);margin-bottom:10px">How many adults are on this membership?</div>'
+      +'<div style="display:flex;gap:10px">'
+      +'<button id="mi-a1" onclick="miSelectAdults(1)" class="btn-s" style="flex:1;font-size:18px;font-weight:800;padding:18px;'+(miData.adults===1?'background:var(--or);color:#fff;border-color:var(--or)':'')+'">1 Adult</button>'
+      +(tc.maxAdults>=2?'<button id="mi-a2" onclick="miSelectAdults(2)" class="btn-s" style="flex:1;font-size:18px;font-weight:800;padding:18px;'+(miData.adults===2?'background:var(--or);color:#fff;border-color:var(--or)':'')+'">2 Adults</button>':'')
+      +'</div>';
+  } else if(step==='second-adult'){
+    body.innerHTML='<div style="font-size:13px;font-weight:700;color:var(--bld);margin-bottom:10px">Second Adult Information</div>'
+      +'<div class="frow">'
+      +'<div class="fg"><label class="fl">First Name</label><input class="fi" id="mi-sec-first" value="'+(m.secFirst||'')+'" placeholder="First name"></div>'
+      +'<div class="fg"><label class="fl">Last Name</label><input class="fi" id="mi-sec-last" value="'+(m.secLast||'')+'" placeholder="Last name"></div>'
+      +'</div>'
+      +'<div class="fg"><label class="fl">Phone (optional)</label><input class="fi" id="mi-sec-phone" type="tel" value="'+(m.secPhone||'')+'" placeholder="(336) 555-0100" oninput="this.value=formatPhone(this.value)"></div>'
+      +'<div class="fg"><label class="fl">Email (optional)</label><input class="fi" id="mi-sec-email" type="email" value="'+(m.secEmail||'')+'" placeholder="email@example.com"></div>';
+  } else if(step==='children'){
+    var existingKids=(m.kids||[]);
+    var kidFields=existingKids.length?existingKids.map(function(k,i){
+      return'<div style="display:flex;gap:8px;align-items:center;margin-bottom:6px"><input class="fi mi-kid-input" value="'+k+'" placeholder="Child first name" style="flex:1"><button onclick="this.parentElement.remove()" style="background:var(--rel);border:none;color:var(--re);width:36px;height:36px;border-radius:8px;cursor:pointer;font-size:16px;font-weight:700;flex-shrink:0">&#x2715;</button></div>';
+    }).join(''):'';
+    body.innerHTML='<div style="font-size:13px;font-weight:700;color:var(--bld);margin-bottom:4px">Children Names</div>'
+      +'<p style="font-size:12px;color:var(--mu);margin:0 0 10px">Add each childs first name. Tap X to remove.</p>'
+      +'<div id="mi-kids-container">'+kidFields+'</div>'
+      +'<button onclick="miAddKidField()" class="btn-s" style="margin-top:6px">&#xFF0B; Add Child</button>';
+  }
+}
+
+function miSelectAdults(n){
+  miData.adults=n;
+  // Update button styles
+  var b1=document.getElementById('mi-a1');
+  var b2=document.getElementById('mi-a2');
+  if(b1) b1.style.cssText='flex:1;font-size:18px;font-weight:800;padding:18px;width:100%;border-radius:11px;cursor:pointer;font-family:Inter,sans-serif;'+(n===1?'background:var(--or);color:#fff;border:2px solid var(--or)':'background:var(--sand);color:var(--tx);border:2px solid var(--sand2)');
+  if(b2) b2.style.cssText='flex:1;font-size:18px;font-weight:800;padding:18px;width:100%;border-radius:11px;cursor:pointer;font-family:Inter,sans-serif;'+(n===2?'background:var(--or);color:#fff;border:2px solid var(--or)':'background:var(--sand);color:var(--tx);border:2px solid var(--sand2)');
+  // If 2 adults selected, ensure second-adult step is in the list
+  if(n===2&&miSteps.indexOf('second-adult')===-1){
+    var ci=miSteps.indexOf('adults');
+    miSteps.splice(ci+1,0,'second-adult');
+  }
+  // If 1 adult, remove second-adult step if it was added dynamically
+  if(n===1){
+    var m=members.find(function(x){return x.id===miMemberId;});
+    var tc=getTypeConfig(m?m.type:'Family');
+    if(!tc.requireSecond){
+      var idx=miSteps.indexOf('second-adult');
+      if(idx>-1) miSteps.splice(idx,1);
+    }
+  }
+}
+
+function miAddKidField(){
+  var c=document.getElementById('mi-kids-container'); if(!c) return;
+  var row=document.createElement('div');
+  row.style.cssText='display:flex;gap:8px;align-items:center;margin-bottom:6px';
+  row.innerHTML='<input class="fi mi-kid-input" placeholder="Child first name" style="flex:1"><button onclick="this.parentElement.remove()" style="background:var(--rel);border:none;color:var(--re);width:36px;height:36px;border-radius:8px;cursor:pointer;font-size:16px;font-weight:700;flex-shrink:0">&#x2715;</button>';
+  c.appendChild(row);
+  row.querySelector('input').focus();
+}
+
+function miCollectStep(){
+  var m=members.find(function(x){return x.id===miMemberId;}); if(!m) return false;
+  var step=miSteps[miStep];
+  var updates={};
+  if(step==='contact'){
+    var email=document.getElementById('mi-email');
+    var phone=document.getElementById('mi-phone');
+    var street=document.getElementById('mi-street');
+    var city=document.getElementById('mi-city');
+    var state=document.getElementById('mi-state');
+    var zip=document.getElementById('mi-zip');
+    if(!email||!email.value.trim()){showToast('Email is required','warn');return false;}
+    if(!phone||!phone.value.trim()){showToast('Phone is required','warn');return false;}
+    if(!street||!street.value.trim()){showToast('Street address is required','warn');return false;}
+    if(!city||!city.value.trim()){showToast('City is required','warn');return false;}
+    if(!zip||!zip.value.trim()){showToast('Zip is required','warn');return false;}
+    updates.email=email.value.trim();
+    updates.phone=phone.value.trim();
+    updates.street=street.value.trim();
+    updates.city=city.value.trim();
+    updates.state=(state?state.value.trim():'')||'NC';
+    updates.zip=zip.value.trim();
+  } else if(step==='adults'){
+    if(!miData.adults){showToast('Please select 1 or 2 adults','warn');return false;}
+    updates.adults=miData.adults;
+  } else if(step==='second-adult'){
+    var sf=document.getElementById('mi-sec-first');
+    var sl=document.getElementById('mi-sec-last');
+    var tc=getTypeConfig(m.type);
+    if(tc.requireSecond||miData.adults===2){
+      if(!sf||!sf.value.trim()){showToast('Second adult first name required','warn');return false;}
+      if(!sl||!sl.value.trim()){showToast('Second adult last name required','warn');return false;}
+    }
+    if(sf) updates.secFirst=sf.value.trim();
+    if(sl) updates.secLast=sl.value.trim();
+    var sp=document.getElementById('mi-sec-phone');
+    var se=document.getElementById('mi-sec-email');
+    if(sp) updates.secPhone=sp.value.trim();
+    if(se) updates.secEmail=se.value.trim();
+  } else if(step==='children'){
+    var inputs=document.querySelectorAll('.mi-kid-input');
+    var kids=[];
+    inputs.forEach(function(inp){var v=inp.value.trim();if(v) kids.push(v);});
+    updates.kids=kids;
+    updates.children=kids.length;
+  }
+  Object.assign(miData, updates);
+  return true;
+}
+
+function miNext(){
+  if(!miCollectStep()) return;
+  var m=members.find(function(x){return x.id===miMemberId;}); if(!m) return;
+  if(miStep<miSteps.length-1){
+    miStep++;
+    renderMiStep();
+  } else {
+    // Save all collected data
+    var updated=Object.assign({},m,miData);
+    saveMember(updated);
+    document.getElementById('mi-overlay').style.display='none';
+    showToast('Member info saved ✓','ok');
+    // Proceed to check-in
+    if(window._miOnComplete) window._miOnComplete();
+  }
+}
+
+function miBack(){
+  if(miStep>0){miStep--;renderMiStep();}
 }
 
 function renderAll(){renderCI();renderDir();renderRep();}
@@ -1104,7 +1513,7 @@ function ciAddKidInline(){
   var row=document.createElement('div');
   row.style.cssText='display:flex;gap:6px;align-items:center';
   var newId='ci-k-new-'+Date.now();
-  row.innerHTML='<input class="ci-inline-input" id="'+newId+'" placeholder="Child\'s first name">'
+  row.innerHTML='<input class="ci-inline-input" id="'+newId+'" placeholder="Child first name">'
     +'<button onclick="ciConfirmNewKid(\''+newId+'\')" style="padding:6px 10px;background:var(--or);border:none;color:#fff;border-radius:7px;font-size:12px;font-weight:700;font-family:Inter,sans-serif;cursor:pointer;white-space:nowrap">Add</button>';
   list.insertBefore(row,addBtn);
   setTimeout(function(){var inp=document.getElementById(newId);if(inp)inp.focus();},50);
@@ -1224,7 +1633,7 @@ document.getElementById('ed-body').innerHTML=
   +'<div class="sec-lbl">Household Roster</div>'
   +'<div class="frow"><div class="fg"><label class="fl">Adults</label><input class="fi" id="ef-adults" type="number" min="1" max="2" value="'+(m.adults!==undefined?m.adults:(defAdults[m.type||'Individual']||1))+'" oninput="adultsChanged()"></div></div>'
   +'<div id="sec-name-row" style="display:none;flex-direction:column;gap:10px"><div class="sec-lbl" style="font-size:10px;margin-top:2px">Secondary Member</div><div class="frow"><div class="fg"><label class="fl">First Name</label><input class="fi" id="ef-sec-first" value="'+(m.secFirst||'')+'" placeholder="First"></div><div class="fg"><label class="fl">Last Name</label><input class="fi" id="ef-sec-last" value="'+(m.secLast||'')+'" placeholder="Last"></div></div><div class="fg"><label class="fl">Phone</label><input class="fi" id="ef-sec-phone" type="tel" value="'+(m.secPhone||'')+'" placeholder="(336) 555-0000"></div><div class="fg"><label class="fl">Email</label><input class="fi" id="ef-sec-email" type="email" value="'+(m.secEmail||'')+'" placeholder="email@example.com"></div></div>'
-  +'<div class="fg"><label class="fl">Children\'s Names</label><div id="kids-list" style="display:flex;flex-direction:column;gap:6px">'+((m.kids&&m.kids.length?m.kids:['']).map(function(k){return'<div style="display:flex;gap:6px;align-items:center"><input class="fi kid-input" value="'+k+'" placeholder="Child\'s first name" style="flex:1"><button onclick="removeKid(this)" style="background:var(--rel);border:none;color:var(--re);width:32px;height:32px;border-radius:8px;font-size:16px;cursor:pointer;flex-shrink:0">&#x2715;</button></div>';}).join(''))+'</div><button onclick="addKid()" class="btn-s" style="margin-top:4px">&#xFF0B; Add Child</button></div>'
+  +'<div class="fg"><label class="fl">Children\'s Names</label><div id="kids-list" style="display:flex;flex-direction:column;gap:6px">'+((m.kids&&m.kids.length?m.kids:['']).map(function(k){return'<div style="display:flex;gap:6px;align-items:center"><input class="fi kid-input" value="'+k+'" placeholder="Child first name" style="flex:1"><button onclick="removeKid(this)" style="background:var(--rel);border:none;color:var(--re);width:32px;height:32px;border-radius:8px;font-size:16px;cursor:pointer;flex-shrink:0">&#x2715;</button></div>';}).join(''))+'</div><button onclick="addKid()" class="btn-s" style="margin-top:4px">&#xFF0B; Add Child</button></div>'
   +'<div class="sec-lbl">Notes</div>'
   +'<div class="fg"><textarea class="fi" id="ef-notes" rows="3" placeholder="Internal notes..." style="resize:vertical">'+(m.notes||'')+'</textarea></div>'
   +'<div class="sec-lbl">Nanny / Authorized Non-Household Member</div>'
@@ -1250,7 +1659,7 @@ function adultsChanged(){var type=document.getElementById('ef-type').value;if(ty
 function updateSecVisibility(){var type=document.getElementById('ef-type')?document.getElementById('ef-type').value:'';var adults=parseInt(document.getElementById('ef-adults')?document.getElementById('ef-adults').value:1)||1;var show=(type!=='Individual')&&(type==='Couples'||adults>=2);var row=document.getElementById('sec-name-row');if(row)row.style.display=show?'flex':'none';}
 function toggleNanny(){var c=document.getElementById('ef-nanny-enabled').checked;document.getElementById('nanny-fields').style.display=c?'flex':'none';}
 function toggleSecondary(){}
-function addKid(){var list=document.getElementById('kids-list');if(!list)return;var row=document.createElement('div');row.style.cssText='display:flex;gap:6px;align-items:center';row.innerHTML='<input class="fi kid-input" placeholder="Child\'s first name" style="flex:1"><button onclick="removeKid(this)" style="background:var(--rel);border:none;color:var(--re);width:32px;height:32px;border-radius:8px;font-size:16px;cursor:pointer;flex-shrink:0">&#x2715;</button>';list.appendChild(row);row.querySelector('input').focus();}
+function addKid(){var list=document.getElementById('kids-list');if(!list)return;var row=document.createElement('div');row.style.cssText='display:flex;gap:6px;align-items:center';row.innerHTML='<input class="fi kid-input" placeholder="Child first name" style="flex:1"><button onclick="removeKid(this)" style="background:var(--rel);border:none;color:var(--re);width:32px;height:32px;border-radius:8px;font-size:16px;cursor:pointer;flex-shrink:0">&#x2715;</button>';list.appendChild(row);row.querySelector('input').focus();}
 function removeKid(btn){var row=btn.parentElement;row.parentElement.removeChild(row);}
 function closeEdit(){document.getElementById('ed-overlay').classList.remove('open');}
 function commitEdit(){var first=document.getElementById('ef-first').value.trim();var last=document.getElementById('ef-last').value.trim();if(!first||!last){showToast('Name required','warn');return;}var type=document.getElementById('ef-type').value;var gtotal=parseInt(document.getElementById('ef-gtotal').value);if(isNaN(gtotal))gtotal=GUEST_PASSES[type];var secRow=document.getElementById('sec-name-row');var secOk=secRow&&secRow.style.display!=='none';var kids=(function(){var inputs=document.querySelectorAll('.kid-input'),arr=[];inputs.forEach(function(i){var v=i.value.trim();if(v)arr.push(v);});return arr;})();var m={id:editingId||uid(),first:first,last:last,type:type,status:document.getElementById('ef-status').value,email:document.getElementById('ef-email').value.trim(),phone:formatPhone(document.getElementById('ef-phone').value),street:document.getElementById('ef-street').value.trim(),city:document.getElementById('ef-city').value.trim(),state:document.getElementById('ef-state').value.trim(),zip:document.getElementById('ef-zip').value.trim(),adults:parseInt(document.getElementById('ef-adults').value)||1,kids:kids,children:kids.length,guestsUsed:parseInt(document.getElementById('ef-gused').value)||0,guestsTotal:gtotal,secFirst:secOk&&document.getElementById('ef-sec-first')?document.getElementById('ef-sec-first').value.trim():'',secLast:secOk&&document.getElementById('ef-sec-last')?document.getElementById('ef-sec-last').value.trim():'',secPhone:secOk&&document.getElementById('ef-sec-phone')?formatPhone(document.getElementById('ef-sec-phone').value):'',secEmail:secOk&&document.getElementById('ef-sec-email')?document.getElementById('ef-sec-email').value.trim():'',notes:document.getElementById('ef-notes').value.trim(),nannyEnabled:document.getElementById('ef-nanny-enabled').checked,nannyName:document.getElementById('ef-nanny-name')?document.getElementById('ef-nanny-name').value.trim():'',nannyPhone:document.getElementById('ef-nanny-phone')?formatPhone(document.getElementById('ef-nanny-phone').value):'',nannyStreet:document.getElementById('ef-nanny-street')?document.getElementById('ef-nanny-street').value.trim():'',nannyCity:document.getElementById('ef-nanny-city')?document.getElementById('ef-nanny-city').value.trim():'',nannyState:document.getElementById('ef-nanny-state')?document.getElementById('ef-nanny-state').value.trim():'',nannyZip:document.getElementById('ef-nanny-zip')?document.getElementById('ef-nanny-zip').value.trim():'',nannyDob:document.getElementById('ef-nanny-dob')?document.getElementById('ef-nanny-dob').value:''};saveMember(m);closeEdit();showToast(m.first+' '+m.last+' '+(editingId?'updated':'added'),'ok');}
@@ -1351,7 +1760,7 @@ function renderRep(){
 
   // ── TODAY ──────────────────────────────────────────────────────────────
   html+='<div class="rep2-block">'
-    +'<div class="rep2-hdr" style="background:'+OR+'">&#x1F305; Today &mdash; '+now.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})+'</div>'
+    +'<div class="rep2-hdr" style="color:'+OR+';border-bottom:2px solid '+OR+'"><span class="rep2-hdr-icon">&#x1F305;</span> Today &mdash; '+now.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})+'</div>'
     +'<div class="kpi2-grid">'
     +kpi(todayV.length,'Check-Ins',OR,'today-hourly')
     +kpi(todayHH,'Households',BL,'today-hourly')
@@ -1361,7 +1770,7 @@ function renderRep(){
 
   // ── LAST 7 DAYS ────────────────────────────────────────────────────────
   html+='<div class="rep2-block">'
-    +'<div class="rep2-hdr" style="background:'+BL+'">&#x1F4C5; Last 7 Days</div>'
+    +'<div class="rep2-hdr" style="color:'+BL+';border-bottom:2px solid '+BL+'"><span class="rep2-hdr-icon">&#x1F4C5;</span> Last 7 Days</div>'
     +'<div class="kpi2-grid">'
     +kpi(last7V.length,'Total Visits',BL,'seven-daily-heads')
     +kpi(avgPerDay,'Avg Visits/Day',BL,'seven-daily-heads')
@@ -1371,7 +1780,7 @@ function renderRep(){
 
   // ── THIS SEASON ────────────────────────────────────────────────────────
   html+='<div class="rep2-block">'
-    +'<div class="rep2-hdr" style="background:'+GR+'">&#x1F3CA; This Season</div>'
+    +'<div class="rep2-hdr" style="color:'+GR+';border-bottom:2px solid '+GR+'"><span class="rep2-hdr-icon">&#x1F3CA;</span> This Season</div>'
     +'<div class="kpi2-grid">'
     +kpi(seasonV.length,'Total Visits',GR,'season-hourly')
     +kpi(seasonHH,'Unique Households',GR,'season-hh-daily')
@@ -1385,7 +1794,7 @@ function renderRep(){
   // ── MEMBERSHIP ─────────────────────────────────────────────────────────
   var paidPct=members.length?Math.round(paid/members.length*100):0;
   html+='<div class="rep2-block">'
-    +'<div class="rep2-hdr" style="background:'+BL+'">&#x1F465; Membership</div>'
+    +'<div class="rep2-hdr" style="color:'+BL+';border-bottom:2px solid '+BL+'"><span class="rep2-hdr-icon">&#x1F465;</span> Membership</div>'
     +'<div class="kpi2-grid">'
     +kpi(members.length,'Total Members',BL)
     +kpi(paid,'Paid ('+paidPct+'%)',GR)
@@ -1396,7 +1805,7 @@ function renderRep(){
   // ── UNPAID LIST ────────────────────────────────────────────────────────
   if(unpaidList.length){
     html+='<div class="rep2-block">'
-      +'<div class="rep2-hdr" style="background:'+RE+'">&#x26A0;&#xFE0F; Unpaid &amp; Pending ('+unpaidList.length+')</div>'
+      +'<div class="rep2-hdr" style="color:'+RE+';border-bottom:2px solid '+RE+'"><span class="rep2-hdr-icon">&#x26A0;&#xFE0F;</span> Unpaid &amp; Pending ('+unpaidList.length+')</div>'
       +'<div class="rep-list">'+unpaidList.map(function(m){
         return'<div class="rep-row"><div><span class="rep-name">'+m.last+', '+m.first+'</span> '+typeBadge(m.type)+' '+statusBadge(m.status)+'</div>'
           +'<div style="font-size:11px;color:var(--mu)">'+(m.email||'')+'</div></div>';
@@ -1405,7 +1814,7 @@ function renderRep(){
 
   // ── DATA MANAGEMENT ────────────────────────────────────────────────────
   html+='<div class="rep2-block">'
-    +'<div class="rep2-hdr" style="background:'+BL+'">&#x1F4BE; Data Management</div>'
+    +'<div class="rep2-hdr" style="color:'+BL+';border-bottom:2px solid '+BL+'"><span class="rep2-hdr-icon">&#x1F4BE;</span> Data Management</div>'
     +'<div style="display:flex;flex-direction:column;gap:8px;padding:4px 0">'
     +'<button class="exp-btn" onclick="requireAdminPin(function(){exportCSV(\'members\');})">&#x1F4E5; Export Member List (CSV)</button>'
     +'<button class="exp-btn" onclick="requireAdminPin(function(){exportCSV(\'visits\');})">&#x1F4E5; Export Visit Log (CSV)</button>'
@@ -1662,5 +2071,39 @@ function doChangePin(){var p1=document.getElementById('np1').value;var p2=docume
 function enablePin(){document.getElementById('pin-screen').classList.remove('hidden');closeSettings();showToast('PIN enabled');}
 function doSeasonReset(){if(!confirm('Reset all guest pass counts for the new season?'))return;members=members.map(function(m){return Object.assign({},m,{guestsUsed:0,guestsTotal:GUEST_PASSES[m.type]!==undefined?GUEST_PASSES[m.type]:m.guestsTotal});});lSet('gsc_members',members);renderAll();closeSettings();showToast('Season reset complete');}
 </script>
+
+<!-- MISSING MEMBER INFO MODAL -->
+<div class="overlay" id="miss-overlay" style="display:none">
+  <div class="sheet" id="miss-sheet" style="max-height:90vh;overflow-y:auto">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <div>
+        <div style="font-size:18px;font-weight:800;color:var(--bld)" id="miss-member-name"></div>
+        <div style="font-size:12px;color:var(--am);font-weight:600;margin-top:2px">&#x26A0;&#xFE0F; Missing Member Info — required before check-in</div>
+      </div>
+      <div style="font-size:11px;color:var(--mu);font-weight:600" id="miss-step-indicator"></div>
+    </div>
+    <div id="miss-step-body"></div>
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <button class="btn-s" id="miss-back-btn" onclick="missBack()" style="display:none">&#x2190; Back</button>
+      <button class="btn-p" id="miss-next-btn" onclick="missNext()">Next &#x2192;</button>
+    </div>
+  </div>
+</div>
+
+<!-- MISSING MEMBER INFO MODAL -->
+<div class="overlay" id="mi-overlay" style="display:none">
+  <div class="sheet" id="mi-sheet" style="max-height:85vh;overflow-y:auto">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+      <div style="font-size:18px;font-weight:800;color:var(--bld)">&#x26A0;&#xFE0F; Missing Member Info</div>
+      <div style="font-size:11px;color:var(--mu);font-weight:600" id="mi-progress"></div>
+    </div>
+    <p style="font-size:13px;color:var(--mu);margin:0 0 14px">Please complete this information before checking in.</p>
+    <div id="mi-step-body"></div>
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <button class="btn-s" id="mi-back-btn" onclick="miBack()" style="display:none">&#x2190; Back</button>
+      <button class="btn-p" id="mi-next-btn" onclick="miNext()">Next &#x2192;</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
