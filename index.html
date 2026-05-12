@@ -55,7 +55,7 @@ body{font-family:'Inter',sans-serif;background:var(--sand);color:var(--tx);min-h
 .sinput:focus{border-color:var(--or);background:var(--wh);box-shadow:0 2px 12px rgba(250,70,22,.18)}
 .sclr{background:none;border:none;font-size:18px;color:var(--mu);cursor:pointer;padding:5px}
 .rlist{flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:7px}
-.mcard{background:var(--wh);border-radius:var(--r);padding:14px 13px;box-shadow:var(--sh);display:flex;align-items:center;gap:11px;cursor:pointer;transition:transform .1s;border-left:4px solid var(--bll)}
+.mcard{background:var(--wh);border-radius:var(--r);padding:14px 13px;box-shadow:var(--sh);display:flex;align-items:center;gap:11px;cursor:pointer;transition:transform .1s;border-left:4px solid var(--bll);border-top:none;border-right:none;border-bottom:none;-webkit-appearance:none;appearance:none}
 .mcard:active{transform:scale(.98)}
 .mcard.st-unpaid{border-left-color:var(--re);background:var(--rel)}
 .mcard.st-pending{border-left-color:var(--am);background:var(--aml)}
@@ -291,7 +291,7 @@ body{font-family:'Inter',sans-serif;background:var(--sand);color:var(--tx);min-h
 <!-- APP -->
 <div id="app">
   <div class="topbar">
-    <div class="topbar-l"><span style="font-size:24px">&#x1F40A;</span><div><div class="topbar-title">Gibsonville Swim Club</div><div class="topbar-sub" id="today-lbl"></div><div style="font-size:10px;color:rgba(255,255,255,.6);letter-spacing:.5px;margin-top:2px;font-weight:600">v1.5.9</div></div></div>
+    <div class="topbar-l"><span style="font-size:24px">&#x1F40A;</span><div><div class="topbar-title">Gibsonville Swim Club</div><div class="topbar-sub" id="today-lbl"></div><div style="font-size:10px;color:rgba(255,255,255,.6);letter-spacing:.5px;margin-top:2px;font-weight:600">v1.6.0</div></div></div>
     <div class="topbar-acts"><div id="sync-pill" style="display:none;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;align-items:center;gap:4px"></div><button class="ibtn" onclick="openSettings()">&#x2699;&#xFE0F;</button></div>
   </div>
   <div class="tabs">
@@ -1178,7 +1178,7 @@ function setFilter(btn,f){dirFilter=f;document.querySelectorAll('.fbtn').forEach
 
 function getVisitCount(mid){return visits.filter(function(v){return v.memberId===mid;}).length;}
 
-function canQuickCI(m){
+function canQuickCheckIn(m){
   if(m.status!=='paid') return false;
   if(!m.email||!m.phone||!m.street) return false;
   if(!m.first||!m.last) return false;
@@ -1197,16 +1197,14 @@ function doQuickCI(mid,evt){
 
 function cardHTML(m,ciMode){
   var chip=chipInfo(m);
-  var quick=ciMode&&canQuickCI(m)
-    ?''
-    :'<div class="gchip '+chip.cls+'">'+chip.lbl+'</div>';
-  return'<div class="mcard '+cardCls(m)+' '+(ciMode?'mcard-ci':'')+'" onclick="openMember(&quot;'+m.id+'&quot;,'+ciMode+')">'
+  var chipHtml='<div class="gchip '+chip.cls+'">'+chip.lbl+'</div>';
+  return'<button class="mcard '+cardCls(m)+'" onclick="openMember(&quot;'+m.id+'&quot;,'+ciMode+')" style="width:100%;text-align:left;font-family:Inter,sans-serif">'
     +'<div class="mavatar">'+(m.last||'?')[0]+'</div>'
     +'<div class="minfo">'
     +'<div class="mname">'+m.last+', '+m.first+'</div>'
     +'<div class="mmeta">'+typeBadge(m.type)+' '+statusBadge(m.status)+'</div>'
     +'<div class="mroster">'+rosterStr(m)+'</div>'
-    +'</div>'+quick+'</div>';
+    +'</div>'+chipHtml+'</button>';
 }
 
 function getPredictive(){
@@ -1293,7 +1291,7 @@ function buildCiAlphaStrips(){
       if(match){
         var mid=match[1];
         var m=members.find(function(x){return x.id===mid;});
-        if(m&&canQuickCI(m)){
+        if(m&&canQuickCheckIn(m)){
           var adultNames=[];
           if(m.first) adultNames.push(m.first+' '+m.last);
           if(m.secFirst||m.secLast) adultNames.push(((m.secFirst||'')+' '+(m.secLast||'')).trim());
@@ -1332,11 +1330,11 @@ function renderCI(){
       var timeLabel=nowH<12?'this morning':nowH<17?'this afternoon':'this evening';
       el.innerHTML='<div class="ci-section-title" style="background:var(--sand)">&#x1F52E; Likely here '+timeLabel+' (based on history)</div>'
         +predicted.map(function(m){
-          return '<div class="predict-card" onclick="openMember(&quot;'+m.id+'&quot;,true)">'
+          return '<button class="predict-card" onclick="openMember(&quot;'+m.id+'&quot;,true)" style="width:100%;text-align:left;font-family:Inter,sans-serif;border:none;cursor:pointer">'
             +'<div class="mavatar">'+(m.last||'?')[0]+'</div>'
             +'<div class="minfo"><div class="mname">'+m.last+', '+m.first+'</div>'
             +'<div class="predict-meta">'+m.type+' &middot; '+(m.status==='paid'?'<span style="color:var(--gr);font-weight:700">Paid</span>':'<span style="color:var(--re);font-weight:700">'+m.status+'</span>')+'</div>'
-            +'</div></div>';
+            +'</button></div>';
         }).join('')
         +'<div class="ci-section-title" style="background:var(--sand);margin-top:6px">&#x1F4CB; Or use Step 1 above — tap the member\'s last name initial</div>';
     } else {
@@ -1533,7 +1531,7 @@ function openMember(id,ciMode){
         +'<button class="ci-checkin-btn" onclick="doCheckin(\''+m.id+'\')">&#x2705; Check In'+(checkedToday?' Again':'')+'</button></div>';
     }
   }
-  if(mv.length){html+='<div><div class="sec-lbl" style="margin-bottom:6px">Recent Visits</div><div class="vlog">'+mv.slice(0,15).map(function(v){var p=[];if(v.adults>0)p.push(v.adults+'A');if(v.children>0)p.push(v.children+'C');if(v.guestPasses>0)p.push('&#x1F3AB;&times;'+v.guestPasses);return'<div class="vitem"><span>'+fmtDate(v.ts)+' '+fmtTime(v.ts)+'</span><span style="color:var(--mu)">'+(p.join(' &middot; ')||'member only')+'</span></div>';}).join('')+'</div></div>';}
+  if(mv.length){html+='<div><div class="sec-lbl" style="margin-bottom:6px">Recent Visits</div><div class="vlog">'+mv.slice(0,15).map(function(v){var p=[];if(v.adults>0)p.push(v.adults+'A');if(v.children>0)p.push(v.children+'C');if(v.guestPasses>0)p.push('&#x1F3AB;&times;'+v.guestPasses);return'<div class="vitem"><span>'+fmtDate(v.ts)+' '+fmtTime(v.ts)+'</span><span style="color:var(--mu)">'+(p.join(' &middot; ')||'member only')+'</span></div>';}).join('')+'</button></div>';}
   html+='<button class="btn-s" onclick="openEdit(\''+m.id+'\')">&#x270F;&#xFE0F; Edit Member</button>';
   document.getElementById('mm-body').innerHTML=html;
   document.getElementById('mm-overlay').classList.add('open');
@@ -1849,7 +1847,7 @@ function renderRep(){
     +kpi(todayHH,'Households',BL,'today-hourly')
     +kpi(todayHeads,'Headcount',TL,'today-hourly')
     +kpi(todayGP,'Guest Passes',AM)
-    +'</div></div>';
+    +'</button></div>';
 
   // ── LAST 7 DAYS ────────────────────────────────────────────────────────
   html+='<div class="rep2-block">'
@@ -1859,7 +1857,7 @@ function renderRep(){
     +kpi(avgPerDay,'Avg Visits/Day',BL,'seven-daily-heads')
     +kpi(sevenHH,'Unique Households',TL,'seven-daily-hh')
     +kpi(sevenHeads,'Total Headcount',OR,'seven-daily-heads')
-    +'</div></div>';
+    +'</button></div>';
 
   // ── THIS SEASON ────────────────────────────────────────────────────────
   html+='<div class="rep2-block">'
@@ -1872,7 +1870,7 @@ function renderRep(){
     +kpi(busiestDow,'Busiest Day',BL,'season-dow')
     +kpi(totalGPUsed,'Guest Passes Used',AM,'season-gp')
     +kpi('$'+(totalPurchased*GUEST_PRICE),'Pass Revenue',AM,'season-gp')
-    +'</div></div>';
+    +'</button></div>';
 
   // ── MEMBERSHIP ─────────────────────────────────────────────────────────
   var paidPct=members.length?Math.round(paid/members.length*100):0;
@@ -1883,7 +1881,7 @@ function renderRep(){
     +kpi(paid,'Paid ('+paidPct+'%)',GR)
     +kpi(unpaidCount,'Unpaid',RE)
     +kpi(pendingCount,'Pending',AM)
-    +'</div></div>';
+    +'</button></div>';
 
   // ── UNPAID LIST ────────────────────────────────────────────────────────
   if(unpaidList.length){
@@ -1891,8 +1889,8 @@ function renderRep(){
       +'<div class="rep2-hdr" style="color:'+RE+';border-bottom:2px solid '+RE+'"><span class="rep2-hdr-icon">&#x26A0;&#xFE0F;</span> Unpaid &amp; Pending ('+unpaidList.length+')</div>'
       +'<div class="rep-list">'+unpaidList.map(function(m){
         return'<div class="rep-row"><div><span class="rep-name">'+m.last+', '+m.first+'</span> '+typeBadge(m.type)+' '+statusBadge(m.status)+'</div>'
-          +'<div style="font-size:11px;color:var(--mu)">'+(m.email||'')+'</div></div>';
-      }).join('')+'</div></div>';
+          +'<div style="font-size:11px;color:var(--mu)">'+(m.email||'')+'</button></div>';
+      }).join('')+'</button></div>';
   }
 
   '<div class="rep2-block"><div class="rep2-hdr">&#x1F4BE; DATA MANAGEMENT</div>'
