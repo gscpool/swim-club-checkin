@@ -291,7 +291,7 @@ body{font-family:'Inter',sans-serif;background:var(--sand);color:var(--tx);min-h
 <!-- APP -->
 <div id="app">
   <div class="topbar">
-    <div class="topbar-l"><span style="font-size:24px">&#x1F40A;</span><div><div class="topbar-title">Gibsonville Swim Club</div><div class="topbar-sub" id="today-lbl"></div><div style="font-size:10px;color:rgba(255,255,255,.6);letter-spacing:.5px;margin-top:2px;font-weight:600">v1.6.0</div></div></div>
+    <div class="topbar-l"><span style="font-size:24px">&#x1F40A;</span><div><div class="topbar-title">Gibsonville Swim Club</div><div class="topbar-sub" id="today-lbl"></div><div style="font-size:10px;color:rgba(255,255,255,.6);letter-spacing:.5px;margin-top:2px;font-weight:600">v1.6.1</div></div></div>
     <div class="topbar-acts"><div id="sync-pill" style="display:none;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;align-items:center;gap:4px"></div><button class="ibtn" onclick="openSettings()">&#x2699;&#xFE0F;</button></div>
   </div>
   <div class="tabs">
@@ -797,8 +797,8 @@ function canQuickCheckIn(m){
 function quickCheckIn(memberId, event){
   if(event) event.stopPropagation();
   var m=members.find(function(x){return x.id===memberId;}); if(!m) return;
-  var missing=getMissingSteps(m);
-  if(missing.length){checkMissingBeforeCI(m,function(){quickCheckIn(memberId,null);});return;}
+  // Only quick check-in if roster is confirmed
+  if(!canQuickCheckIn(m)){openMember(memberId,true);return;}
   if(m.status==='unpaid'&&getUnpaidDays(m.id)>=GRACE_DAYS){showToast('Check-in blocked — payment required','err');return;}
   // Check in all household members
   var adults=[];
@@ -1421,14 +1421,7 @@ function renderDir(){
 
 function openMember(id,ciMode){
   var m=members.find(function(x){return x.id===id;});if(!m)return;
-  // Check for missing info before opening check-in panel
-  if(ciMode){
-    var missing=getMissingSteps(m);
-    if(missing.length){
-      checkMissingBeforeCI(m,function(){openMember(id,ciMode);});
-      return;
-    }
-  }
+  // Missing info is handled inside the panel - don't block openMember
   ciMemberId=id;A={adults:0,children:0};ciGuests=0;
   document.getElementById('mm-title').textContent=m.first+' '+m.last;
   var todayStr=new Date().toDateString();
@@ -1510,6 +1503,18 @@ function openMember(id,ciMode){
       var gpSection=m.guestsTotal>0
         ?'<div style="border-top:1px solid rgba(255,255,255,.15);padding-top:10px"><div class="gp-counter-row"><div><div class="ci-lbl">&#x1F3AB; Guest Passes</div><div class="ci-sub">'+m.guestsTotal+' allotted &middot; '+(m.guestsUsed||0)+' used &middot; '+rem+' remaining</div></div><div class="ctr"><button class="cbtn" onclick="adjGuests(-1)">&minus;</button><div class="cval" id="ci-guests">0</div><button class="cbtn" onclick="adjGuests(1)">+</button></div></div><div id="gp-live-status" style="margin-top:6px"></div></div>'
         :'';
+      // Build missing info prompt if needed
+      var missing=getMissingSteps(m);
+      var missingBanner='';
+      if(missing.length){
+        missingBanner='<div style="background:#fef3c7;border:2px solid #f59e0b;border-radius:10px;padding:12px;margin-bottom:4px">'
+          +'<div style="font-weight:800;font-size:13px;color:#92400e;margin-bottom:6px">&#x26A0;&#xFE0F; Missing Member Info Required</div>'
+          +'<div style="font-size:12px;color:#92400e;margin-bottom:8px">Please complete this before checking in.</div>'
+          +'<button onclick="checkMissingBeforeCI(members.find(function(x){return x.id===&quot;'+m.id+'&quot;;}),function(){closeMM();setTimeout(function(){openMember(&quot;'+m.id+'&quot;,true);},200);})" '
+          +'style="width:100%;padding:10px;background:#f59e0b;border:none;color:#fff;border-radius:8px;font-size:13px;font-weight:700;font-family:Inter,sans-serif;cursor:pointer">'
+          +'&#x270F;&#xFE0F; Complete Member Info</button>'
+          +'</div>';
+      }
       var panelBg=m.status==='paid'
         ?'linear-gradient(135deg,#064e3b,#065f46)'
         :(m.status==='unpaid'?'linear-gradient(135deg,#7f1d1d,#991b1b)':'linear-gradient(135deg,#78350f,#92400e)');
@@ -1520,6 +1525,7 @@ function openMember(id,ciMode){
           :'<div style="background:rgba(253,230,138,.2);border:1.5px solid rgba(253,230,138,.4);color:#fde68a;font-weight:800;font-size:14px;padding:8px 12px;border-radius:9px;text-align:center">&#x23F3; PENDING &mdash; Follow up on payment</div>');
       html+='<div class="ci-panel" style="background:'+panelBg+'">'
         +'<div class="ci-title">&#x1F40A; Today\'s Visit</div>'
+        +missingBanner
         +statusBar
         +(checkedToday?'<div class="ci-already">&#x2713; Already checked in today</div>':'')
         +unpaidWarn
