@@ -291,7 +291,7 @@ body{font-family:'Inter',sans-serif;background:var(--sand);color:var(--tx);min-h
 <!-- APP -->
 <div id="app">
   <div class="topbar">
-    <div class="topbar-l"><span style="font-size:24px">&#x1F40A;</span><div><div class="topbar-title">Gibsonville Swim Club</div><div class="topbar-sub" id="today-lbl"></div><div style="font-size:10px;color:rgba(255,255,255,.6);letter-spacing:.5px;margin-top:2px;font-weight:600">v1.5.6</div></div></div>
+    <div class="topbar-l"><span style="font-size:24px">&#x1F40A;</span><div><div class="topbar-title">Gibsonville Swim Club</div><div class="topbar-sub" id="today-lbl"></div><div style="font-size:10px;color:rgba(255,255,255,.6);letter-spacing:.5px;margin-top:2px;font-weight:600">v1.5.7</div></div></div>
     <div class="topbar-acts"><div id="sync-pill" style="display:none;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;align-items:center;gap:4px"></div><button class="ibtn" onclick="openSettings()">&#x2699;&#xFE0F;</button></div>
   </div>
   <div class="tabs">
@@ -848,17 +848,16 @@ var miMemberId=null, miStep=0, miSteps=[], miData={};
 function getMissingSteps(m){
   var steps=[];
   var tc=getTypeConfig(m.type);
-  // Contact - any missing field
+  // 1. Contact info - any missing field
   var needsContact=!m.email||!m.phone||!m.street||!m.city||!m.state||!m.zip;
-  // Adults - not set (null/undefined/0) for types that can have variable adults
-  // Use m.rosterConfirmed flag to know if they've been through the flow this season
-  var needsAdults=!m.rosterConfirmed&&tc.maxAdults>1;
-  // For Individual - no adults step needed, just mark confirmed
-  // Second adult - required by type, or 2 adults selected but no name
+  // 2. Roster not yet confirmed this season (covers adults + children for eligible types)
+  var rosterDone=m.rosterConfirmed===true;
+  var needsAdults=!rosterDone&&tc.maxAdults>1;
+  var needsKids=!rosterDone&&tc.allowChildren;
+  // 3. Second adult - required by type with no name on file
   var needsSec=tc.requireSecond&&!(m.secFirst&&m.secLast);
+  // 4. Second adult optional - chose 2 adults but no name
   var needsSecOptional=!tc.requireSecond&&tc.maxAdults>1&&m.adults===2&&!(m.secFirst&&m.secLast);
-  // Children - types that allow children and not yet confirmed this season
-  var needsKids=tc.allowChildren&&!m.rosterConfirmed;
   if(needsContact) steps.push('contact');
   if(needsAdults) steps.push('adults');
   if(needsSec||needsSecOptional) steps.push('second-adult');
@@ -1417,6 +1416,14 @@ function renderDir(){
 
 function openMember(id,ciMode){
   var m=members.find(function(x){return x.id===id;});if(!m)return;
+  // Check for missing info before opening check-in panel
+  if(ciMode){
+    var missing=getMissingSteps(m);
+    if(missing.length){
+      checkMissingBeforeCI(m,function(){openMember(id,ciMode);});
+      return;
+    }
+  }
   ciMemberId=id;A={adults:0,children:0};ciGuests=0;
   document.getElementById('mm-title').textContent=m.first+' '+m.last;
   var todayStr=new Date().toDateString();
