@@ -76,8 +76,8 @@ body{font-family:'Inter',sans-serif;background:var(--sand);color:var(--tx);min-h
 .dir-filters{display:flex;gap:5px;flex-wrap:wrap}
 .fbtn{padding:9px 14px;border-radius:20px;border:2px solid var(--sand2);background:var(--sand);font-size:12px;font-weight:700;color:var(--mu);cursor:pointer;transition:all .12s;text-transform:uppercase;letter-spacing:.4px}
 .alpha-btn{min-width:44px;height:44px;border-radius:10px;border:2px solid var(--sand2);background:#fff;font-size:15px;font-weight:700;color:var(--bl);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .12s;flex-shrink:0;box-shadow:0 1px 4px rgba(0,0,0,.07)}
-.alpha-btn.on{background:var(--or);border-color:var(--or);color:#fff}
-.alpha-btn.empty{color:var(--sand2);border-color:var(--sand2);cursor:default}
+.alpha-btn.on{background:var(--or);border-color:var(--or);color:#fff;box-shadow:0 2px 8px rgba(250,70,22,.3)}
+.alpha-btn:active{transform:scale(.93)}
 .fbtn.on{background:var(--bl);border-color:var(--bl);color:#fff}
 .dlist{flex:1;overflow-y:auto;padding:8px 10px 80px}
 .alpha-hdr{font-family:'Inter',sans-serif;font-size:20px;color:var(--or);padding:8px 4px 2px;position:sticky;top:0;background:var(--sand);z-index:1;font-weight:800;letter-spacing:-.3px}
@@ -240,7 +240,7 @@ body{font-family:'Inter',sans-serif;background:var(--sand);color:var(--tx);min-h
 .miss-adult-btn{flex:1;padding:16px;border:2.5px solid var(--sand2);border-radius:12px;background:var(--sand);font-size:18px;font-weight:800;color:var(--bld);cursor:pointer;font-family:'Inter',sans-serif;text-align:center;transition:all .15s}
 .miss-adult-btn.selected{border-color:var(--or);background:var(--orl);color:var(--or)}
 .miss-child-row{display:flex;gap:8px;align-items:center;margin-bottom:6px}
-.ci-alpha-row{display:flex;flex-wrap:wrap;gap:7px;padding:10px 13px 12px;background:var(--sand);border-bottom:1px solid var(--sand2)}
+.ci-alpha-row{display:flex;flex-wrap:wrap;gap:7px;padding:10px 13px 12px;background:var(--sand);border-bottom:1px solid var(--sand2);justify-content:center;align-content:center}
 .ci-alpha-btn{min-width:44px;height:44px;padding:0 8px;border-radius:10px;border:2px solid var(--sand2);background:#fff;font-size:16px;font-weight:700;color:var(--bl);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .12s;box-shadow:0 1px 4px rgba(0,0,0,.07)}
 .ci-alpha-btn.on{background:var(--or);border-color:var(--or);color:#fff;box-shadow:0 2px 8px rgba(250,70,22,.3)}
 .ci-alpha-btn:active{transform:scale(.93)}
@@ -291,7 +291,7 @@ body{font-family:'Inter',sans-serif;background:var(--sand);color:var(--tx);min-h
 <!-- APP -->
 <div id="app">
   <div class="topbar">
-    <div class="topbar-l"><span style="font-size:24px">&#x1F40A;</span><div><div class="topbar-title">Gibsonville Swim Club</div><div class="topbar-sub" id="today-lbl"></div><div style="font-size:10px;color:rgba(255,255,255,.6);letter-spacing:.5px;margin-top:2px;font-weight:600">v1.5.4</div></div></div>
+    <div class="topbar-l"><span style="font-size:24px">&#x1F40A;</span><div><div class="topbar-title">Gibsonville Swim Club</div><div class="topbar-sub" id="today-lbl"></div><div style="font-size:10px;color:rgba(255,255,255,.6);letter-spacing:.5px;margin-top:2px;font-weight:600">v1.5.5</div></div></div>
     <div class="topbar-acts"><div id="sync-pill" style="display:none;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;align-items:center;gap:4px"></div><button class="ibtn" onclick="openSettings()">&#x2699;&#xFE0F;</button></div>
   </div>
   <div class="tabs">
@@ -317,7 +317,7 @@ body{font-family:'Inter',sans-serif;background:var(--sand);color:var(--tx);min-h
         <button class="fbtn on" onclick="setFilter(this,'all')">All</button>
         <button class="fbtn" onclick="setFilter(this,'unpaid')">Unpaid</button>
       </div>
-      <div id="dir-alpha-strip" style="display:flex;flex-wrap:wrap;gap:4px;padding:6px 0 2px"></div>
+      <div id="dir-alpha-strip" style="display:flex;flex-wrap:wrap;gap:6px;padding:8px 13px 10px;justify-content:center;align-content:center;background:var(--sand);border-bottom:1px solid var(--sand2)"></div>
     </div>
     <div class="dlist" id="dir-list"></div>
   </div>
@@ -1400,7 +1400,7 @@ function renderDir(){
   var activeLetters=Object.keys(availLetters).sort();
   var strip=document.getElementById('dir-alpha-strip');
   if(strip){
-    var allBtnHtml='<button onclick="dirAlpha=\'\';renderDir()" style="padding:4px 10px;border-radius:7px;border:1.5px solid '+(dirAlpha===''?'var(--or)':'var(--sand2)')+';background:'+(dirAlpha===''?'var(--or)':'var(--sand)')+';font-size:11px;font-weight:700;color:'+(dirAlpha===''?'#fff':'var(--bl)')+';cursor:pointer">ALL</button>';
+    var allBtnHtml='<button onclick="dirAlpha=\'\';renderDir()" class="alpha-btn'+(dirAlpha===''?' on':'')+'">ALL</button>';
     strip.innerHTML=allBtnHtml+activeLetters.map(function(l){
       var active=dirAlpha===l;
       return '<button onclick="setAlpha(&quot;'+l+'&quot;)" class="alpha-btn'+(active?' on':'')+'">'+l+'</button>';
