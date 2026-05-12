@@ -291,7 +291,7 @@ body{font-family:'Inter',sans-serif;background:var(--sand);color:var(--tx);min-h
 <!-- APP -->
 <div id="app">
   <div class="topbar">
-    <div class="topbar-l"><span style="font-size:24px">&#x1F40A;</span><div><div class="topbar-title">Gibsonville Swim Club</div><div class="topbar-sub" id="today-lbl"></div><div style="font-size:10px;color:rgba(255,255,255,.6);letter-spacing:.5px;margin-top:2px;font-weight:600">v1.5.8</div></div></div>
+    <div class="topbar-l"><span style="font-size:24px">&#x1F40A;</span><div><div class="topbar-title">Gibsonville Swim Club</div><div class="topbar-sub" id="today-lbl"></div><div style="font-size:10px;color:rgba(255,255,255,.6);letter-spacing:.5px;margin-top:2px;font-weight:600">v1.5.9</div></div></div>
     <div class="topbar-acts"><div id="sync-pill" style="display:none;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;align-items:center;gap:4px"></div><button class="ibtn" onclick="openSettings()">&#x2699;&#xFE0F;</button></div>
   </div>
   <div class="tabs">
@@ -785,10 +785,12 @@ function getVisitCount(memberId){
 }
 
 function canQuickCheckIn(m){
-  // Quick check-in only if: paid, all names on file, no missing fields
+  // Quick check-in only if: paid, roster confirmed, all names on file, no missing fields
   if(m.status!=='paid') return false;
+  if(m.rosterConfirmed!==true) return false;
   if(!m.first||!m.last||!m.email||!m.phone||!m.street) return false;
-  if(m.type==='Couples'&&!(m.secFirst||m.secLast)) return false;
+  var tc=getTypeConfig(m.type);
+  if(tc.requireSecond&&!(m.secFirst||m.secLast)) return false;
   return true;
 }
 
@@ -1025,8 +1027,10 @@ function miNext(){
     if(localIdx>=0) members[localIdx]=Object.assign({},members[localIdx],miData);
     document.getElementById('mi-overlay').style.display='none';
     showToast('Member info saved ✓','ok');
-    // Proceed to check-in
-    if(window._miOnComplete) window._miOnComplete();
+    // Short delay to let Firebase sync, then proceed
+    setTimeout(function(){
+      if(window._miOnComplete) window._miOnComplete();
+    }, 400);
   }
 }
 
@@ -1357,8 +1361,8 @@ function renderCI(){
     return diff!==0?diff:a.last.localeCompare(b.last)||a.first.localeCompare(b.first);
   });
 
-  // Auto-open if exactly one match
-  if(list.length===1){
+  // Auto-open if exactly one match (only if roster is confirmed - avoid modal loop)
+  if(list.length===1&&list[0].rosterConfirmed===true){
     el.innerHTML='';
     setTimeout(function(){openMember(list[0].id,true);},50);
     return;
