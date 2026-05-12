@@ -291,7 +291,7 @@ body{font-family:'Inter',sans-serif;background:var(--sand);color:var(--tx);min-h
 <!-- APP -->
 <div id="app">
   <div class="topbar">
-    <div class="topbar-l"><span style="font-size:24px">&#x1F40A;</span><div><div class="topbar-title">Gibsonville Swim Club</div><div class="topbar-sub" id="today-lbl"></div><div style="font-size:10px;color:rgba(255,255,255,.6);letter-spacing:.5px;margin-top:2px;font-weight:600">v1.5.7</div></div></div>
+    <div class="topbar-l"><span style="font-size:24px">&#x1F40A;</span><div><div class="topbar-title">Gibsonville Swim Club</div><div class="topbar-sub" id="today-lbl"></div><div style="font-size:10px;color:rgba(255,255,255,.6);letter-spacing:.5px;margin-top:2px;font-weight:600">v1.5.8</div></div></div>
     <div class="topbar-acts"><div id="sync-pill" style="display:none;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;align-items:center;gap:4px"></div><button class="ibtn" onclick="openSettings()">&#x2699;&#xFE0F;</button></div>
   </div>
   <div class="tabs">
@@ -1020,6 +1020,9 @@ function miNext(){
     miData.rosterConfirmed=true;
     var updated=Object.assign({},m,miData);
     saveMember(updated);
+    // Update local members array immediately so getMissingSteps won't loop
+    var localIdx=members.findIndex(function(x){return x.id===miMemberId;});
+    if(localIdx>=0) members[localIdx]=Object.assign({},members[localIdx],miData);
     document.getElementById('mi-overlay').style.display='none';
     showToast('Member info saved ✓','ok');
     // Proceed to check-in
@@ -1234,7 +1237,7 @@ function buildCiAlphaStrips(){
   var checkedToday={};
   visits.forEach(function(v){if(new Date(v.ts).toDateString()===todayStr) checkedToday[v.memberId]=true;});
   var lnLetters={};
-  members.forEach(function(m){if(m.last&&!checkedToday[m.id]) lnLetters[m.last[0].toUpperCase()]=true;});
+  members.forEach(function(m){if(m.last) lnLetters[m.last[0].toUpperCase()]=true;});
   var lnStrip=document.getElementById('ci-ln-strip'); if(!lnStrip) return;
   lnStrip.innerHTML=Object.keys(lnLetters).sort().map(function(l){
     return '<button class="ci-alpha-btn'+(ciLastAlpha===l?' on':'')+'" onclick="setCiLastAlpha(&quot;'+l+'&quot;)">'+l+'</button>';
@@ -1245,7 +1248,7 @@ function buildCiAlphaStrips(){
   if(ciLastAlpha&&fnSection&&fnStrip){
     fnSection.style.display='block';
     var fnLetters={};
-    members.filter(function(m){return m.last&&m.last[0].toUpperCase()===ciLastAlpha&&!checkedToday[m.id];})
+    members.filter(function(m){return m.last&&m.last[0].toUpperCase()===ciLastAlpha;})
       .forEach(function(m){
         if(m.first&&m.first.length>=2){
           var key=m.first[0].toUpperCase()+m.first[1].toLowerCase();
