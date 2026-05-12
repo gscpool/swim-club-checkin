@@ -291,7 +291,7 @@ body{font-family:'Inter',sans-serif;background:var(--sand);color:var(--tx);min-h
 <!-- APP -->
 <div id="app">
   <div class="topbar">
-    <div class="topbar-l"><span style="font-size:24px">&#x1F40A;</span><div><div class="topbar-title">Gibsonville Swim Club</div><div class="topbar-sub" id="today-lbl"></div><div style="font-size:10px;color:rgba(255,255,255,.6);letter-spacing:.5px;margin-top:2px;font-weight:600">v1.5.5</div></div></div>
+    <div class="topbar-l"><span style="font-size:24px">&#x1F40A;</span><div><div class="topbar-title">Gibsonville Swim Club</div><div class="topbar-sub" id="today-lbl"></div><div style="font-size:10px;color:rgba(255,255,255,.6);letter-spacing:.5px;margin-top:2px;font-weight:600">v1.5.6</div></div></div>
     <div class="topbar-acts"><div id="sync-pill" style="display:none;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;align-items:center;gap:4px"></div><button class="ibtn" onclick="openSettings()">&#x2699;&#xFE0F;</button></div>
   </div>
   <div class="tabs">
@@ -848,11 +848,17 @@ var miMemberId=null, miStep=0, miSteps=[], miData={};
 function getMissingSteps(m){
   var steps=[];
   var tc=getTypeConfig(m.type);
+  // Contact - any missing field
   var needsContact=!m.email||!m.phone||!m.street||!m.city||!m.state||!m.zip;
-  var needsAdults=(tc.maxAdults>1||tc.allowChildren)&&(!m.adults||m.adults===0);
+  // Adults - not set (null/undefined/0) for types that can have variable adults
+  // Use m.rosterConfirmed flag to know if they've been through the flow this season
+  var needsAdults=!m.rosterConfirmed&&tc.maxAdults>1;
+  // For Individual - no adults step needed, just mark confirmed
+  // Second adult - required by type, or 2 adults selected but no name
   var needsSec=tc.requireSecond&&!(m.secFirst&&m.secLast);
   var needsSecOptional=!tc.requireSecond&&tc.maxAdults>1&&m.adults===2&&!(m.secFirst&&m.secLast);
-  var needsKids=tc.allowChildren&&(!m.kids||m.kids.length===0);
+  // Children - types that allow children and not yet confirmed this season
+  var needsKids=tc.allowChildren&&!m.rosterConfirmed;
   if(needsContact) steps.push('contact');
   if(needsAdults) steps.push('adults');
   if(needsSec||needsSecOptional) steps.push('second-adult');
@@ -1011,7 +1017,8 @@ function miNext(){
     miStep++;
     renderMiStep();
   } else {
-    // Save all collected data
+    // Save all collected data - mark roster as confirmed for this season
+    miData.rosterConfirmed=true;
     var updated=Object.assign({},m,miData);
     saveMember(updated);
     document.getElementById('mi-overlay').style.display='none';
@@ -1029,39 +1036,31 @@ function miBack(){
 // Runs once per device per season - clears adult/child counts so members
 // are prompted at first check-in. Tracks via localStorage flag.
 function runSeasonMigration(){
-  var flagKey='gsc_migration_2025_v2';
+  var flagKey='gsc_migration_2025_v3';
   localStorage.removeItem('gsc_migration_2025_v1');
+  localStorage.removeItem('gsc_migration_2025_v2');
+  localStorage.removeItem('gsc_migration_2025_v3');
   if(localStorage.getItem(flagKey)) return;
-  var typesToClear=['Family','Board','Comp','Couples','Individual'];
-  var updated=false;
+  var count=0;
   members.forEach(function(m){
-    var tc=getTypeConfig(m.type);
-    var needsClear=false;
-    var changes={};
-    // Clear adults count for all types so they are prompted
-    if(m.adults&&m.adults>0){changes.adults=0;needsClear=true;}
-    // Clear children count and names for types that allow children
-    if(tc.allowChildren&&(m.children>0||(m.kids&&m.kids.length>0))){
-      changes.children=0;
-      changes.kids=[];
-      needsClear=true;
-    }
-    // Clear secondary adult for all types
-    if(m.secFirst||m.secLast){
-      changes.secFirst='';
-      changes.secLast='';
-      changes.secPhone='';
-      changes.secEmail='';
-      needsClear=true;
-    }
-    if(needsClear){
-      var updated2=Object.assign({},m,changes);
-      saveMember(updated2);
-      updated=true;
-    }
+    // Clear rosterConfirmed so everyone is prompted this season
+    // Also clear secondary adult info and children so fresh data is collected
+    var changes={
+      rosterConfirmed:false,
+      adults:0,
+      children:0,
+      kids:[],
+      secFirst:'',
+      secLast:'',
+      secPhone:'',
+      secEmail:''
+    };
+    var updated=Object.assign({},m,changes);
+    saveMember(updated);
+    count++;
   });
   localStorage.setItem(flagKey,'done');
-  if(updated) console.log('Season migration complete - adult/child counts cleared for first check-in prompts');
+  console.log('Season migration v3 complete -',count,'members cleared for first check-in prompts');
 }
 
 function renderAll(){renderCI();renderDir();renderRep();}
@@ -2205,6 +2204,7 @@ function resetMigrationFlag(){
   if(!confirm('This will prompt every member to confirm their household info on next check-in. Continue?')) return;
   localStorage.removeItem('gsc_migration_2025_v1');
   localStorage.removeItem('gsc_migration_2025_v2');
+  localStorage.removeItem('gsc_migration_2025_v3');
   // Run migration immediately
   runSeasonMigration();
   showToast('First check-in prompts reset for all members','ok');
