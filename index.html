@@ -291,7 +291,7 @@ body{font-family:'Inter',sans-serif;background:var(--sand);color:var(--tx);min-h
 <!-- APP -->
 <div id="app">
   <div class="topbar">
-    <div class="topbar-l"><span style="font-size:24px">&#x1F40A;</span><div><div class="topbar-title">Gibsonville Swim Club</div><div class="topbar-sub" id="today-lbl"></div><div style="font-size:10px;color:rgba(255,255,255,.6);letter-spacing:.5px;margin-top:2px;font-weight:600">v1.6.3</div></div></div>
+    <div class="topbar-l"><span style="font-size:24px">&#x1F40A;</span><div><div class="topbar-title">Gibsonville Swim Club</div><div class="topbar-sub" id="today-lbl"></div><div style="font-size:10px;color:rgba(255,255,255,.6);letter-spacing:.5px;margin-top:2px;font-weight:600">v1.6.4</div></div></div>
     <div class="topbar-acts"><div id="sync-pill" style="display:none;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;align-items:center;gap:4px"></div><button class="ibtn" onclick="openSettings()">&#x2699;&#xFE0F;</button></div>
   </div>
   <div class="tabs">
@@ -1514,7 +1514,11 @@ function openMember(id,ciMode){
       var missing=getMissingSteps(m);
       var missingBanner='';
       if(missing.length){
-        missingBanner='<div style="background:#fef3c7;border:2px solid #f59e0b;border-radius:10px;padding:12px;margin-bottom:4px"><div style="font-weight:800;font-size:13px;color:#92400e;margin-bottom:6px">&#x26A0;&#xFE0F; Missing Member Info Required</div><div style="font-size:12px;color:#92400e;margin-bottom:8px">Please complete this before checking in.</div><button data-mid="'+m.id+'" onclick="openMissingInfo(this.dataset.mid)" style="width:100%;padding:11px;background:#f59e0b;border:none;color:#fff;border-radius:8px;font-size:14px;font-weight:700;font-family:Inter,sans-serif;cursor:pointer">&#x270F;&#xFE0F; Complete Member Info</button></div>';
+        missingBanner='<div style="background:#fef3c7;border:2px solid #f59e0b;border-radius:10px;padding:12px;margin-bottom:4px">'
+        +'<div style="font-weight:800;font-size:13px;color:#92400e;margin-bottom:6px">&#x26A0;&#xFE0F; Missing Member Info Required</div>'
+        +'<div style="font-size:12px;color:#92400e;margin-bottom:8px">Please complete all required info before checking in.</div>'
+        +'<button onclick="openMissingInfo(\''+m.id+'\')" style="width:100%;padding:13px;background:#f59e0b;border:none;color:#fff;border-radius:9px;font-size:15px;font-weight:700;font-family:Inter,sans-serif;cursor:pointer;margin-top:2px">&#x270F;&#xFE0F; Complete Member Info</button>'
+        +'</div>';
       }
       var panelBg=m.status==='paid'
         ?'linear-gradient(135deg,#064e3b,#065f46)'
