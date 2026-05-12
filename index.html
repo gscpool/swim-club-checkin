@@ -291,7 +291,7 @@ body{font-family:'Inter',sans-serif;background:var(--sand);color:var(--tx);min-h
 <!-- APP -->
 <div id="app">
   <div class="topbar">
-    <div class="topbar-l"><span style="font-size:24px">&#x1F40A;</span><div><div class="topbar-title">Gibsonville Swim Club</div><div class="topbar-sub" id="today-lbl"></div><div style="font-size:10px;color:rgba(255,255,255,.6);letter-spacing:.5px;margin-top:2px;font-weight:600">v1.5.2</div></div></div>
+    <div class="topbar-l"><span style="font-size:24px">&#x1F40A;</span><div><div class="topbar-title">Gibsonville Swim Club</div><div class="topbar-sub" id="today-lbl"></div><div style="font-size:10px;color:rgba(255,255,255,.6);letter-spacing:.5px;margin-top:2px;font-weight:600">v1.5.4</div></div></div>
     <div class="topbar-acts"><div id="sync-pill" style="display:none;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;align-items:center;gap:4px"></div><button class="ibtn" onclick="openSettings()">&#x2699;&#xFE0F;</button></div>
   </div>
   <div class="tabs">
@@ -527,6 +527,37 @@ function delMember(id){
 function saveVisit(v){
   if(fbReady&&window._saveVisitFB){window._saveVisitFB(v);}
   else{visits.unshift(v);lSet('gsc_visits',visits);renderRep();renderCI();}
+}
+
+function deleteVisit(id){
+  if(fbReady&&db){
+    db.collection('visits').doc(id).delete().catch(function(e){console.error(e);});
+  } else {
+    visits=visits.filter(function(v){return v.id!==id;});
+    lSet('gsc_visits',visits);
+  }
+}
+
+function clearTodayVisits(){
+  requireAdminPin(function(){
+    var todayStr=new Date().toDateString();
+    var toDelete=visits.filter(function(v){return new Date(v.ts).toDateString()===todayStr;});
+    if(!toDelete.length){showToast('No check-ins today to clear','warn');return;}
+    if(!confirm('Clear all '+toDelete.length+' check-in(s) from today? This cannot be undone.')) return;
+    toDelete.forEach(function(v){deleteVisit(v.id);});
+    showToast('Cleared '+toDelete.length+' check-in(s) from today','ok');
+  });
+}
+
+function clearSeasonVisits(){
+  requireAdminPin(function(){
+    var seasonStart=new Date(new Date().getFullYear(),0,1);
+    var toDelete=visits.filter(function(v){return new Date(v.ts)>=seasonStart;});
+    if(!toDelete.length){showToast('No check-ins this season to clear','warn');return;}
+    if(!confirm('Clear ALL '+toDelete.length+' check-in(s) this season? This cannot be undone.')) return;
+    toDelete.forEach(function(v){deleteVisit(v.id);});
+    showToast('Cleared '+toDelete.length+' season check-in(s)','ok');
+  });
 }
 function uid(){return 'm'+Date.now()+Math.random().toString(36).slice(2,5);}
 function fmtDate(ts){return new Date(ts).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});}
@@ -1851,15 +1882,18 @@ function renderRep(){
       }).join('')+'</div></div>';
   }
 
-  // ── DATA MANAGEMENT ────────────────────────────────────────────────────
-  html+='<div class="rep2-block">'
-    +'<div class="rep2-hdr" style="color:'+BL+';border-bottom:2px solid '+BL+'"><span class="rep2-hdr-icon">&#x1F4BE;</span> Data Management</div>'
-    +'<div style="display:flex;flex-direction:column;gap:8px;padding:4px 0">'
+  '<div class="rep2-block"><div class="rep2-hdr">&#x1F4BE; DATA MANAGEMENT</div>'
+    +'<div style="padding:4px 0;display:flex;flex-direction:column;gap:8px">'
+    +'<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--mu);padding:2px 0 4px">Check-In Exports</div>'
+    +'<button class="exp-btn" onclick="exportVisitsRange(&quot;today&quot;)">&#x1F4CA; Today\'s Check-Ins (CSV)</button>'
+    +'<button class="exp-btn" onclick="exportVisitsRange(&quot;7days&quot;)">&#x1F4CA; Last 7 Days (CSV)</button>'
+    +'<button class="exp-btn" onclick="exportVisitsRange(&quot;season&quot;)">&#x1F4CA; This Season (CSV)</button>'
+    +'<button class="exp-btn" onclick="exportVisitsRange(&quot;all&quot;)">&#x1F4CA; All-Time (CSV)</button>'
+    +'<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--mu);padding:8px 0 4px">Member Data</div>'
     +'<button class="exp-btn" onclick="requireAdminPin(function(){exportCSV(\'members\');})">&#x1F4E5; Export Member List (CSV)</button>'
-    +'<button class="exp-btn" onclick="requireAdminPin(function(){exportCSV(\'visits\');})">&#x1F4E5; Export Visit Log (CSV)</button>'
     +'<button class="imp-btn" onclick="requireAdminPin(function(){openCSVImport();})">&#x1F4E4; Import Members from CSV</button>'
     +'<button class="exp-btn" onclick="requireAdminPin(function(){downloadTemplate();})">&#x1F4CB; Download CSV Template</button>'
-    +'</div></div>';
+    +'</div></div></div>';
 
   el.innerHTML=html;
 }
@@ -1987,6 +2021,58 @@ function showRepChart(chartId){
 }
 
 function exportCSV(type){var esc=function(v){return'"'+(v===null||v===undefined?'':String(v)).replace(/"/g,'""')+'"';};var csv,fn;if(type==='members'){var h=['Last','First','Type','Status','Adults','Children','Kids Names','Passes Used','Passes Total','Email','Phone','Street','City','State','Zip','2nd First','2nd Last','2nd Phone','2nd Email'];var r=members.map(function(m){return[m.last,m.first,m.type,m.status,m.adults||0,m.kids?m.kids.length:(m.children||0),m.kids?m.kids.join(';'):'',m.guestsUsed||0,m.guestsTotal,m.email,m.phone,m.street||'',m.city||'',m.state||'',m.zip||'',m.secFirst||'',m.secLast||'',m.secPhone||'',m.secEmail||''].map(esc);});csv=[h].concat(r).map(function(x){return x.join(',');}).join('\n');fn='gsc-members-'+new Date().toISOString().slice(0,10)+'.csv';}else{var h2=['Date','Time','Last','First','Type','Adults','Children','Guest Passes','Passes Purchased'];var r2=visits.map(function(v){var m=members.find(function(x){return x.id===v.memberId;})||{last:'',first:'',type:''};return[fmtDate(v.ts),fmtTime(v.ts),m.last,m.first,m.type,v.adults||0,v.children||0,v.guestPasses||0,v.passesPurchased||0].map(esc);});csv=[h2].concat(r2).map(function(x){return x.join(',');}).join('\n');fn='gsc-visits-'+new Date().toISOString().slice(0,10)+'.csv';}var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download=fn;a.click();showToast('Exported '+fn);}
+
+function exportVisitsRange(range){
+  requireAdminPin(function(){
+    var now=new Date();
+    var todayStr=now.toDateString();
+    var d7=new Date(now);d7.setDate(d7.getDate()-6);d7.setHours(0,0,0,0);
+    var seasonStart=new Date(now.getFullYear(),0,1);
+    var filtered,label;
+    if(range==='today'){
+      filtered=visits.filter(function(v){return new Date(v.ts).toDateString()===todayStr;});
+      label='today-'+now.toISOString().slice(0,10);
+    } else if(range==='7days'){
+      filtered=visits.filter(function(v){return new Date(v.ts)>=d7;});
+      label='last-7-days';
+    } else if(range==='season'){
+      filtered=visits.filter(function(v){return new Date(v.ts)>=seasonStart;});
+      label='season-'+now.getFullYear();
+    } else {
+      filtered=visits.slice();
+      label='all-time';
+    }
+    if(!filtered.length){showToast('No check-ins in this range','warn');return;}
+    var esc=function(v){return'"'+(v===null||v===undefined?'':String(v)).replace(/"/g,'""')+'"';};
+    var headers=['Date','Time','Day of Week','Last Name','First Name','Membership Type','Payment Status','Adults','Children','Total Headcount','Guest Passes Used','Passes Purchased','Pass Revenue ($)','While Unpaid'];
+    var rows=filtered.map(function(v){
+      var m=members.find(function(x){return x.id===v.memberId;})||{last:'(deleted)',first:'',type:'',status:''};
+      var d=new Date(v.ts);
+      var dow=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][d.getDay()];
+      var headcount=(v.adults||0)+(v.children||0);
+      var revenue=(v.passesPurchased||0)*GUEST_PRICE;
+      return[
+        fmtDate(v.ts),
+        fmtTime(v.ts),
+        dow,
+        m.last,m.first,m.type,m.status,
+        v.adults||0,
+        v.children||0,
+        headcount,
+        v.guestPasses||0,
+        v.passesPurchased||0,
+        revenue,
+        v.whileUnpaid?'Yes':'No'
+      ].map(esc);
+    });
+    var csv=[headers].concat(rows).map(function(r){return r.join(',');}).join('\n');
+    var fn='gsc-checkins-'+label+'.csv';
+    var a=document.createElement('a');
+    a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+    a.download=fn;a.click();
+    showToast('Exported '+filtered.length+' check-in(s) to '+fn,'ok');
+  });
+}
 function downloadTemplate(){var csv='Last,First,Type,Status,Adults,Children,Kids Names,Passes Used,Passes Total,Email,Phone,Street,City,State,Zip\nSmith,John,Family,paid,2,3,"Emma;Liam;Olivia",0,10,jsmith@email.com,(336) 555-0100,123 Main St,Gibsonville,NC,27249';var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='gsc-member-template.csv';a.click();showToast('Template downloaded');}
 function openCSVImport(){csvParsed=[];document.getElementById('csv-body').innerHTML='<p class="fnote" style="line-height:1.6">Upload a CSV with member data. Use <strong>Download CSV Template</strong> for the correct format.</p><div class="csv-drop" onclick="document.getElementById(\'csv-file\').click()">&#x1F4C2; Tap to choose a CSV file</div><input type="file" id="csv-file" accept=".csv" style="display:none" onchange="handleCSVFile(event)"><div id="csv-preview"></div><div id="csv-actions"></div>';document.getElementById('csv-overlay').classList.add('open');}
 function closeCSV(){document.getElementById('csv-overlay').classList.remove('open');}
@@ -2039,6 +2125,10 @@ function openSettings(){requireAdminPin(function(){
     +'<div class="sec-lbl" style="margin-top:4px">Season Reset</div>'
     +'<p class="fnote">Resets guest pass counts to 0 for all members. Profiles and visit history are kept.</p>'
     +'<button class="btn-d" onclick="doSeasonReset()">&#x1F504; Reset for New Season</button>'
+    +'<div class="sec-lbl" style="margin-top:4px">Clear Check-In Records</div>'
+    +'<p class="fnote">Permanently deletes check-in visit records. Member profiles are not affected.</p>'
+    +'<button class="btn-d" onclick="closeSettings();clearTodayVisits()">&#x1F5D1; Clear Today\'s Check-Ins</button>'
+    +'<button class="btn-d" style="margin-top:6px" onclick="closeSettings();clearSeasonVisits()">&#x1F5D1; Clear All Season Check-Ins</button>'
     +'<div class="sec-lbl" style="margin-top:4px">First Check-In Prompts</div>'
     +'<p class="fnote">Forces every member to complete missing info on their next check-in.</p>'
     +'<button class="btn-o" onclick="resetMigrationFlag()">&#x1F501; Reset First Check-In Prompts for All Members</button>';
