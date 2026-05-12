@@ -291,7 +291,7 @@ body{font-family:'Inter',sans-serif;background:var(--sand);color:var(--tx);min-h
 <!-- APP -->
 <div id="app">
   <div class="topbar">
-    <div class="topbar-l"><span style="font-size:24px">&#x1F40A;</span><div><div class="topbar-title">Gibsonville Swim Club</div><div class="topbar-sub" id="today-lbl"></div><div style="font-size:10px;color:rgba(255,255,255,.6);letter-spacing:.5px;margin-top:2px;font-weight:600">v1.5.0</div></div></div>
+    <div class="topbar-l"><span style="font-size:24px">&#x1F40A;</span><div><div class="topbar-title">Gibsonville Swim Club</div><div class="topbar-sub" id="today-lbl"></div><div style="font-size:10px;color:rgba(255,255,255,.6);letter-spacing:.5px;margin-top:2px;font-weight:600">v1.5.1</div></div></div>
     <div class="topbar-acts"><div id="sync-pill" style="display:none;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;align-items:center;gap:4px"></div><button class="ibtn" onclick="openSettings()">&#x2699;&#xFE0F;</button></div>
   </div>
   <div class="tabs">
@@ -992,6 +992,44 @@ function miNext(){
 
 function miBack(){
   if(miStep>0){miStep--;renderMiStep();}
+}
+
+// ── SEASON MIGRATION ──────────────────────────────────────────────────────
+// Runs once per device per season - clears adult/child counts so members
+// are prompted at first check-in. Tracks via localStorage flag.
+function runSeasonMigration(){
+  var flagKey='gsc_migration_2025_v1';
+  if(localStorage.getItem(flagKey)) return;
+  var typesToClear=['Family','Board','Comp','Couples','Individual'];
+  var updated=false;
+  members.forEach(function(m){
+    var tc=getTypeConfig(m.type);
+    var needsClear=false;
+    var changes={};
+    // Clear adults count for all types so they are prompted
+    if(m.adults&&m.adults>0){changes.adults=0;needsClear=true;}
+    // Clear children count and names for types that allow children
+    if(tc.allowChildren&&(m.children>0||(m.kids&&m.kids.length>0))){
+      changes.children=0;
+      changes.kids=[];
+      needsClear=true;
+    }
+    // Clear secondary adult for all types
+    if(m.secFirst||m.secLast){
+      changes.secFirst='';
+      changes.secLast='';
+      changes.secPhone='';
+      changes.secEmail='';
+      needsClear=true;
+    }
+    if(needsClear){
+      var updated2=Object.assign({},m,changes);
+      saveMember(updated2);
+      updated=true;
+    }
+  });
+  localStorage.setItem(flagKey,'done');
+  if(updated) console.log('Season migration complete - adult/child counts cleared for first check-in prompts');
 }
 
 function renderAll(){renderCI();renderDir();renderRep();}
