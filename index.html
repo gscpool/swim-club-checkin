@@ -291,7 +291,7 @@ body{font-family:'Inter',sans-serif;background:var(--sand);color:var(--tx);min-h
 <!-- APP -->
 <div id="app">
   <div class="topbar">
-    <div class="topbar-l"><span style="font-size:24px">&#x1F40A;</span><div><div class="topbar-title">Gibsonville Swim Club</div><div class="topbar-sub" id="today-lbl"></div><div style="font-size:10px;color:rgba(255,255,255,.6);letter-spacing:.5px;margin-top:2px;font-weight:600">v1.5.1</div></div></div>
+    <div class="topbar-l"><span style="font-size:24px">&#x1F40A;</span><div><div class="topbar-title">Gibsonville Swim Club</div><div class="topbar-sub" id="today-lbl"></div><div style="font-size:10px;color:rgba(255,255,255,.6);letter-spacing:.5px;margin-top:2px;font-weight:600">v1.5.2</div></div></div>
     <div class="topbar-acts"><div id="sync-pill" style="display:none;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;align-items:center;gap:4px"></div><button class="ibtn" onclick="openSettings()">&#x2699;&#xFE0F;</button></div>
   </div>
   <div class="tabs">
@@ -998,7 +998,8 @@ function miBack(){
 // Runs once per device per season - clears adult/child counts so members
 // are prompted at first check-in. Tracks via localStorage flag.
 function runSeasonMigration(){
-  var flagKey='gsc_migration_2025_v1';
+  var flagKey='gsc_migration_2025_v2';
+  localStorage.removeItem('gsc_migration_2025_v1');
   if(localStorage.getItem(flagKey)) return;
   var typesToClear=['Family','Board','Comp','Couples','Individual'];
   var updated=false;
@@ -2037,7 +2038,10 @@ function openSettings(){requireAdminPin(function(){
     +'<button class="btn-p" onclick="doChangePin()">&#x1F511; Update PIN</button>'
     +'<div class="sec-lbl" style="margin-top:4px">Season Reset</div>'
     +'<p class="fnote">Resets guest pass counts to 0 for all members. Profiles and visit history are kept.</p>'
-    +'<button class="btn-d" onclick="doSeasonReset()">&#x1F504; Reset for New Season</button>';
+    +'<button class="btn-d" onclick="doSeasonReset()">&#x1F504; Reset for New Season</button>'
+    +'<div class="sec-lbl" style="margin-top:4px">First Check-In Prompts</div>'
+    +'<p class="fnote">Forces every member to complete missing info on their next check-in.</p>'
+    +'<button class="btn-o" onclick="resetMigrationFlag()">&#x1F501; Reset First Check-In Prompts for All Members</button>';
   document.getElementById('st-overlay').classList.add('open');
 });}
 
@@ -2107,6 +2111,16 @@ function renumberTypeInputs(){
 function closeSettings(){document.getElementById('st-overlay').classList.remove('open');}
 function doChangePin(){var p1=document.getElementById('np1').value;var p2=document.getElementById('np2').value;if(!/^\d{4}$/.test(p1)){showToast('PIN must be exactly 4 digits','warn');return;}if(p1!==p2){showToast('PINs do not match','warn');return;}setPin(p1);closeSettings();showToast('PIN updated');}
 function enablePin(){document.getElementById('pin-screen').classList.remove('hidden');closeSettings();showToast('PIN enabled');}
+function resetMigrationFlag(){
+  if(!confirm('This will prompt every member to confirm their household info on next check-in. Continue?')) return;
+  localStorage.removeItem('gsc_migration_2025_v1');
+  localStorage.removeItem('gsc_migration_2025_v2');
+  // Run migration immediately
+  runSeasonMigration();
+  showToast('First check-in prompts reset for all members','ok');
+  closeSettings();
+}
+
 function doSeasonReset(){if(!confirm('Reset all guest pass counts for the new season?'))return;members=members.map(function(m){return Object.assign({},m,{guestsUsed:0,guestsTotal:GUEST_PASSES[m.type]!==undefined?GUEST_PASSES[m.type]:m.guestsTotal});});lSet('gsc_members',members);renderAll();closeSettings();showToast('Season reset complete');}
 </script>
 
