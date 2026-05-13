@@ -291,7 +291,7 @@ body{font-family:'Inter',sans-serif;background:var(--sand);color:var(--tx);min-h
 <!-- APP -->
 <div id="app">
   <div class="topbar">
-    <div class="topbar-l"><span style="font-size:24px">&#x1F40A;</span><div><div class="topbar-title">Gibsonville Swim Club</div><div class="topbar-sub" id="today-lbl"></div><div style="font-size:10px;color:rgba(255,255,255,.6);letter-spacing:.5px;margin-top:2px;font-weight:600">v1.6.4</div></div></div>
+    <div class="topbar-l"><span style="font-size:24px">&#x1F40A;</span><div><div class="topbar-title">Gibsonville Swim Club</div><div class="topbar-sub" id="today-lbl"></div><div style="font-size:10px;color:rgba(255,255,255,.6);letter-spacing:.5px;margin-top:2px;font-weight:600">v1.6.5</div></div></div>
     <div class="topbar-acts"><div id="sync-pill" style="display:none;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;align-items:center;gap:4px"></div><button class="ibtn" onclick="openSettings()">&#x2699;&#xFE0F;</button></div>
   </div>
   <div class="tabs">
@@ -869,11 +869,139 @@ function getMissingSteps(m){
 
 function openMissingInfo(memberId){
   var m=members.find(function(x){return x.id===memberId;}); if(!m) return;
-  checkMissingBeforeCI(m,function(){
-    closeMM();
-    setTimeout(function(){openMember(memberId,true);},300);
-  });
+  // Inject the missing info form directly into the ci-panel
+  var panel=document.querySelector('.ci-panel');
+  if(!panel) return;
+  panel.innerHTML=buildInlineMissingForm(m);
 }
+
+function buildInlineMissingForm(m){
+  var tc=getTypeConfig(m.type);
+  var html='<div style="display:flex;flex-direction:column;gap:12px">';
+  html+='<div style="font-size:16px;font-weight:800;color:#fff">&#x26A0;&#xFE0F; Complete Member Info</div>';
+  html+='<div style="font-size:12px;color:rgba(255,255,255,.7)">This information is required before checking in. It will be saved permanently.</div>';
+
+  // Contact fields
+  var needsContact=!m.email||!m.phone||!m.street||!m.city||!m.state||!m.zip;
+  if(needsContact){
+    html+='<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:rgba(255,255,255,.5)">Contact Information</div>';
+    if(!m.email) html+='<div class="fg"><label class="fl" style="color:rgba(255,255,255,.7)">Email</label><input class="fi" id="ilf-email" type="email" value="'+(m.email||'')+'" placeholder="email@example.com"></div>';
+    if(!m.phone) html+='<div class="fg"><label class="fl" style="color:rgba(255,255,255,.7)">Phone</label><input class="fi" id="ilf-phone" type="tel" value="'+(m.phone||'')+'" placeholder="(336) 555-0100"></div>';
+    if(!m.street||!m.city||!m.zip){
+      html+='<div class="fg"><label class="fl" style="color:rgba(255,255,255,.7)">Street Address</label><input class="fi" id="ilf-street" value="'+(m.street||'')+'" placeholder="123 Main St"></div>';
+      html+='<div class="frow">';
+      html+='<div class="fg"><label class="fl" style="color:rgba(255,255,255,.7)">City</label><input class="fi" id="ilf-city" value="'+(m.city||'')+'" placeholder="Burlington"></div>';
+      html+='<div class="fg" style="max-width:70px"><label class="fl" style="color:rgba(255,255,255,.7)">State</label><input class="fi" id="ilf-state" value="'+(m.state||'NC')+'" maxlength="2"></div>';
+      html+='<div class="fg" style="max-width:90px"><label class="fl" style="color:rgba(255,255,255,.7)">Zip</label><input class="fi" id="ilf-zip" type="tel" value="'+(m.zip||'')+'" maxlength="5" placeholder="27249"></div>';
+      html+='</div>';
+    }
+  }
+
+  // Adults (for types that allow variable adults)
+  if(tc.maxAdults>1){
+    html+='<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:rgba(255,255,255,.5)">Household — Adults</div>';
+    html+='<div style="display:flex;gap:8px">';
+    html+='<button id="ilf-a1" onclick="ilfSelectAdults(1)" style="flex:1;padding:14px;border-radius:10px;font-size:16px;font-weight:800;font-family:Inter,sans-serif;cursor:pointer;border:2px solid rgba(255,255,255,.3);background:rgba(255,255,255,.1);color:#fff">1 Adult</button>';
+    html+='<button id="ilf-a2" onclick="ilfSelectAdults(2)" style="flex:1;padding:14px;border-radius:10px;font-size:16px;font-weight:800;font-family:Inter,sans-serif;cursor:pointer;border:2px solid rgba(255,255,255,.3);background:rgba(255,255,255,.1);color:#fff">2 Adults</button>';
+    html+='</div>';
+    html+='<div id="ilf-sec-fields" style="display:none;flex-direction:column;gap:8px">';
+    html+='<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:rgba(255,255,255,.5)">Second Adult Name</div>';
+    html+='<div class="frow"><div class="fg"><label class="fl" style="color:rgba(255,255,255,.7)">First Name</label><input class="fi" id="ilf-sec-first" value="'+(m.secFirst||'')+'" placeholder="First"></div>';
+    html+='<div class="fg"><label class="fl" style="color:rgba(255,255,255,.7)">Last Name</label><input class="fi" id="ilf-sec-last" value="'+(m.secLast||'')+'" placeholder="Last"></div></div>';
+    html+='</div>';
+  } else if(tc.requireSecond&&!(m.secFirst&&m.secLast)){
+    html+='<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:rgba(255,255,255,.5)">Second Adult (Required)</div>';
+    html+='<div class="frow"><div class="fg"><label class="fl" style="color:rgba(255,255,255,.7)">First Name</label><input class="fi" id="ilf-sec-first" value="'+(m.secFirst||'')+'" placeholder="First"></div>';
+    html+='<div class="fg"><label class="fl" style="color:rgba(255,255,255,.7)">Last Name</label><input class="fi" id="ilf-sec-last" value="'+(m.secLast||'')+'" placeholder="Last"></div></div>';
+  }
+
+  // Children
+  if(tc.allowChildren){
+    html+='<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:rgba(255,255,255,.5)">Children</div>';
+    html+='<div id="ilf-kids-list">';
+    (m.kids||[]).forEach(function(k,i){
+      html+='<div style="display:flex;gap:8px;align-items:center;margin-bottom:6px"><input class="fi ilf-kid" value="'+k+'" placeholder="Child name" style="flex:1"><button onclick="this.parentElement.remove()" style="background:var(--rel);border:none;color:var(--re);width:36px;height:36px;border-radius:8px;cursor:pointer;font-size:16px;flex-shrink:0">&#x2715;</button></div>';
+    });
+    html+='</div>';
+    html+='<button onclick="ilfAddKid()" style="width:100%;padding:10px;background:rgba(255,255,255,.1);border:1.5px dashed rgba(255,255,255,.3);border-radius:9px;color:rgba(255,255,255,.7);font-size:13px;font-weight:600;font-family:Inter,sans-serif;cursor:pointer">&#xFF0B; Add Child</button>';
+  }
+
+  // Save button
+  html+='<button onclick="ilfSave(\''+m.id+'\')" style="width:100%;padding:15px;background:var(--or);border:none;color:#fff;border-radius:11px;font-size:17px;font-weight:800;font-family:Inter,sans-serif;cursor:pointer;margin-top:4px">&#x2713; Save &amp; Continue to Check-In</button>';
+  html+='</div>';
+  return html;
+}
+
+var _ilfAdults=0;
+function ilfSelectAdults(n){
+  _ilfAdults=n;
+  var b1=document.getElementById('ilf-a1');
+  var b2=document.getElementById('ilf-a2');
+  var sec=document.getElementById('ilf-sec-fields');
+  if(b1) b1.style.cssText='flex:1;padding:14px;border-radius:10px;font-size:16px;font-weight:800;font-family:Inter,sans-serif;cursor:pointer;border:2px solid '+(n===1?'var(--or)':'rgba(255,255,255,.3)')+';background:'+(n===1?'var(--or)':'rgba(255,255,255,.1)')+';color:#fff';
+  if(b2) b2.style.cssText='flex:1;padding:14px;border-radius:10px;font-size:16px;font-weight:800;font-family:Inter,sans-serif;cursor:pointer;border:2px solid '+(n===2?'var(--or)':'rgba(255,255,255,.3)')+';background:'+(n===2?'var(--or)':'rgba(255,255,255,.1)')+';color:#fff';
+  if(sec) sec.style.display=n===2?'flex':'none';
+}
+
+function ilfAddKid(){
+  var list=document.getElementById('ilf-kids-list'); if(!list) return;
+  var row=document.createElement('div');
+  row.style.cssText='display:flex;gap:8px;align-items:center;margin-bottom:6px';
+  row.innerHTML='<input class="fi ilf-kid" placeholder="Child name" style="flex:1"><button onclick="this.parentElement.remove()" style="background:var(--rel);border:none;color:var(--re);width:36px;height:36px;border-radius:8px;cursor:pointer;font-size:16px;flex-shrink:0">&#x2715;</button>';
+  list.appendChild(row);
+  row.querySelector('input').focus();
+}
+
+function ilfSave(memberId){
+  var m=members.find(function(x){return x.id===memberId;}); if(!m) return;
+  var tc=getTypeConfig(m.type);
+  var updates={rosterConfirmed:true};
+  // Contact
+  var email=document.getElementById('ilf-email');
+  var phone=document.getElementById('ilf-phone');
+  var street=document.getElementById('ilf-street');
+  var city=document.getElementById('ilf-city');
+  var state=document.getElementById('ilf-state');
+  var zip=document.getElementById('ilf-zip');
+  if(email&&email.value.trim()){updates.email=email.value.trim();}
+  else if(!m.email){showToast('Email is required','warn');return;}
+  if(phone&&phone.value.trim()){updates.phone=formatPhone(phone.value.trim());}
+  else if(!m.phone){showToast('Phone is required','warn');return;}
+  if(street&&street.value.trim()) updates.street=street.value.trim();
+  if(city&&city.value.trim()) updates.city=city.value.trim();
+  if(state&&state.value.trim()) updates.state=state.value.trim();
+  if(zip&&zip.value.trim()) updates.zip=zip.value.trim();
+  if(!updates.street&&!m.street){showToast('Address is required','warn');return;}
+  // Adults
+  if(tc.maxAdults>1){
+    if(!_ilfAdults){showToast('Please select 1 or 2 adults','warn');return;}
+    updates.adults=_ilfAdults;
+  }
+  // Second adult
+  var sf=document.getElementById('ilf-sec-first');
+  var sl=document.getElementById('ilf-sec-last');
+  if(sf&&sf.value.trim()) updates.secFirst=sf.value.trim();
+  if(sl&&sl.value.trim()) updates.secLast=sl.value.trim();
+  if((tc.requireSecond||_ilfAdults===2)&&(!updates.secFirst||!updates.secLast)){
+    if(!m.secFirst||!m.secLast){showToast('Second adult name is required','warn');return;}
+  }
+  // Kids
+  var kidInputs=document.querySelectorAll('.ilf-kid');
+  if(kidInputs.length){
+    var kids=[];
+    kidInputs.forEach(function(inp){var v=inp.value.trim();if(v) kids.push(v);});
+    updates.kids=kids;
+    updates.children=kids.length;
+  }
+  // Save and reload panel
+  var updated=Object.assign({},m,updates);
+  saveMember(updated);
+  var localIdx=members.findIndex(function(x){return x.id===memberId;});
+  if(localIdx>=0) members[localIdx]=updated;
+  showToast('Saved!','ok');
+  setTimeout(function(){openMember(memberId,true);},300);
+}
+
 function checkMissingBeforeCI(m, onComplete){
   var steps=getMissingSteps(m);
   if(!steps.length){onComplete();return;}
