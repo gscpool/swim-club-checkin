@@ -1969,8 +1969,6 @@ function renderRep(){
   var DNAMES=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
   var busiestDow=DNAMES[dowC.indexOf(Math.max.apply(null,dowC))];
 
-  var unpaidList=members.filter(function(m){return m.status!=='paid';}).sort(function(a,b){return a.last.localeCompare(b.last);});
-
   // ── KPI card builder ─────────────────────────────────────────────────────
   function stat(val, lbl, color, chartId){
     var chartBtn=chartId
@@ -2036,15 +2034,6 @@ function renderRep(){
     +stat(pendingCount,'Pending',AM),
     4
   );
-
-  // Unpaid list
-  if(unpaidList.length){
-    html+='<div class="rsec"><div class="rsec-title">Unpaid &amp; Pending ('+unpaidList.length+')</div>'
-      +'<div class="rep-list">'+unpaidList.map(function(m){
-        return'<div class="rep-row"><div><span class="rep-name">'+m.last+', '+m.first+'</span> '+typeBadge(m.type)+' '+statusBadge(m.status)+'</div>'
-          +'<div style="font-size:11px;color:var(--mu)">'+(m.email||'')+'</div></div>';
-      }).join('')+'</div></div>';
-  }
 
   // Data Management
   html+='<div class="rsec"><div class="rsec-title">Check-In Exports</div>'
