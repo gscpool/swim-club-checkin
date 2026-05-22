@@ -240,6 +240,36 @@ body{font-family:'Inter',sans-serif;background:var(--sand);color:var(--tx);min-h
 .rstat-val{font-size:26px;font-weight:800;line-height:1;color:var(--rcolor,var(--bld));font-variant-numeric:tabular-nums}
 .rstat-lbl{font-size:10px;font-weight:600;color:var(--mu);text-transform:uppercase;letter-spacing:.5px}
 
+/* ANNOUNCEMENT BANNER */
+#announce-bar{background:var(--or);padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-shrink:0}
+.announce-text{font-size:13px;font-weight:700;color:#fff;font-family:'Inter',sans-serif;line-height:1.4;flex:1}
+
+/* MEMBER NOTES */
+.note-item{background:var(--sand);border-radius:9px;padding:10px 12px;border-left:3px solid var(--or)}
+.note-item.visible{border-left-color:var(--gr)}
+.note-ts{font-size:10px;color:var(--mu);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px}
+.note-body{font-size:13px;color:var(--tx);line-height:1.4}
+.note-tag{display:inline-block;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:2px 7px;border-radius:10px;margin-top:5px}
+.note-tag.visible{background:var(--grl);color:var(--gr)}
+.note-tag.internal{background:var(--bll);color:var(--bl)}
+
+/* INCIDENTS */
+.inc-card{background:var(--wh);border-radius:var(--r);box-shadow:var(--sh);padding:14px;border-left:4px solid var(--re);cursor:pointer;transition:transform .1s}
+.inc-card:active{transform:scale(.98)}
+.inc-card.severity-low{border-left-color:var(--am)}
+.inc-card.severity-med{border-left-color:var(--or)}
+.inc-card.severity-high{border-left-color:var(--re)}
+.inc-type{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--mu)}
+.inc-desc{font-size:14px;font-weight:600;color:var(--tx);margin:3px 0}
+.inc-meta{font-size:11px;color:var(--mu)}
+.inc-followup{display:inline-block;font-size:10px;font-weight:700;background:var(--rel);color:var(--re);padding:2px 8px;border-radius:10px;margin-top:4px}
+
+/* AUTH */
+.role-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px}
+.role-admin{background:var(--orl);color:var(--ord)}
+.role-board{background:var(--bll);color:var(--bl)}
+.role-attendant{background:var(--sand);color:var(--mu)}
+
 /* CHECK-IN TAB QUICK FIND */
 .ci-section-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--mu);padding:10px 13px 5px;background:var(--sand)}
 .miss-step-title{font-size:15px;font-weight:800;color:var(--bld);margin-bottom:4px}
@@ -299,15 +329,20 @@ body{font-family:'Inter',sans-serif;background:var(--sand);color:var(--tx);min-h
 <!-- APP -->
 <div id="app">
   <div class="topbar">
-    <div class="topbar-l"><span style="font-size:24px">&#x1F40A;</span><div><div class="topbar-title">Gibsonville Swim Club</div><div class="topbar-sub" id="today-lbl"></div><div style="font-size:10px;color:rgba(255,255,255,.6);letter-spacing:.5px;margin-top:2px;font-weight:600">v1.6.8</div></div></div>
+    <div class="topbar-l"><span style="font-size:24px">&#x1F40A;</span><div><div class="topbar-title">Gibsonville Swim Club</div><div class="topbar-sub" id="today-lbl"></div><div style="font-size:10px;color:rgba(255,255,255,.6);letter-spacing:.5px;margin-top:2px;font-weight:600">v1.7.5</div></div></div>
     <div class="topbar-acts"><div id="sync-pill" style="display:none;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;align-items:center;gap:4px"></div><button class="ibtn" onclick="openSettings()">&#x2699;&#xFE0F;</button></div>
   </div>
   <div class="tabs">
     <button class="tab on" id="tb-ci" onclick="switchTab('ci')">&#x2705; Check-In</button>
     <button class="tab" id="tb-dir" onclick="switchTab('dir')">&#x1F4CB; Directory</button>
     <button class="tab" id="tb-rep" onclick="switchTab('rep')">&#x1F4CA; Reports</button>
+      <button class="tab" id="tb-inc" onclick="switchTab('inc')">&#x26A0;&#xFE0F; Incidents</button>
   </div>
   <div id="pane-ci" class="pane on">
+    <!-- Announcement Banner -->
+    <div id="announce-bar" style="display:none">
+      <div class="announce-text" id="announce-text"></div>
+    </div>
     <!-- Last name alpha strip -->
     <div class="ci-section-title" id="ci-ln-label">Step 1 — Tap member's last name initial</div>
     <div class="ci-alpha-row" id="ci-ln-strip"></div>
@@ -328,6 +363,10 @@ body{font-family:'Inter',sans-serif;background:var(--sand);color:var(--tx);min-h
       <div id="dir-alpha-strip" style="display:flex;flex-wrap:wrap;gap:6px;padding:8px 13px 10px;justify-content:center;align-content:center;background:var(--sand);border-bottom:1px solid var(--sand2)"></div>
     </div>
     <div class="dlist" id="dir-list"></div>
+  </div>
+  <div id="pane-inc" class="pane">
+    <div class="rep-scroll" id="inc-body"></div>
+    <button class="fab" id="inc-fab" onclick="openNewIncident()" style="display:none">&#x2B;</button>
   </div>
   <div id="pane-rep" class="pane"><div class="rep-scroll" id="rep-body"></div></div>
   <button class="fab" id="fab" onclick="openEdit(null)">&#xFF0B;</button>
@@ -458,7 +497,11 @@ var db=null,fbReady=false;
       rebuildFromConfig();
       document.getElementById('today-lbl').textContent=new Date().toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
       initPin();
+      updateUIForRole();
       renderAll();
+      renderAnnouncement();
+      checkRenewalExpiry();
+      loadIncidents();
       // Set up real-time listeners after boot
       _db.collection('members').orderBy('last').onSnapshot(function(snap){
         members=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
@@ -472,7 +515,11 @@ var db=null,fbReady=false;
       rebuildFromConfig();
       document.getElementById('today-lbl').textContent=new Date().toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
       initPin();
+      updateUIForRole();
       renderAll();
+      renderAnnouncement();
+      checkRenewalExpiry();
+      loadIncidents();
       _db.collection('members').orderBy('last').onSnapshot(function(snap){
         members=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
         renderAll();
@@ -1212,7 +1259,216 @@ function runSeasonMigration(){
   console.log('Season migration v3 complete -',count,'members cleared for first check-in prompts');
 }
 
-function renderAll(){renderCI();renderDir();renderRep();}
+// ── AUTH SYSTEM ───────────────────────────────────────────────────────────────
+// Master admin credentials (SHA-256 hashed password)
+var MASTER_ADMIN={
+  username:'jeffklowe',
+  passwordHash:'5b06d149a77e7119ea9f7cc89a0647e17f0b4c99da6195c039a1cae4a76e1ce7',
+  role:'master_admin',
+  displayName:'Jeff Lowe'
+};
+
+// Default permissions per role type
+var DEFAULT_PERMISSIONS={
+  master_admin:{
+    canCheckin:true,canEditMembers:true,canChangePayment:true,
+    canAddDeleteMembers:true,canImportExport:true,canViewReports:true,
+    canViewIncidents:true,canFileIncidents:true,canVoteApplications:true,
+    canViewApplications:true,canManageAnnouncements:true,canAccessSettings:true,
+    canManageUsers:true
+  },
+  board:{
+    canCheckin:false,canEditMembers:false,canChangePayment:false,
+    canAddDeleteMembers:false,canImportExport:false,canViewReports:true,
+    canViewIncidents:true,canFileIncidents:true,canVoteApplications:true,
+    canViewApplications:true,canManageAnnouncements:false,canAccessSettings:false,
+    canManageUsers:false
+  },
+  attendant:{
+    canCheckin:true,canEditMembers:false,canChangePayment:false,
+    canAddDeleteMembers:false,canImportExport:false,canViewReports:false,
+    canViewIncidents:false,canFileIncidents:true,canVoteApplications:false,
+    canViewApplications:false,canManageAnnouncements:false,canAccessSettings:false,
+    canManageUsers:false
+  }
+};
+
+var currentUser=null; // null = attendant mode
+var inactivityTimer=null;
+var INACTIVITY_MINUTES=5; // configurable
+
+function can(permission){
+  if(!currentUser) return DEFAULT_PERMISSIONS.attendant[permission]||false;
+  var perms=currentUser.permissions||DEFAULT_PERMISSIONS[currentUser.roleType]||DEFAULT_PERMISSIONS.attendant;
+  return perms[permission]||false;
+}
+
+function isMasterAdmin(){return currentUser&&currentUser.username===MASTER_ADMIN.username;}
+function isLoggedIn(){return currentUser!==null;}
+
+async function sha256(message){
+  var msgBuffer=new TextEncoder().encode(message);
+  var hashBuffer=await crypto.subtle.digest('SHA-256',msgBuffer);
+  var hashArray=Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(function(b){return b.toString(16).padStart(2,'0');}).join('');
+}
+
+async function doLogin(){
+  var user=document.getElementById('login-user');
+  var pass=document.getElementById('login-pass');
+  var err=document.getElementById('login-err');
+  if(!user||!pass) return;
+  var username=user.value.trim().toLowerCase();
+  var password=pass.value;
+  if(!username||!password){err.textContent='Please enter username and password';return;}
+  err.textContent='';
+  var hash=await sha256(password);
+  // Check master admin
+  if(username===MASTER_ADMIN.username&&hash===MASTER_ADMIN.passwordHash){
+    loginAs({username:MASTER_ADMIN.username,displayName:MASTER_ADMIN.displayName,
+      roleType:'master_admin',roleLabel:'Admin',permissions:DEFAULT_PERMISSIONS.master_admin});
+    return;
+  }
+  // Check Firebase users
+  if(fbReady&&db){
+    db.collection('staff_users').where('username','==',username).get().then(function(snap){
+      if(snap.empty){err.textContent='Invalid username or password';return;}
+      var doc=snap.docs[0];var data=doc.data();
+      if(data.passwordHash===hash){
+        loginAs({id:doc.id,username:data.username,displayName:data.displayName||data.username,
+          roleType:data.roleType||'board',roleLabel:data.roleLabel||'Board Member',
+          permissions:data.permissions||DEFAULT_PERMISSIONS.board});
+      } else {
+        err.textContent='Invalid username or password';
+      }
+    }).catch(function(){err.textContent='Login failed - check connection';});
+  } else {
+    err.textContent='Not connected to server';
+  }
+}
+
+function loginAs(user){
+  currentUser=user;
+  closeLogin();
+  resetInactivityTimer();
+  updateUIForRole();
+  renderAll();
+  showToast('Signed in as '+user.displayName,'ok');
+}
+
+function logoutUser(){
+  currentUser=null;
+  clearTimeout(inactivityTimer);
+  updateUIForRole();
+  renderAll();
+  showToast('Signed out','ok');
+}
+
+function switchToAttendant(){
+  logoutUser();
+}
+
+function openLogin(){
+  var ov=document.getElementById('login-overlay');
+  if(isLoggedIn()){
+    // Show logged-in options
+    if(confirm('Sign out as '+currentUser.displayName+'?')){logoutUser();}
+    return;
+  }
+  if(ov) ov.style.display='flex';
+  setTimeout(function(){var u=document.getElementById('login-user');if(u)u.focus();},100);
+}
+
+function closeLogin(){
+  var ov=document.getElementById('login-overlay');
+  if(ov) ov.style.display='none';
+  var u=document.getElementById('login-user');
+  var p=document.getElementById('login-pass');
+  if(u) u.value='';
+  if(p) p.value='';
+}
+
+function updateUIForRole(){
+  var settingsBtn=document.getElementById('settings-btn');
+  var loginIcon=document.getElementById('login-icon');
+  var loginDisp=document.getElementById('login-username-display');
+  // Settings gear only for admin
+  if(settingsBtn) settingsBtn.style.display=can('canAccessSettings')?'flex':'none';
+  // Login icon state
+  if(loginIcon) loginIcon.textContent=isLoggedIn()?'&#x1F513;':'&#x1F512;';
+  if(loginDisp) loginDisp.textContent=isLoggedIn()?currentUser.displayName:'';
+  // FAB for adding members - only if permitted
+  var fab=document.getElementById('fab');
+  if(fab){
+    if(!can('canAddDeleteMembers')) fab.style.display='none';
+  }
+  // Incident FAB
+  var incFab=document.getElementById('inc-fab');
+  // Incidents tab visibility
+  var tbInc=document.getElementById('tb-inc');
+  if(tbInc) tbInc.style.display=can('canViewIncidents')?'':'none';
+  // Reports tab
+  var tbRep=document.getElementById('tb-rep');
+  if(tbRep) tbRep.style.display=can('canViewReports')?'':'none';
+}
+
+function resetInactivityTimer(){
+  clearTimeout(inactivityTimer);
+  if(!isLoggedIn()) return;
+  var ms=INACTIVITY_MINUTES*60*1000;
+  inactivityTimer=setTimeout(function(){
+    if(isLoggedIn()){
+      logoutUser();
+      showToast('Signed out due to inactivity','warn');
+    }
+  }, ms);
+}
+
+// Reset timer on any user interaction
+['touchstart','mousedown','keydown','scroll'].forEach(function(evt){
+  document.addEventListener(evt,function(){if(isLoggedIn()) resetInactivityTimer();},{passive:true});
+});
+
+function requirePermission(perm, callback){
+  if(can(perm)){callback();return;}
+  if(!isLoggedIn()){
+    showToast('Please sign in to perform this action','warn');
+    openLogin();
+  } else {
+    showToast('You don\'t have permission for this action','err');
+  }
+}
+
+function renderAll(){renderCI();renderDir();renderRep();renderAnnouncement();}
+
+function renderAnnouncement(){
+  var bar=document.getElementById('announce-bar');
+  var txt=document.getElementById('announce-text');
+  if(!bar||!txt) return;
+  var msg='';
+  if(fbReady&&db){
+    db.collection('config').doc('announcement').get().then(function(doc){
+      if(doc.exists&&doc.data().message){
+        msg=doc.data().message;
+        txt.textContent=msg;
+        bar.style.display='flex';
+      } else {
+        bar.style.display='none';
+      }
+    }).catch(function(){bar.style.display='none';});
+  } else {
+    try{msg=localStorage.getItem('gsc_announcement')||'';}catch(e){}
+    if(msg){txt.textContent=msg;bar.style.display='flex';}
+    else{bar.style.display='none';}
+  }
+}
+
+function saveAnnouncement(msg){
+  if(fbReady&&db){
+    db.collection('config').doc('announcement').set({message:msg}).catch(function(e){console.error(e);});
+  }
+  try{if(msg)localStorage.setItem('gsc_announcement',msg);else localStorage.removeItem('gsc_announcement');}catch(e){}
+}
 
 // Directory search - poll + direct binding for maximum compatibility
 var _lastDirQ='',_dirQ='',dirAlpha='',ciLastAlpha='',ciFirstAlpha='';
@@ -2240,7 +2496,9 @@ function importCSVReplace(){if(!csvParsed.length){showToast('No data','warn');re
 if(fbReady&&window._delMemberFB){members.forEach(function(m){window._delMemberFB(m.id);});}// Save new ones
 csvParsed.forEach(function(m){saveMember(m);});if(!fbReady){members=csvParsed;lSet('gsc_members',members);renderAll();}closeCSV();showToast('Replaced with '+csvParsed.length+' members','ok');}
 
-function openSettings(){requireAdminPin(function(){
+function openSettings(){
+  if(!can('canAccessSettings')){showToast('Admin login required','warn');openLogin();return;}
+  (function(){
   var typesHTML=CONFIG.membershipTypes.map(function(t,i){
     return '<div style="background:var(--sand);border-radius:9px;padding:10px 12px;display:flex;flex-direction:column;gap:6px;border:1px solid var(--sand2)">'
       +'<div style="display:flex;align-items:center;gap:8px;justify-content:space-between">'
@@ -2273,6 +2531,13 @@ function openSettings(){requireAdminPin(function(){
     +'<div id="cfg-types-list" style="display:flex;flex-direction:column;gap:8px">'+typesHTML+'</div>'
     +'<button onclick="addMemberType()" class="btn-s" style="margin-top:6px">&#xFF0B; Add Membership Type</button>'
     +'<button class="btn-p" style="margin-top:4px" onclick="saveAllConfig()">&#x1F4BE; Save All Settings</button>'
+    +'<div class="sec-lbl" style="margin-top:4px">Check-In Announcement</div>'
+    +'<p class="fnote">Shown at the top of the check-in screen until cleared. Leave blank to hide.</p>'
+    +'<div class="fg"><label class="fl">Message</label><input class="fi" id="st-announce" placeholder="e.g. Pool closes at 6pm today for a private event"></div>'
+    +'<div style="display:flex;gap:8px">'
+    +'<button class="btn-p" style="flex:1" onclick="saveAnnouncementFromSettings()">&#x1F4E3; Save Announcement</button>'
+    +'<button class="btn-d" style="flex:1" onclick="clearAnnouncement()">&#x2715; Clear</button>'
+    +'</div>'
     +'<div class="sec-lbl" style="margin-top:4px">Change PIN</div>'
     +'<p class="fnote">This PIN protects delete, payment status changes, import/export, and settings.</p>'
     +'<div class="fg"><label class="fl">New PIN (4 digits)</label><input class="fi" id="np1" type="tel" maxlength="4" placeholder="New PIN"></div>'
@@ -2281,6 +2546,15 @@ function openSettings(){requireAdminPin(function(){
     +'<div class="sec-lbl" style="margin-top:4px">Season Reset</div>'
     +'<p class="fnote">Resets guest pass counts to 0 for all members. Profiles and visit history are kept.</p>'
     +'<button class="btn-d" onclick="doSeasonReset()">&#x1F504; Reset for New Season</button>'
+    +(isMasterAdmin()?
+    '<div class="sec-lbl" style="margin-top:4px">User Management</div>'
+    +'<p class="fnote">Add board members and staff with custom roles and permissions.</p>'
+    +'<button class="btn-p" onclick="openUserManagement()">&#x1F465; Manage Users &amp; Roles</button>'
+    +'<div class="sec-lbl" style="margin-top:4px">Session Timeout</div>'
+    +'<p class="fnote">Auto sign-out after inactivity (minutes).</p>'
+    +'<div class="fg"><input class="fi" id="st-timeout" type="number" min="1" max="60" value="'+INACTIVITY_MINUTES+'" placeholder="5"></div>'
+    +'<button class="btn-s" onclick="saveTimeoutSetting()">Save Timeout</button>'
+    :'')
     +'<div class="sec-lbl" style="margin-top:4px">Clear Check-In Records</div>'
     +'<p class="fnote">Permanently deletes check-in visit records. Member profiles are not affected.</p>'
     +'<button class="btn-d" onclick="closeSettings();clearTodayVisits()">&#x1F5D1; Clear Today\'s Check-Ins</button>'
@@ -2289,7 +2563,17 @@ function openSettings(){requireAdminPin(function(){
     +'<p class="fnote">Forces every member to complete missing info on their next check-in.</p>'
     +'<button class="btn-o" onclick="resetMigrationFlag()">&#x1F501; Reset First Check-In Prompts for All Members</button>';
   document.getElementById('st-overlay').classList.add('open');
-});}
+  // Load current announcement
+  if(fbReady&&db){
+    db.collection('config').doc('announcement').get().then(function(doc){
+      var inp=document.getElementById('st-announce');
+      if(inp&&doc.exists&&doc.data().message) inp.value=doc.data().message;
+    });
+  } else {
+    try{var msg=localStorage.getItem('gsc_announcement')||'';var inp=document.getElementById('st-announce');if(inp)inp.value=msg;}catch(e){}
+  }
+  })();
+}
 
 function saveAllConfig(){
   var newTypes=[];
@@ -2357,6 +2641,380 @@ function renumberTypeInputs(){
 function closeSettings(){document.getElementById('st-overlay').classList.remove('open');}
 function doChangePin(){var p1=document.getElementById('np1').value;var p2=document.getElementById('np2').value;if(!/^\d{4}$/.test(p1)){showToast('PIN must be exactly 4 digits','warn');return;}if(p1!==p2){showToast('PINs do not match','warn');return;}setPin(p1);closeSettings();showToast('PIN updated');}
 function enablePin(){document.getElementById('pin-screen').classList.remove('hidden');closeSettings();showToast('PIN enabled');}
+function saveAnnouncementFromSettings(){
+  var inp=document.getElementById('st-announce');
+  var msg=inp?inp.value.trim():'';
+  if(!msg){showToast('Enter a message first','warn');return;}
+  saveAnnouncement(msg);
+  showToast('Announcement saved','ok');
+  renderAnnouncement();
+  closeSettings();
+}
+
+function clearAnnouncement(){
+  saveAnnouncement('');
+  showToast('Announcement cleared','ok');
+  renderAnnouncement();
+  closeSettings();
+}
+
+function addMemberNote(memberId){
+  requireAdminPin(function(){
+    var m=members.find(function(x){return x.id===memberId;}); if(!m) return;
+    var inp=document.getElementById('ef-new-note');
+    var vis=document.getElementById('ef-note-visible');
+    if(!inp||!inp.value.trim()){showToast('Enter a note first','warn');return;}
+    var note={
+      id:uid(),
+      ts:Date.now(),
+      text:inp.value.trim(),
+      showAtCheckin:vis?vis.checked:false
+    };
+    var history=(m.notes_history||[]).concat([note]);
+    var updated=Object.assign({},m,{notes_history:history});
+    saveMember(updated);
+    var localIdx=members.findIndex(function(x){return x.id===memberId;});
+    if(localIdx>=0) members[localIdx]=updated;
+    inp.value='';
+    if(vis) vis.checked=false;
+    // Refresh notes list in form
+    var list=document.getElementById('ef-notes-list');
+    if(list){
+      list.innerHTML=history.slice().sort(function(a,b){return b.ts-a.ts;}).map(function(n){
+        return'<div class="note-item '+(n.showAtCheckin?'visible':'')+'">'
+          +'<div class="note-ts">'+new Date(n.ts).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})+' '+new Date(n.ts).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})+'</div>'
+          +'<div class="note-body">'+n.text+'</div>'
+          +'<span class="note-tag '+(n.showAtCheckin?'visible':'internal')+'">'+(n.showAtCheckin?'Visible at check-in':'Internal')+'</span>'
+          +'</div>';
+      }).join('');
+    }
+    showToast('Note added','ok');
+  });
+}
+
+// ── MEMBERSHIP RENEWAL ────────────────────────────────────────────────────────
+function getRenewalExpiry(year){
+  // Memberships expire October 1 each year
+  return new Date(year||new Date().getFullYear(), 9, 1); // month 9 = October
+}
+
+function checkRenewalExpiry(){
+  // Run daily - flip unpaid if past Oct 1
+  var now=new Date();
+  var expiry=getRenewalExpiry(now.getFullYear());
+  if(now<expiry) return; // Not yet expired
+  var flagKey='gsc_renewal_check_'+now.getFullYear();
+  if(localStorage.getItem(flagKey)) return;
+  var updated=false;
+  members.forEach(function(m){
+    if(m.status==='paid'){
+      var renewedThisYear=m.renewalYear&&m.renewalYear>=now.getFullYear();
+      if(!renewedThisYear){
+        var upd=Object.assign({},m,{status:'unpaid'});
+        saveMember(upd);
+        var i=members.findIndex(function(x){return x.id===m.id;});
+        if(i>=0) members[i]=upd;
+        updated=true;
+      }
+    }
+  });
+  localStorage.setItem(flagKey,'done');
+  if(updated){renderAll();showToast('Memberships expired Oct 1 — statuses updated','warn');}
+}
+
+function getMemberRenewalStatus(m){
+  var now=new Date();
+  var expiry=getRenewalExpiry(now.getFullYear());
+  var daysToExpiry=Math.ceil((expiry-now)/(1000*60*60*24));
+  return{
+    expiry:expiry,
+    daysToExpiry:daysToExpiry,
+    expired:now>=expiry,
+    expiringSoon:daysToExpiry>0&&daysToExpiry<=30
+  };
+}
+
+// ── INCIDENT LOG ──────────────────────────────────────────────────────────────
+var incidents=[];
+
+function loadIncidents(){
+  if(fbReady&&db){
+    db.collection('incidents').orderBy('ts','desc').onSnapshot(function(snap){
+      incidents=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
+      if(document.getElementById('pane-inc').classList.contains('on')) renderIncidents();
+    });
+  } else {
+    try{incidents=JSON.parse(localStorage.getItem('gsc_incidents')||'[]');}catch(e){incidents=[];}
+  }
+}
+
+function saveIncident(inc){
+  if(fbReady&&db){
+    var copy=Object.assign({},inc);var id=copy.id;delete copy.id;
+    db.collection('incidents').doc(id).set(copy).catch(function(e){console.error(e);});
+  } else {
+    var existing=incidents.findIndex(function(x){return x.id===inc.id;});
+    if(existing>=0) incidents[existing]=inc; else incidents.unshift(inc);
+    try{localStorage.setItem('gsc_incidents',JSON.stringify(incidents));}catch(e){}
+  }
+}
+
+function renderIncidents(){
+  var el=document.getElementById('inc-body'); if(!el) return;
+  if(!incidents.length){
+    el.innerHTML='<div class="empty" style="padding:40px 0"><div class="ico">&#x1F4CB;</div><p>No incidents recorded.</p></div>';
+    return;
+  }
+  var html='<div style="display:flex;flex-direction:column;gap:10px;padding:12px">';
+  incidents.forEach(function(inc){
+    var sevClass=inc.severity==='High'?'severity-high':inc.severity==='Medium'?'severity-med':'severity-low';
+    html+='<div class="inc-card '+sevClass+'" onclick="viewIncident(&quot;'+inc.id+'&quot;)">'
+      +'<div class="inc-type">'+inc.type+' &nbsp;&#x2022;&nbsp; '+inc.severity+' severity'+(inc.followupRequired?'':'')+' &nbsp;&#x2022;&nbsp; '+new Date(inc.ts).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})+'</div>'
+      +'<div class="inc-desc">'+inc.description.substring(0,80)+(inc.description.length>80?'...':'')+'</div>'
+      +'<div class="inc-meta">Reported by: '+inc.reportedBy+(inc.membersInvolved?' &nbsp;&#x2022;&nbsp; '+inc.membersInvolved:'')+'</div>'
+      +(inc.followupRequired?'<span class="inc-followup">Follow-up required</span>':'')
+      +'</div>';
+  });
+  html+='</div>';
+  el.innerHTML=html;
+}
+
+function openNewIncident(){
+  document.getElementById('inc-modal-title').textContent='New Incident';
+  document.getElementById('inc-modal-body').innerHTML=buildIncidentForm(null);
+  document.getElementById('inc-overlay').style.display='flex';
+}
+
+function viewIncident(id){
+  var inc=incidents.find(function(x){return x.id===id;}); if(!inc) return;
+  document.getElementById('inc-modal-title').textContent='Incident Report';
+  document.getElementById('inc-modal-body').innerHTML=buildIncidentForm(inc);
+  document.getElementById('inc-overlay').style.display='flex';
+}
+
+function buildIncidentForm(inc){
+  var now=new Date();
+  var dtStr=inc?new Date(inc.ts).toISOString().slice(0,16):now.toISOString().slice(0,16);
+  var types=['Injury','Near Drowning','Rule Violation','Medical Emergency','Property Damage','Altercation','Other'];
+  var severities=['Low','Medium','High'];
+  var readonly=inc?'readonly disabled':'';
+  var roAttr=inc?'pointer-events:none;opacity:.85':'';
+  var html='<div style="display:flex;flex-direction:column;gap:10px">';
+  html+='<div class="fg"><label class="fl">Date &amp; Time</label><input class="fi" id="inc-dt" type="datetime-local" value="'+dtStr+'" '+readonly+'></div>';
+  html+='<div class="fg"><label class="fl">Incident Type</label><select class="fs" id="inc-type" '+readonly+' style="'+roAttr+'">'
+    +types.map(function(t){return'<option'+(inc&&inc.type===t?' selected':'')+'>'+t+'</option>';}).join('')+'</select></div>';
+  html+='<div class="fg"><label class="fl">Severity</label><select class="fs" id="inc-sev" '+readonly+' style="'+roAttr+'">'
+    +severities.map(function(s){return'<option'+(inc&&inc.severity===s?' selected':'')+'>'+s+'</option>';}).join('')+'</select></div>';
+  html+='<div class="fg"><label class="fl">Description</label><textarea class="fi" id="inc-desc" rows="3" style="resize:vertical" '+readonly+'>'+(inc?inc.description:'')+'</textarea></div>';
+  html+='<div class="fg"><label class="fl">Members / Guests Involved</label><input class="fi" id="inc-members" value="'+(inc?inc.membersInvolved||'':'') +'" placeholder="Names of anyone involved" '+readonly+'></div>';
+  html+='<div class="fg"><label class="fl">Reported By</label><input class="fi" id="inc-reporter" value="'+(inc?inc.reportedBy||'':'')+'" placeholder="Guard or staff name" '+readonly+'></div>';
+  html+='<div class="fg"><label class="fl">Action Taken</label><textarea class="fi" id="inc-action" rows="2" style="resize:vertical" '+readonly+'>'+(inc?inc.actionTaken||'':'')+'</textarea></div>';
+  html+='<label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--mu);cursor:pointer">'
+    +'<input type="checkbox" id="inc-followup" style="width:18px;height:18px;accent-color:var(--re)"'+(inc&&inc.followupRequired?' checked':'')+(inc?' disabled':'')+'> Follow-up required</label>';
+  if(inc&&inc.followupNotes){
+    html+='<div class="fg"><label class="fl">Follow-up Notes (Admin)</label><div style="background:var(--sand);border-radius:9px;padding:10px;font-size:13px;color:var(--tx)">'+inc.followupNotes+'</div></div>';
+  }
+  // Admin follow-up notes field (only when viewing existing incident)
+  if(inc){
+    html+='<div class="fg"><label class="fl">Add Follow-up Note (Admin)</label><textarea class="fi" id="inc-followup-note" rows="2" style="resize:vertical" placeholder="Admin notes..."></textarea></div>';
+    html+='<button class="btn-p" onclick="saveFollowupNote(&quot;'+inc.id+'&quot;)">Save Follow-up Note</button>';
+  } else {
+    html+='<button class="btn-p" onclick="submitIncident()">&#x26A0;&#xFE0F; Submit Incident Report</button>';
+  }
+  html+='</div>';
+  return html;
+}
+
+function submitIncident(){
+  var dt=document.getElementById('inc-dt');
+  var type=document.getElementById('inc-type');
+  var sev=document.getElementById('inc-sev');
+  var desc=document.getElementById('inc-desc');
+  var reporter=document.getElementById('inc-reporter');
+  if(!desc||!desc.value.trim()){showToast('Description is required','warn');return;}
+  if(!reporter||!reporter.value.trim()){showToast('Reported by is required','warn');return;}
+  var inc={
+    id:uid(),
+    ts:dt?new Date(dt.value).getTime():Date.now(),
+    type:type?type.value:'Other',
+    severity:sev?sev.value:'Low',
+    description:desc.value.trim(),
+    membersInvolved:(document.getElementById('inc-members')||{}).value||'',
+    reportedBy:reporter.value.trim(),
+    actionTaken:(document.getElementById('inc-action')||{}).value||'',
+    followupRequired:(document.getElementById('inc-followup')||{}).checked||false,
+    followupNotes:''
+  };
+  saveIncident(inc);
+  incidents.unshift(inc);
+  closeIncident();
+  renderIncidents();
+  showToast('Incident logged','ok');
+}
+
+function saveFollowupNote(id){
+  requireAdminPin(function(){
+    var inc=incidents.find(function(x){return x.id===id;}); if(!inc) return;
+    var inp=document.getElementById('inc-followup-note');
+    if(!inp||!inp.value.trim()){showToast('Enter a note','warn');return;}
+    var ts=new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})+': ';
+    var existing=inc.followupNotes?inc.followupNotes+'\n':'';
+    var updated=Object.assign({},inc,{followupNotes:existing+ts+inp.value.trim()});
+    saveIncident(updated);
+    var i=incidents.findIndex(function(x){return x.id===id;});
+    if(i>=0) incidents[i]=updated;
+    closeIncident();
+    renderIncidents();
+    showToast('Follow-up note saved','ok');
+  });
+}
+
+function closeIncident(){
+  document.getElementById('inc-overlay').style.display='none';
+}
+
+function saveTimeoutSetting(){
+  var inp=document.getElementById('st-timeout');
+  var val=inp?parseInt(inp.value):5;
+  if(val<1||val>60){showToast('Enter a value between 1 and 60','warn');return;}
+  INACTIVITY_MINUTES=val;
+  if(fbReady&&db) db.collection('config').doc('settings').set({inactivityMinutes:val},{merge:true});
+  showToast('Timeout set to '+val+' minutes','ok');
+}
+
+function openUserManagement(){
+  closeSettings();
+  // Show user management overlay
+  if(fbReady&&db){
+    db.collection('staff_users').get().then(function(snap){
+      var users=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
+      showUserManagementUI(users);
+    });
+  } else {
+    showUserManagementUI([]);
+  }
+}
+
+function showUserManagementUI(users){
+  var PERMS=[
+    {key:'canCheckin',label:'Check in members'},
+    {key:'canEditMembers',label:'Edit member records'},
+    {key:'canChangePayment',label:'Change payment status'},
+    {key:'canAddDeleteMembers',label:'Add / delete members'},
+    {key:'canImportExport',label:'Import / export CSV'},
+    {key:'canViewReports',label:'View reports'},
+    {key:'canViewIncidents',label:'View incidents'},
+    {key:'canFileIncidents',label:'File incidents'},
+    {key:'canViewApplications',label:'View applications'},
+    {key:'canVoteApplications',label:'Vote on applications'},
+    {key:'canManageAnnouncements',label:'Manage announcements'},
+    {key:'canAccessSettings',label:'Access settings'},
+  ];
+  var html='<div style="display:flex;flex-direction:column;gap:14px">';
+  // Existing users
+  if(users.length){
+    users.forEach(function(u){
+      var perms=u.permissions||DEFAULT_PERMISSIONS.board;
+      html+='<div style="background:var(--sand);border-radius:10px;padding:12px;border:1px solid var(--sand2)">'
+        +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">'
+        +'<div><div style="font-weight:700;font-size:14px">'+u.displayName+'</div>'
+        +'<div style="font-size:11px;color:var(--mu)">@'+u.username+' &middot; '+u.roleLabel+'</div></div>'
+        +'<button onclick="deleteStaffUser(&quot;'+u.id+'&quot;)" style="background:var(--rel);border:none;color:var(--re);padding:6px 10px;border-radius:8px;font-size:12px;font-weight:700;font-family:Inter,sans-serif;cursor:pointer">Remove</button>'
+        +'</div>'
+        +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px">'+PERMS.map(function(p){
+          return'<label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--tx);cursor:pointer">'
+            +'<input type="checkbox" data-uid="'+u.id+'" data-perm="'+p.key+'" onchange="updateUserPerm(this)"'+(perms[p.key]?' checked':'')+' style="accent-color:var(--or)"> '+p.label+'</label>';
+        }).join('')+'</div>'
+        +'<button data-uid="'+u.id+'" data-name="'+u.displayName+'" onclick="resetUserPassword(this.dataset.uid,this.dataset.name)" style="margin-top:8px;background:var(--bll);border:none;color:var(--bl);padding:7px 12px;border-radius:8px;font-size:12px;font-weight:700;font-family:Inter,sans-serif;cursor:pointer;width:100%">Reset Password</button>'
+        +'</div>';
+    });
+  } else {
+    html+='<div style="color:var(--mu);font-size:13px;text-align:center;padding:20px">No staff users yet.</div>';
+  }
+  // Add new user form
+  html+='<div style="background:var(--bll);border-radius:10px;padding:12px;border:1px solid var(--bl)">'
+    +'<div style="font-weight:700;font-size:13px;color:var(--bld);margin-bottom:10px">Add New User</div>'
+    +'<div class="fg"><label class="fl">Display Name</label><input class="fi" id="nu-name" placeholder="e.g. Sarah Smith"></div>'
+    +'<div class="fg"><label class="fl">Username</label><input class="fi" id="nu-user" placeholder="e.g. ssmith" autocapitalize="off"></div>'
+    +'<div class="fg"><label class="fl">Password</label><input class="fi" id="nu-pass" type="password" placeholder="Temporary password"></div>'
+    +'<div class="fg"><label class="fl">Role Label</label><input class="fi" id="nu-role" placeholder="e.g. Board Member, Treasurer"></div>'
+    +'<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--mu);margin:8px 0 6px">Permissions</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:10px">'+PERMS.map(function(p){
+      return'<label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer">'
+        +'<input type="checkbox" class="nu-perm" data-perm="'+p.key+'" style="accent-color:var(--or)"'+(DEFAULT_PERMISSIONS.board[p.key]?' checked':'')+'>'+p.label+'</label>';
+    }).join('')+'</div>'
+    +'<button onclick="addStaffUser()" style="width:100%;padding:12px;background:var(--or);border:none;color:#fff;border-radius:10px;font-size:14px;font-weight:700;font-family:Inter,sans-serif;cursor:pointer">Add User</button>'
+    +'</div>';
+  html+='</div>';
+  // Show in a modal
+  var sheet=document.querySelector('#st-overlay .sheet');
+  if(!sheet) return;
+  document.getElementById('st-body').innerHTML=html;
+  document.getElementById('st-overlay').classList.add('open');
+}
+
+function updateUserPerm(checkbox){
+  var uid=checkbox.dataset.uid;
+  var perm=checkbox.dataset.perm;
+  var val=checkbox.checked;
+  if(!fbReady||!db) return;
+  var update={};
+  update['permissions.'+perm]=val;
+  db.collection('staff_users').doc(uid).update(update).then(function(){
+    showToast('Permission updated','ok');
+  }).catch(function(e){console.error(e);showToast('Failed to update','err');});
+}
+
+async function addStaffUser(){
+  var name=document.getElementById('nu-name');
+  var user=document.getElementById('nu-user');
+  var pass=document.getElementById('nu-pass');
+  var role=document.getElementById('nu-role');
+  if(!name.value.trim()||!user.value.trim()||!pass.value.trim()){
+    showToast('Name, username and password are required','warn');return;
+  }
+  var permChecks=document.querySelectorAll('.nu-perm');
+  var perms={};
+  permChecks.forEach(function(c){perms[c.dataset.perm]=c.checked;});
+  var hash=await sha256(pass.value);
+  var newUser={
+    username:user.value.trim().toLowerCase(),
+    displayName:name.value.trim(),
+    roleLabel:role.value.trim()||'Board Member',
+    roleType:'board',
+    passwordHash:hash,
+    permissions:perms,
+    createdAt:Date.now()
+  };
+  if(fbReady&&db){
+    db.collection('staff_users').add(newUser).then(function(){
+      showToast(newUser.displayName+' added','ok');
+      openUserManagement();
+    }).catch(function(e){console.error(e);showToast('Failed to add user','err');});
+  }
+}
+
+function deleteStaffUser(uid){
+  if(!confirm('Remove this user? They will no longer be able to log in.')) return;
+  if(fbReady&&db){
+    db.collection('staff_users').doc(uid).delete().then(function(){
+      showToast('User removed','ok');
+      openUserManagement();
+    });
+  }
+}
+
+async function resetUserPassword(uid, name){
+  var newPass=prompt('Enter new password for '+name+':');
+  if(!newPass||!newPass.trim()) return;
+  var hash=await sha256(newPass.trim());
+  if(fbReady&&db){
+    db.collection('staff_users').doc(uid).update({passwordHash:hash}).then(function(){
+      showToast('Password reset for '+name,'ok');
+    });
+  }
+}
+
 function resetMigrationFlag(){
   if(!confirm('This will prompt every member to confirm their household info on next check-in. Continue?')) return;
   localStorage.removeItem('gsc_migration_2025_v1');
@@ -2402,6 +3060,30 @@ function doSeasonReset(){if(!confirm('Reset all guest pass counts for the new se
       <button class="btn-s" id="mi-back-btn" onclick="miBack()" style="display:none">&#x2190; Back</button>
       <button class="btn-p" id="mi-next-btn" onclick="miNext()">Next &#x2192;</button>
     </div>
+  </div>
+</div>
+<!-- LOGIN OVERLAY -->
+<div id="login-overlay" style="display:none;position:fixed;inset:0;z-index:9995;background:var(--bld);flex-direction:column;align-items:center;justify-content:center;padding:24px">
+  <img src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐊</text></svg>" style="width:60px;height:60px;margin-bottom:8px">
+  <div style="font-size:22px;font-weight:800;color:var(--or);margin-bottom:4px">Gibsonville Swim Club</div>
+  <div style="font-size:13px;color:rgba(255,255,255,.5);margin-bottom:28px">Staff Login</div>
+  <div style="width:100%;max-width:340px;display:flex;flex-direction:column;gap:12px">
+    <div class="fg"><label class="fl" style="color:rgba(255,255,255,.6)">Username</label><input class="fi" id="login-user" type="text" autocomplete="username" autocorrect="off" autocapitalize="off" placeholder="Enter username"></div>
+    <div class="fg"><label class="fl" style="color:rgba(255,255,255,.6)">Password</label><input class="fi" id="login-pass" type="password" autocomplete="current-password" placeholder="Enter password" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <div id="login-err" style="color:#fca5a5;font-size:13px;font-weight:600;text-align:center;min-height:18px"></div>
+    <button onclick="doLogin()" style="width:100%;padding:15px;background:var(--or);border:none;color:#fff;border-radius:11px;font-size:16px;font-weight:700;font-family:Inter,sans-serif;cursor:pointer">Sign In</button>
+    <button onclick="closeLogin()" style="width:100%;padding:12px;background:rgba(255,255,255,.08);border:1.5px solid rgba(255,255,255,.15);color:rgba(255,255,255,.6);border-radius:11px;font-size:14px;font-weight:600;font-family:Inter,sans-serif;cursor:pointer">Continue as Attendant</button>
+  </div>
+</div>
+
+<!-- INCIDENT MODAL -->
+<div class="overlay" id="inc-overlay" style="display:none;z-index:200">
+  <div class="sheet" style="max-height:90vh;overflow-y:auto">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <div style="font-size:18px;font-weight:800;color:var(--bld)" id="inc-modal-title">New Incident</div>
+      <button class="mclose" onclick="closeIncident()">&#x2715;</button>
+    </div>
+    <div id="inc-modal-body"></div>
   </div>
 </div>
 </body>
