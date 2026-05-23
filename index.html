@@ -46,8 +46,8 @@ body{font-family:'Inter',sans-serif;background:var(--sand);color:var(--tx);min-h
 .ibtn{background:rgba(255,255,255,.1);border:none;color:#fff;width:44px;height:44px;border-radius:9px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px}
 .ibtn:active{background:var(--or)}
 .tabs{background:var(--bl);display:flex;flex-shrink:0}
-.tab{flex:1;padding:13px 4px;border:none;background:none;font-family:'Inter',sans-serif;font-size:15px;font-weight:600;color:rgba(255,255,255,.55);cursor:pointer;border-bottom:3px solid transparent;transition:color .14s,border-color .14s;letter-spacing:.3px;text-transform:uppercase}
-.tab.on{color:var(--or);border-bottom-color:var(--or);font-weight:800;background:rgba(255,255,255,.06)}
+.tab{flex:1;padding:10px 2px;border:none;background:none;font-family:'Inter',sans-serif;font-size:11px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;color:rgba(255,255,255,.55);cursor:pointer;border-bottom:3px solid transparent;transition:color .14s,border-color .14s;letter-spacing:.3px;text-transform:uppercase}
+.tab.on{color:var(--or);border-bottom:3px solid var(--or);background:rgba(250,70,22,.08)}
 .pane{display:none;flex:1;overflow-y:auto;flex-direction:column;-webkit-overflow-scrolling:touch}
 .pane.on{display:flex}
 .pane.on{display:flex}
@@ -384,14 +384,14 @@ body{font-family:'Inter',sans-serif;background:var(--sand);color:var(--tx);min-h
 </div>
 <div id="app">
   <div class="topbar">
-    <div class="topbar-l"><span style="font-size:24px">&#x1F40A;</span><div><div class="topbar-title">Gibsonville Swim Club</div><div class="topbar-sub" id="today-lbl"></div><div style="font-size:10px;color:rgba(255,255,255,.6);letter-spacing:.5px;margin-top:2px;font-weight:600">v1.8.3</div></div></div>
-    <div class="topbar-acts"><div id="sync-pill" style="display:none;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;align-items:center;gap:4px"></div><button class="ibtn" id="login-btn" onclick="openLogin()"><span id="login-icon">&#x1F512;</span><span id="login-username-display" style="font-size:10px;font-weight:700;max-width:50px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-left:2px"></span></button><button class="ibtn" id="settings-btn" onclick="openSettings()" style="display:none">&#x2699;&#xFE0F;</button></div>
+    <div class="topbar-l"><span style="font-size:24px">&#x1F40A;</span><div><div class="topbar-title">Gibsonville Swim Club</div><div class="topbar-sub" id="today-lbl"></div><div style="font-size:10px;color:rgba(255,255,255,.6);letter-spacing:.5px;margin-top:2px;font-weight:600">v1.8.7</div></div></div>
+    <div class="topbar-acts"><div id="sync-pill" style="display:none;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;align-items:center;gap:4px"></div><button class="ibtn" id="login-btn" onclick="openLogin()"><span id="login-icon">🔒</span><span id="login-username-display" style="font-size:10px;font-weight:700;max-width:50px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-left:2px"></span></button><button class="ibtn" id="settings-btn" onclick="openSettings()" style="display:none">&#x2699;&#xFE0F;</button></div>
   </div>
   <div class="tabs">
-    <button class="tab on" id="tb-ci" onclick="switchTab('ci')">&#x2705; Check-In</button>
-    <button class="tab" id="tb-dir" onclick="switchTab('dir')">&#x1F4CB; Directory</button>
-    <button class="tab" id="tb-rep" onclick="switchTab('rep')">&#x1F4CA; Reports</button>
-      <button class="tab" id="tb-inc" onclick="switchTab('inc')">&#x26A0;&#xFE0F; Incidents</button>
+    <button class="tab on" id="tb-ci" onclick="switchTab('ci')">Check-In</button>
+    <button class="tab" id="tb-dir" onclick="switchTab('dir')">Directory</button>
+    <button class="tab" id="tb-rep" onclick="switchTab('rep')">Reports</button>
+    <button class="tab" id="tb-inc" onclick="switchTab('inc')">Incidents</button>
   </div>
   <div id="pane-ci" class="pane on">
     <!-- Announcement Banner -->
@@ -409,7 +409,7 @@ body{font-family:'Inter',sans-serif;background:var(--sand);color:var(--tx);min-h
     <!-- Results / predictive list -->
     <div class="rlist" id="ci-list"></div>
   </div>
-  <div id="pane-dir" class="pane">
+  <div id="pane-dir" class="pane"><div class="sbar" style="display:none"><input class="sinput" id="dir-search" type="text" placeholder="Search..." oninput="renderDir()" autocomplete="off"></div>
     <div class="dir-controls">
       <div class="dir-filters" id="dir-filter-btns">
         <button class="fbtn on" onclick="setFilter(this,'all')">All</button>
@@ -1456,7 +1456,7 @@ function updateUIForRole(){
   // Settings gear only for admin
   if(settingsBtn) settingsBtn.style.display=can('canAccessSettings')?'flex':'none';
   // Login icon state
-  if(loginIcon) loginIcon.textContent=isLoggedIn()?'&#x1F513;':'&#x1F512;';
+  if(loginIcon) loginIcon.textContent=isLoggedIn()?'🔓':'🔒';
   if(loginDisp) loginDisp.textContent=isLoggedIn()?currentUser.displayName:'';
   // FAB for adding members - only if permitted
   var fab=document.getElementById('fab');
@@ -3493,13 +3493,13 @@ function initSelfCIMode(){
   var linkedId=localStorage.getItem(SCI_DEVICE_KEY);
   if(linkedId){
     sciMemberId=linkedId;
-    renderSciCheckin();
+    sciShowCheckin();
   } else {
-    renderSciSetup();
+    sciShowSetup();
   }
 }
 
-function renderSciSetup(){
+function sciShowSetup(){
   // Step 1: enter setup code from attendant
   var html='<div style="text-align:center;margin-bottom:8px">'
     +'<div style="font-size:22px;font-weight:800;color:var(--bld);margin-bottom:6px">Welcome!</div>'
@@ -3573,11 +3573,11 @@ function sciCreatePinKey(k){
           localStorage.setItem(SCI_DEVICE_KEY, sciMemberId);
           localStorage.setItem(SCI_PIN_KEY+'_'+sciMemberId, hash);
           if(fbReady&&db){
-            db.collection('sci_members').doc(sciMemberId).set({
-              memberId:sciMemberId,pinHash:hash,linkedAt:Date.now()
-            });
+            db.collection('members').doc(sciMemberId).update({
+              sciPinHash:hash,sciLinkedAt:Date.now()
+            }).catch(function(e){console.error(e);});
           }
-          renderSciCheckin();
+          sciShowCheckin();
         });
       } else {
         sciPin='';
@@ -3618,7 +3618,7 @@ function sciPinKey(k){
     var storedHash=localStorage.getItem(SCI_PIN_KEY+'_'+sciMemberId);
     sha256(sciPin).then(function(hash){
       if(hash===storedHash){
-        renderSciCheckin();
+        sciShowCheckin();
       } else {
         sciPin='';
         dots.forEach(function(d){d.classList.remove('on');});
@@ -3628,7 +3628,7 @@ function sciPinKey(k){
   }
 }
 
-function renderSciCheckin(){
+function sciShowCheckin(){
   var m=members.find(function(x){return x.id===sciMemberId;});
   if(!m){sciForgetDevice();return;}
   // Check paid status
@@ -3766,7 +3766,7 @@ function sciSubmitCheckin(memberId){
 function sciForgetDevice(){
   localStorage.removeItem(SCI_DEVICE_KEY);
   sciMemberId=null;
-  renderSciSetup();
+  sciShowSetup();
 }
 
 // ── ATTENDANT: Generate setup code ────────────────────────────────────────────
@@ -3824,7 +3824,7 @@ function doSeasonReset(){if(!confirm('Reset all guest pass counts for the new se
 </div>
 
 <!-- MISSING MEMBER INFO MODAL -->
-<div class="overlay" id="mi-overlay" style="display:none;z-index:200">
+<div class="overlay" id="mi-overlay" style="display:none;z-index:9990">
   <div class="sheet" id="mi-sheet" style="max-height:85vh;overflow-y:auto">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
       <div style="font-size:18px;font-weight:800;color:var(--bld)">&#x26A0;&#xFE0F; Missing Member Info</div>
@@ -3859,7 +3859,7 @@ function doSeasonReset(){if(!confirm('Reset all guest pass counts for the new se
 </div>
 
 <!-- LOGIN OVERLAY -->
-<div id="login-overlay" style="display:none;position:fixed;inset:0;z-index:9995;background:var(--bld);flex-direction:column;align-items:center;justify-content:center;padding:24px">
+<div id="login-overlay" style="display:none;z-index:9999;position:fixed;inset:0;z-index:9995;background:var(--bld);flex-direction:column;align-items:center;justify-content:center;padding:24px">
   <img src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐊</text></svg>" style="width:60px;height:60px;margin-bottom:8px">
   <div style="font-size:22px;font-weight:800;color:var(--or);margin-bottom:4px">Gibsonville Swim Club</div>
   <div style="font-size:13px;color:rgba(255,255,255,.5);margin-bottom:28px">Staff Login</div>
