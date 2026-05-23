@@ -384,8 +384,8 @@ body{font-family:'Inter',sans-serif;background:var(--sand);color:var(--tx);min-h
 </div>
 <div id="app">
   <div class="topbar">
-    <div class="topbar-l"><span style="font-size:24px">&#x1F40A;</span><div><div class="topbar-title">Gibsonville Swim Club</div><div class="topbar-sub" id="today-lbl"></div><div style="font-size:10px;color:rgba(255,255,255,.6);letter-spacing:.5px;margin-top:2px;font-weight:600">v1.8.0</div></div></div>
-    <div class="topbar-acts"><div id="sync-pill" style="display:none;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;align-items:center;gap:4px"></div><button class="ibtn" onclick="openSettings()">&#x2699;&#xFE0F;</button></div>
+    <div class="topbar-l"><span style="font-size:24px">&#x1F40A;</span><div><div class="topbar-title">Gibsonville Swim Club</div><div class="topbar-sub" id="today-lbl"></div><div style="font-size:10px;color:rgba(255,255,255,.6);letter-spacing:.5px;margin-top:2px;font-weight:600">v1.8.2</div></div></div>
+    <div class="topbar-acts"><div id="sync-pill" style="display:none;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;align-items:center;gap:4px"></div><button class="ibtn" id="login-btn" onclick="openLogin()"><span id="login-icon">&#x1F512;</span><span id="login-username-display" style="font-size:10px;font-weight:700;max-width:50px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-left:2px"></span></button><button class="ibtn" id="settings-btn" onclick="openSettings()" style="display:none">&#x2699;&#xFE0F;</button></div>
   </div>
   <div class="tabs">
     <button class="tab on" id="tb-ci" onclick="switchTab('ci')">&#x2705; Check-In</button>
@@ -517,7 +517,7 @@ function rebuildFromConfig(){
   if(tn) tn.textContent=CONFIG.clubName;
 }
 
-var PIN_KEY='gsc_pin',PROTECTED_PIN='6448';
+var PIN_KEY='gsc_pin',PROTECTED_PIN='unused';
 // EmailJS config - fill in after EmailJS setup
 var EMAILJS_PUBLIC_KEY='hSDfKoakQnUPd1Ts1';
 var EMAILJS_SERVICE_ID='service_j5ftlqw';
@@ -2252,6 +2252,8 @@ function openMember(id,ciMode){
     +((m.kids&&m.kids.length)?'<div class="irow"><span class="ilbl">Children</span><span class="ival">'+m.kids.join(', ')+'</span></div>':'')
     +((m.secFirst||m.secLast)?'<div class="irow"><span class="ilbl">2nd Member</span><span class="ival">'+((m.secFirst||'')+' '+(m.secLast||'')).trim()+(m.secPhone?' &middot; '+m.secPhone:'')+'</span></div>':'')
     +'<div class="irow"><span class="ilbl">Passes</span><span class="ival">'+(m.guestsTotal===0?'None (Comp)':rem+' of '+m.guestsTotal+' remaining')+'</span></div>'
+    +(isLoggedIn()&&isMasterAdmin()?(function(){var rs=getMemberRenewalStatus(m);var color=rs.expired?'var(--re)':rs.expiringSoon?'var(--am)':'var(--gr)';var label=rs.expired?'Expired Oct 1':'Expires in '+rs.daysToExpiry+' days (Oct 1)';return '<div class="irow"><span class="ilbl">Renewal</span><span class="ival" style="color:'+color+';font-weight:700">'+label+'</span></div>';})():'')
+    +(function(){var vn=(m.notes_history||[]).filter(function(n){return n.showAtCheckin;});return vn.length?'<div class="irow"><span class="ilbl">Notes</span><span class="ival" style="color:var(--gr);font-weight:600">'+vn.map(function(n){return n.text;}).join(' | ')+'</span></div>':'';})() 
     +(m.notes?'<div class="irow"><span class="ilbl">Notes</span><span class="ival" style="color:var(--am);font-weight:600">'+m.notes+'</span></div>':'')
     +'</div>';
   if(m.nannyEnabled&&m.nannyName){html+='<div class="nanny-card"><div class="nanny-title">&#x1F476; Authorized Nanny</div><div class="nanny-row"><span class="nanny-lbl">Name</span><span class="nanny-val">'+m.nannyName+'</span></div><div class="nanny-row"><span class="nanny-lbl">Phone</span><span class="nanny-val">'+(m.nannyPhone||'&mdash;')+'</span></div><div class="nanny-row"><span class="nanny-lbl">Age</span><span class="nanny-val">'+(m.nannyDob?calcAge(m.nannyDob)+' years old':'&mdash;')+'</span></div></div>';}
@@ -2351,7 +2353,8 @@ function openMember(id,ciMode){
     }
   }
   if(mv.length){html+='<div><div class="sec-lbl" style="margin-bottom:6px">Recent Visits</div><div class="vlog">'+mv.slice(0,15).map(function(v){var p=[];if(v.adults>0)p.push(v.adults+'A');if(v.children>0)p.push(v.children+'C');if(v.guestPasses>0)p.push('&#x1F3AB;&times;'+v.guestPasses);return'<div class="vitem"><span>'+fmtDate(v.ts)+' '+fmtTime(v.ts)+'</span><span style="color:var(--mu)">'+(p.join(' &middot; ')||'member only')+'</span></div>';}).join('')+'</button></div>';}
-  html+='<button class="btn-s" onclick="openEdit(\''+m.id+'\')">&#x270F;&#xFE0F; Edit Member</button>';
+  html+=(m.status==='paid'?'<button class="btn-s" style="margin-bottom:6px" onclick="generateSciCode(&quot;'+m.id+'&quot;)">&#x1F4F1; Set Up Self Check-In</button>':'');
+    html+='<button class="btn-s" onclick="openEdit(\''+m.id+'\')">&#x270F;&#xFE0F; Edit Member</button>';
   document.getElementById('mm-body').innerHTML=html;
   document.getElementById('mm-overlay').classList.add('open');
   // Swipe right to quick check-in (ciMode only)
