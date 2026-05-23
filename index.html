@@ -384,7 +384,7 @@ body{font-family:'Inter',sans-serif;background:var(--sand);color:var(--tx);min-h
 </div>
 <div id="app">
   <div class="topbar">
-    <div class="topbar-l"><span style="font-size:24px">&#x1F40A;</span><div><div class="topbar-title">Gibsonville Swim Club</div><div class="topbar-sub" id="today-lbl"></div><div style="font-size:10px;color:rgba(255,255,255,.6);letter-spacing:.5px;margin-top:2px;font-weight:600">v1.8.2</div></div></div>
+    <div class="topbar-l"><span style="font-size:24px">&#x1F40A;</span><div><div class="topbar-title">Gibsonville Swim Club</div><div class="topbar-sub" id="today-lbl"></div><div style="font-size:10px;color:rgba(255,255,255,.6);letter-spacing:.5px;margin-top:2px;font-weight:600">v1.8.3</div></div></div>
     <div class="topbar-acts"><div id="sync-pill" style="display:none;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;align-items:center;gap:4px"></div><button class="ibtn" id="login-btn" onclick="openLogin()"><span id="login-icon">&#x1F512;</span><span id="login-username-display" style="font-size:10px;font-weight:700;max-width:50px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-left:2px"></span></button><button class="ibtn" id="settings-btn" onclick="openSettings()" style="display:none">&#x2699;&#xFE0F;</button></div>
   </div>
   <div class="tabs">
@@ -558,7 +558,6 @@ var db=null,fbReady=false;
       rebuildFromConfig();
       document.getElementById('today-lbl').textContent=new Date().toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
       initPin();
-      initSciMode();
       if(!SCI_MODE){updateUIForRole();renderAll();}
       renderAnnouncement();
       checkRenewalExpiry();
@@ -577,7 +576,6 @@ var db=null,fbReady=false;
       rebuildFromConfig();
       document.getElementById('today-lbl').textContent=new Date().toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
       initPin();
-      initSciMode();
       if(!SCI_MODE){updateUIForRole();renderAll();}
       renderAnnouncement();
       checkRenewalExpiry();
@@ -1510,15 +1508,40 @@ var sciSetupCode = '';
 
 function initSciMode() {
   if (!SCI_MODE) return;
-  // Hide main app, show sci shell
+  // Hide main app, show sci shell immediately
   document.getElementById('app').style.display = 'none';
   document.getElementById('sci-shell').classList.add('on');
-  // Check if device is remembered
+  // Show loading while Firebase connects
+  var body = document.getElementById('sci-body');
+  if (body) body.innerHTML = '<div class="sci-success"><div style="font-size:40px">🐊</div><div class="sci-sub2">Connecting...</div></div>';
+  // If called before Firebase ready, wait for it
+  if (!fbReady || !members.length) {
+    var attempts = 0;
+    var wait = setInterval(function() {
+      attempts++;
+      if (members.length || attempts > 20) {
+        clearInterval(wait);
+        sciInitWithData();
+      }
+    }, 300);
+  } else {
+    sciInitWithData();
+  }
+}
+
+function sciInitWithData() {
   var remembered = null;
   try { remembered = localStorage.getItem('gsc_sci_member'); } catch(e) {}
   if (remembered) {
     sciMemberId = remembered;
-    sciShowCheckin();
+    // Verify member still exists and is paid
+    var m = members.find(function(x) { return x.id === remembered; });
+    if (!m) { sciForgetDevice(); return; }
+    if (m.sciPinHash) {
+      sciShowPinEntry();
+    } else {
+      sciShowCheckin();
+    }
   } else {
     sciShowSetup();
   }
