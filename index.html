@@ -269,11 +269,50 @@ body{font-family:'Inter',sans-serif;background:var(--sand);color:var(--tx);min-h
 .st-sec-hdr{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--bld)}
 .st-sec-subhdr{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--mu);padding-top:4px;border-top:1px solid var(--sand2)}
 
+/* SELF CHECK-IN */
+#self-ci-shell{display:none;position:fixed;inset:0;z-index:9980;flex-direction:column;background:var(--sand);overflow-y:auto}
+.sci-header{background:var(--bld);padding:16px 18px;display:flex;align-items:center;gap:12px;border-bottom:4px solid var(--or);flex-shrink:0}
+.sci-header-text{display:flex;flex-direction:column}
+.sci-title{font-size:18px;font-weight:800;color:var(--or);line-height:1.2}
+.sci-sub{font-size:12px;color:rgba(255,255,255,.6);margin-top:2px}
+.sci-body{flex:1;padding:20px 16px;display:flex;flex-direction:column;gap:16px;max-width:480px;margin:0 auto;width:100%}
+.sci-pin-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:300px;margin:0 auto}
+.sci-pin-btn{height:64px;border-radius:12px;border:2px solid var(--sand2);background:#fff;font-size:24px;font-weight:700;color:var(--bld);cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.08);transition:all .1s;font-family:Inter,sans-serif}
+.sci-pin-btn:active{background:var(--or);color:#fff;border-color:var(--or)}
+.sci-dots{display:flex;gap:12px;justify-content:center;margin:8px 0}
+.sci-dot{width:14px;height:14px;border-radius:50%;background:var(--sand2);transition:background .15s}
+.sci-dot.on{background:var(--or)}
+.sci-success{position:fixed;inset:0;z-index:9999;background:rgba(22,101,52,.95);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px}
+.sci-success-icon{font-size:80px;line-height:1}
+.sci-success-name{font-size:24px;font-weight:800;color:#fff;text-align:center;padding:0 24px}
+.sci-success-sub{font-size:15px;color:rgba(255,255,255,.75);text-align:center}
+
 /* AUTH */
 .role-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px}
 .role-admin{background:var(--orl);color:var(--ord)}
 .role-board{background:var(--bll);color:var(--bl)}
 .role-attendant{background:var(--sand);color:var(--mu)}
+
+/* SELF CHECK-IN MODE */
+#sci-shell{display:none;flex-direction:column;height:100%;background:var(--bld)}
+#sci-shell.on{display:flex}
+.sci-header{padding:18px 16px 12px;text-align:center;flex-shrink:0}
+.sci-logo{font-size:40px;margin-bottom:4px}
+.sci-club{font-size:20px;font-weight:800;color:var(--or)}
+.sci-sub{font-size:12px;color:rgba(255,255,255,.5);margin-top:2px}
+.sci-card{background:#fff;border-radius:16px;margin:0 16px 16px;padding:20px;flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:14px}
+.sci-title{font-size:20px;font-weight:800;color:var(--bld);text-align:center}
+.sci-sub2{font-size:13px;color:var(--mu);text-align:center;line-height:1.4}
+.sci-pin-display{display:flex;justify-content:center;gap:10px;margin:8px 0}
+.sci-pin-dot{width:16px;height:16px;border-radius:50%;background:var(--sand2);transition:background .1s}
+.sci-pin-dot.filled{background:var(--bld)}
+.sci-numpad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.sci-num{background:var(--sand);border:none;border-radius:12px;font-size:22px;font-weight:700;padding:16px;cursor:pointer;font-family:Inter,sans-serif;color:var(--bld);transition:transform .1s;-webkit-appearance:none}
+.sci-num:active{transform:scale(.93);background:var(--sand2)}
+.sci-success{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;gap:12px;text-align:center}
+.sci-check{font-size:80px;line-height:1}
+.sci-success-name{font-size:22px;font-weight:800;color:var(--gr)}
+.sci-success-sub{font-size:14px;color:var(--mu)}
 
 /* CHECK-IN TAB QUICK FIND */
 .ci-section-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--mu);padding:10px 13px 5px;background:var(--sand)}
@@ -332,9 +371,20 @@ body{font-family:'Inter',sans-serif;background:var(--sand);color:var(--tx);min-h
 </div>
 <div id="setup-banner">&#x26A0;&#xFE0F; Firebase not configured &mdash; <strong>local-only mode</strong>. See <strong>setup-guide.html</strong>.</div>
 <!-- APP -->
+<div id="sci-shell">
+  <div class="sci-header">
+    <div class="sci-logo">🐊</div>
+    <div class="sci-club">Gibsonville Swim Club</div>
+    <div class="sci-sub">Member Self Check-In</div>
+  </div>
+  <div class="sci-card" id="sci-body">
+    <div class="sci-title">Welcome!</div>
+    <div class="sci-sub2">Loading...</div>
+  </div>
+</div>
 <div id="app">
   <div class="topbar">
-    <div class="topbar-l"><span style="font-size:24px">&#x1F40A;</span><div><div class="topbar-title">Gibsonville Swim Club</div><div class="topbar-sub" id="today-lbl"></div><div style="font-size:10px;color:rgba(255,255,255,.6);letter-spacing:.5px;margin-top:2px;font-weight:600">v1.7.8</div></div></div>
+    <div class="topbar-l"><span style="font-size:24px">&#x1F40A;</span><div><div class="topbar-title">Gibsonville Swim Club</div><div class="topbar-sub" id="today-lbl"></div><div style="font-size:10px;color:rgba(255,255,255,.6);letter-spacing:.5px;margin-top:2px;font-weight:600">v1.8.0</div></div></div>
     <div class="topbar-acts"><div id="sync-pill" style="display:none;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;align-items:center;gap:4px"></div><button class="ibtn" onclick="openSettings()">&#x2699;&#xFE0F;</button></div>
   </div>
   <div class="tabs">
@@ -417,6 +467,9 @@ body{font-family:'Inter',sans-serif;background:var(--sand);color:var(--tx);min-h
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script>
+// ── SELF CHECK-IN MODE ────────────────────────────────────────────────────────
+var SELF_CI_MODE = window.location.search.indexOf('selfcheckin=true') >= 0;
+
 // ══════════════════════════════════════════════════════
 // FIREBASE CONFIG
 // ══════════════════════════════════════════════════════
@@ -505,11 +558,12 @@ var db=null,fbReady=false;
       rebuildFromConfig();
       document.getElementById('today-lbl').textContent=new Date().toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
       initPin();
-      updateUIForRole();
-      renderAll();
+      initSciMode();
+      if(!SCI_MODE){updateUIForRole();renderAll();}
       renderAnnouncement();
       checkRenewalExpiry();
       loadIncidents();
+      initSelfCIMode();
       // Set up real-time listeners after boot
       _db.collection('members').orderBy('last').onSnapshot(function(snap){
         members=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
@@ -523,11 +577,12 @@ var db=null,fbReady=false;
       rebuildFromConfig();
       document.getElementById('today-lbl').textContent=new Date().toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
       initPin();
-      updateUIForRole();
-      renderAll();
+      initSciMode();
+      if(!SCI_MODE){updateUIForRole();renderAll();}
       renderAnnouncement();
       checkRenewalExpiry();
       loadIncidents();
+      initSelfCIMode();
       _db.collection('members').orderBy('last').onSnapshot(function(snap){
         members=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
         renderAll();
@@ -1444,6 +1499,356 @@ function requirePermission(perm, callback){
     openLogin();
   } else {
     showToast('You don\'t have permission for this action','err');
+  }
+}
+
+// ── SELF CHECK-IN SYSTEM ──────────────────────────────────────────────────────
+var SCI_MODE = window.location.search.indexOf('selfcheckin=true') >= 0;
+var sciMemberId = null;
+var sciPin = '';
+var sciSetupCode = '';
+
+function initSciMode() {
+  if (!SCI_MODE) return;
+  // Hide main app, show sci shell
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('sci-shell').classList.add('on');
+  // Check if device is remembered
+  var remembered = null;
+  try { remembered = localStorage.getItem('gsc_sci_member'); } catch(e) {}
+  if (remembered) {
+    sciMemberId = remembered;
+    sciShowCheckin();
+  } else {
+    sciShowSetup();
+  }
+}
+
+function sciShowSetup() {
+  var body = document.getElementById('sci-body');
+  body.innerHTML = '<div class="sci-title">First Time Setup</div>'
+    + '<div class="sci-sub2">Enter the 6-digit setup code provided by the attendant at the gate.</div>'
+    + '<div class="fg"><label class="fl">Setup Code</label><input class="fi" id="sci-setup-inp" type="tel" maxlength="6" placeholder="••••••" style="font-size:24px;text-align:center;letter-spacing:8px" oninput="this.value=this.value.replace(/\D/g,\'\')"></div>'
+    + '<button onclick="sciVerifySetupCode()" style="width:100%;padding:14px;background:var(--or);border:none;color:#fff;border-radius:11px;font-size:16px;font-weight:700;font-family:Inter,sans-serif;cursor:pointer">Continue</button>';
+}
+
+function sciVerifySetupCode() {
+  var inp = document.getElementById('sci-setup-inp');
+  var code = inp ? inp.value.trim() : '';
+  if (code.length !== 6) { sciShowError('Please enter the full 6-digit code.'); return; }
+  if (!fbReady || !db) { sciShowError('Not connected. Please try again.'); return; }
+  db.collection('sci_codes').doc(code).get().then(function(doc) {
+    if (!doc.exists || doc.data().used) {
+      sciShowError('Invalid or already used code. Please see the attendant.');
+      return;
+    }
+    var data = doc.data();
+    // Check membership is paid
+    var m = members.find(function(x) { return x.id === data.memberId; });
+    if (!m) { sciShowError('Member not found. Please see the attendant.'); return; }
+    if (m.status !== 'paid') { sciShowError('Self check-in requires an active paid membership. Please see the attendant.'); return; }
+    sciMemberId = data.memberId;
+    sciSetupCode = code;
+    sciShowCreatePin();
+  }).catch(function() { sciShowError('Connection error. Please try again.'); });
+}
+
+function sciShowCreatePin(isReset) {
+  sciPin = '';
+  var body = document.getElementById('sci-body');
+  body.innerHTML = '<div class="sci-title">' + (isReset ? 'Set New PIN' : 'Create Your PIN') + '</div>'
+    + '<div class="sci-sub2">Choose a 6-digit PIN you will use every visit.</div>'
+    + '<div class="sci-pin-display" id="sci-dots">' + sciRenderDots(0) + '</div>'
+    + sciNumpad('sciEnterCreatePin')
+    + '<button onclick="sciClearPin()" style="background:none;border:none;color:var(--mu);font-size:13px;font-family:Inter,sans-serif;cursor:pointer;padding:4px">Clear</button>';
+}
+
+function sciEnterCreatePin(n) {
+  if (sciPin.length >= 6) return;
+  sciPin += n;
+  sciUpdateDots(sciPin.length);
+  if (sciPin.length === 6) {
+    var firstPin = sciPin;
+    sciPin = '';
+    sciShowConfirmPin(firstPin);
+  }
+}
+
+function sciShowConfirmPin(firstPin) {
+  var body = document.getElementById('sci-body');
+  body.innerHTML = '<div class="sci-title">Confirm PIN</div>'
+    + '<div class="sci-sub2">Enter your PIN again to confirm.</div>'
+    + '<div class="sci-pin-display" id="sci-dots">' + sciRenderDots(0) + '</div>'
+    + sciNumpad('sciEnterConfirmPin')
+    + '<button onclick="sciShowCreatePin()" style="background:none;border:none;color:var(--mu);font-size:13px;font-family:Inter,sans-serif;cursor:pointer;padding:4px">Back</button>';
+  window._sciFirstPin = firstPin;
+}
+
+function sciEnterConfirmPin(n) {
+  if (sciPin.length >= 6) return;
+  sciPin += n;
+  sciUpdateDots(sciPin.length);
+  if (sciPin.length === 6) {
+    if (sciPin === window._sciFirstPin) {
+      sciSavePin(sciPin);
+    } else {
+      sciPin = '';
+      sciShowError('PINs did not match. Please try again.');
+      setTimeout(function() { sciShowCreatePin(); }, 1500);
+    }
+  }
+}
+
+async function sciSavePin(pin) {
+  var hash = await sha256(pin);
+  // Mark setup code as used
+  if (fbReady && db && sciSetupCode) {
+    db.collection('sci_codes').doc(sciSetupCode).update({ used: true });
+  }
+  // Save pin hash to member record
+  var m = members.find(function(x) { return x.id === sciMemberId; });
+  if (m) {
+    var updated = Object.assign({}, m, { sciPinHash: hash });
+    saveMember(updated);
+    var i = members.findIndex(function(x) { return x.id === sciMemberId; });
+    if (i >= 0) members[i] = updated;
+  }
+  // Remember device
+  try { localStorage.setItem('gsc_sci_member', sciMemberId); } catch(e) {}
+  sciPin = '';
+  sciShowCheckin();
+}
+
+function sciShowPinEntry() {
+  sciPin = '';
+  var body = document.getElementById('sci-body');
+  body.innerHTML = '<div class="sci-title">Welcome Back!</div>'
+    + '<div class="sci-sub2">Enter your 6-digit PIN to check in.</div>'
+    + '<div class="sci-pin-display" id="sci-dots">' + sciRenderDots(0) + '</div>'
+    + sciNumpad('sciEnterPin')
+    + '<div style="display:flex;justify-content:center;gap:16px;margin-top:4px">'
+    + '<button onclick="sciClearPin()" style="background:none;border:none;color:var(--mu);font-size:13px;font-family:Inter,sans-serif;cursor:pointer;padding:4px">Clear</button>'
+    + '<button onclick="sciForgetDevice()" style="background:none;border:none;color:var(--mu);font-size:13px;font-family:Inter,sans-serif;cursor:pointer;padding:4px">Not you?</button>'
+    + '</div>';
+}
+
+function sciEnterPin(n) {
+  if (sciPin.length >= 6) return;
+  sciPin += n;
+  sciUpdateDots(sciPin.length);
+  if (sciPin.length === 6) {
+    sciVerifyPin(sciPin);
+  }
+}
+
+async function sciVerifyPin(pin) {
+  var hash = await sha256(pin);
+  var m = members.find(function(x) { return x.id === sciMemberId; });
+  if (!m || m.sciPinHash !== hash) {
+    sciPin = '';
+    sciUpdateDots(0);
+    sciShowError('Incorrect PIN. Please try again.');
+    setTimeout(function() { sciUpdateDots(0); }, 1200);
+    return;
+  }
+  sciPin = '';
+  sciShowCheckin();
+}
+
+function sciShowCheckin() {
+  var m = members.find(function(x) { return x.id === sciMemberId; });
+  if (!m) { sciForgetDevice(); return; }
+  if (m.status !== 'paid') {
+    document.getElementById('sci-body').innerHTML = '<div class="sci-title" style="color:var(--re)">Check-In Unavailable</div>'
+      + '<div class="sci-sub2">Your membership is not currently active. Please see the attendant to resolve your account.</div>';
+    return;
+  }
+  // Check grace period
+  var unpaidDays = getUnpaidDays(m.id);
+  if (m.status === 'unpaid' && unpaidDays >= GRACE_DAYS) {
+    document.getElementById('sci-body').innerHTML = '<div class="sci-title" style="color:var(--re)">Check-In Blocked</div>'
+      + '<div class="sci-sub2">Your membership payment is overdue. Please see the attendant.</div>';
+    return;
+  }
+  // Build checklist
+  var adults = [];
+  if (m.first) adults.push({ name: m.first + ' ' + m.last, tag: 'primary' });
+  if (m.secFirst) adults.push({ name: (m.secFirst + ' ' + (m.secLast || '')).trim(), tag: 'secondary' });
+  var kids = m.kids || [];
+  var rem = (m.guestsTotal || 0) - (m.guestsUsed || 0);
+  var body = document.getElementById('sci-body');
+  var html = '<div class="sci-title">Check In</div>'
+    + '<div class="sci-sub2" style="text-align:left;font-weight:600;color:var(--bld)">Select everyone who is here today:</div>'
+    + '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--mu)">Adults</div>';
+  adults.forEach(function(a, i) {
+    html += '<label style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--sand);border-radius:10px;cursor:pointer">'
+      + '<input type="checkbox" class="sci-person" data-type="adult" checked style="width:22px;height:22px;accent-color:var(--or);flex-shrink:0"> '
+      + '<span style="font-size:15px;font-weight:600;color:var(--bld)">' + a.name + ' <span style="color:var(--mu);font-size:12px;font-weight:400">(' + a.tag + ')</span></span></label>';
+  });
+  if (kids.length) {
+    html += '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--mu)">Children</div>';
+    kids.forEach(function(k) {
+      html += '<label style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--sand);border-radius:10px;cursor:pointer">'
+        + '<input type="checkbox" class="sci-person" data-type="child" checked style="width:22px;height:22px;accent-color:var(--or);flex-shrink:0"> '
+        + '<span style="font-size:15px;font-weight:600;color:var(--bld)">' + k + '</span></label>';
+    });
+  }
+  // Guest passes
+  html += '<div style="background:var(--sand);border-radius:10px;padding:12px">'
+    + '<div style="display:flex;align-items:center;justify-content:space-between">'
+    + '<div><div style="font-size:13px;font-weight:700;color:var(--bld)">Guest Passes</div>'
+    + '<div style="font-size:11px;color:var(--mu)">' + rem + ' remaining</div></div>'
+    + '<div style="display:flex;align-items:center;gap:12px">'
+    + '<button onclick="sciAdjGuests(-1)" style="width:36px;height:36px;border-radius:50%;background:var(--or);border:none;color:#fff;font-size:20px;font-weight:700;cursor:pointer;font-family:Inter,sans-serif">-</button>'
+    + '<span id="sci-guests" style="font-size:20px;font-weight:800;min-width:24px;text-align:center">0</span>'
+    + '<button onclick="sciAdjGuests(1)" style="width:36px;height:36px;border-radius:50%;background:var(--or);border:none;color:#fff;font-size:20px;font-weight:700;cursor:pointer;font-family:Inter,sans-serif">+</button>'
+    + '</div></div></div>';
+  html += '<button onclick="sciSubmitCheckin()" style="width:100%;padding:16px;background:var(--or);border:none;color:#fff;border-radius:11px;font-size:18px;font-weight:800;font-family:Inter,sans-serif;cursor:pointer">Check In</button>';
+  body.innerHTML = html;
+  window._sciGuestRem = rem;
+}
+
+var _sciGuests = 0;
+function sciAdjGuests(d) {
+  var rem = window._sciGuestRem || 0;
+  _sciGuests = Math.max(0, Math.min(rem, _sciGuests + d));
+  if (_sciGuests > rem) {
+    document.getElementById('sci-body').innerHTML = '<div class="sci-title" style="color:var(--am)">No Passes Remaining</div>'
+      + '<div class="sci-sub2">You have no guest passes left. Please see the attendant for assistance.</div>'
+      + '<button onclick="sciShowCheckin()" style="width:100%;padding:14px;background:var(--sand);border:1.5px solid var(--sand2);border-radius:11px;font-size:15px;font-weight:700;font-family:Inter,sans-serif;cursor:pointer;color:var(--tx)">Back</button>';
+    return;
+  }
+  var el = document.getElementById('sci-guests');
+  if (el) el.textContent = _sciGuests;
+}
+
+function sciSubmitCheckin() {
+  var m = members.find(function(x) { return x.id === sciMemberId; });
+  if (!m) return;
+  var checked = document.querySelectorAll('.sci-person:checked');
+  var checkedAdults = [], checkedKids = [];
+  checked.forEach(function(c) {
+    var label = c.parentElement.querySelector('span');
+    var name = label ? label.childNodes[0].textContent.trim() : '';
+    if (c.dataset.type === 'adult') checkedAdults.push(name);
+    else checkedKids.push(name);
+  });
+  if (!checkedAdults.length && !checkedKids.length) {
+    sciShowError('Please select at least one person.');
+    return;
+  }
+  var guests = _sciGuests || 0;
+  var v = {
+    id: uid(), memberId: m.id, ts: new Date().toISOString(),
+    adults: checkedAdults.length, children: checkedKids.length,
+    checkedAdults: checkedAdults, checkedKids: checkedKids,
+    guestPasses: guests, passesPurchased: 0, whileUnpaid: false,
+    selfCheckin: true
+  };
+  if (guests > 0) {
+    var updated = Object.assign({}, m, { guestsUsed: (m.guestsUsed || 0) + guests });
+    saveMember(updated);
+    var i = members.findIndex(function(x) { return x.id === sciMemberId; });
+    if (i >= 0) members[i] = updated;
+  }
+  saveVisit(v);
+  _sciGuests = 0;
+  sciShowSuccess(m.first + ' ' + m.last, checkedAdults.concat(checkedKids));
+}
+
+function sciShowSuccess(name, people) {
+  var body = document.getElementById('sci-body');
+  body.innerHTML = '<div class="sci-success">'
+    + '<div class="sci-check">✅</div>'
+    + '<div class="sci-success-name">Enjoy the pool, ' + name.split(' ')[0] + '!</div>'
+    + '<div class="sci-success-sub">' + people.join(', ') + '</div>'
+    + '<div class="sci-success-sub" style="margin-top:8px;font-size:12px;color:var(--mu)">Resetting in 5 seconds...</div>'
+    + '</div>';
+  // Play chime
+  playChime();
+  // Reset after 5 seconds
+  setTimeout(function() {
+    _sciGuests = 0;
+    // Check if device remembered - if so skip PIN, else show PIN entry
+    var remembered = null;
+    try { remembered = localStorage.getItem('gsc_sci_member'); } catch(e) {}
+    if (remembered) {
+      sciShowCheckin();
+    } else {
+      sciShowPinEntry();
+    }
+  }, 5000);
+}
+
+function sciForgetDevice() {
+  try { localStorage.removeItem('gsc_sci_member'); } catch(e) {}
+  sciMemberId = null;
+  sciShowSetup();
+}
+
+function sciShowError(msg) {
+  var existing = document.getElementById('sci-err');
+  if (existing) { existing.textContent = msg; return; }
+  var body = document.getElementById('sci-body');
+  var errDiv = document.createElement('div');
+  errDiv.id = 'sci-err';
+  errDiv.style.cssText = 'background:var(--rel);border:1.5px solid var(--re);border-radius:9px;padding:10px;font-size:13px;font-weight:600;color:var(--re);text-align:center';
+  errDiv.textContent = msg;
+  body.insertBefore(errDiv, body.firstChild);
+  setTimeout(function() { if (errDiv.parentNode) errDiv.parentNode.removeChild(errDiv); }, 3000);
+}
+
+function sciRenderDots(filled) {
+  var html = '';
+  for (var i = 0; i < 6; i++) {
+    html += '<div class="sci-pin-dot' + (i < filled ? ' filled' : '') + '"></div>';
+  }
+  return html;
+}
+
+function sciUpdateDots(filled) {
+  var el = document.getElementById('sci-dots');
+  if (el) el.innerHTML = sciRenderDots(filled);
+}
+
+function sciClearPin() {
+  sciPin = sciPin.slice(0, -1);
+  sciUpdateDots(sciPin.length);
+}
+
+function sciNumpad(fn) {
+  var nums = ['1','2','3','4','5','6','7','8','9','','0','⌫'];
+  return '<div class="sci-numpad">' + nums.map(function(n) {
+    if (n === '') return '<div></div>';
+    if (n === '⌫') return '<button class="sci-num" onclick="sciClearPin()" style="font-size:18px">⌫</button>';
+    return '<button class="sci-num" onclick="' + fn + '(' + n + ')">' + n + '</button>';
+  }).join('') + '</div>';
+}
+
+// ── ATTENDANT: Generate setup code for a member ───────────────────────────────
+function generateSciCode(memberId) {
+  var m = members.find(function(x) { return x.id === memberId; });
+  if (!m) return;
+  if (m.status !== 'paid') { showToast('Member must be paid to set up self check-in', 'warn'); return; }
+  var code = Math.floor(100000 + Math.random() * 900000).toString();
+  if (fbReady && db) {
+    db.collection('sci_codes').doc(code).set({
+      memberId: memberId,
+      created: Date.now(),
+      used: false
+    }).then(function() {
+      showToast('Setup code: ' + code + ' (single use)', 'ok');
+      // Show prominently
+      var el = document.getElementById('mm-body');
+      if (el) {
+        var banner = document.createElement('div');
+        banner.style.cssText = 'background:var(--grl);border:2px solid var(--gr);border-radius:10px;padding:14px;text-align:center;margin-bottom:8px';
+        banner.innerHTML = '<div style="font-size:11px;font-weight:700;color:var(--gr);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Self Check-In Setup Code</div>'
+          + '<div style="font-size:32px;font-weight:800;letter-spacing:8px;color:var(--bld)">' + code + '</div>'
+          + '<div style="font-size:11px;color:var(--mu);margin-top:4px">Single use &middot; Give to member</div>';
+        el.insertBefore(banner, el.firstChild);
+      }
+    });
   }
 }
 
@@ -3047,6 +3452,319 @@ async function resetUserPassword(uid, name){
   }
 }
 
+// ── SELF CHECK-IN SYSTEM ──────────────────────────────────────────────────────
+var sciPin='';
+var sciMemberId=null;
+var SCI_DEVICE_KEY='gsc_sci_member';
+var SCI_PIN_KEY='gsc_sci_pin';
+
+function initSelfCIMode(){
+  if(!SELF_CI_MODE) return;
+  // Hide main app, show self-CI shell
+  document.getElementById('app').style.display='none';
+  document.getElementById('self-ci-shell').style.display='flex';
+  // Check if device is already linked
+  var linkedId=localStorage.getItem(SCI_DEVICE_KEY);
+  if(linkedId){
+    sciMemberId=linkedId;
+    renderSciCheckin();
+  } else {
+    renderSciSetup();
+  }
+}
+
+function renderSciSetup(){
+  // Step 1: enter setup code from attendant
+  var html='<div style="text-align:center;margin-bottom:8px">'
+    +'<div style="font-size:22px;font-weight:800;color:var(--bld);margin-bottom:6px">Welcome!</div>'
+    +'<div style="font-size:14px;color:var(--mu);line-height:1.5">First time? Get a 6-digit setup code from the check-in attendant, then tap below to get started.</div>'
+    +'</div>'
+    +'<div class="fg"><label class="fl">Setup Code (from attendant)</label>'
+    +'<input class="fi" id="sci-setup-code" type="tel" maxlength="6" placeholder="______" style="font-size:24px;text-align:center;letter-spacing:8px"></div>'
+    +'<button onclick="verifySciSetupCode()" style="width:100%;padding:16px;background:var(--or);border:none;color:#fff;border-radius:11px;font-size:17px;font-weight:700;font-family:Inter,sans-serif;cursor:pointer">Continue</button>'
+    +'<div id="sci-setup-err" style="color:var(--re);font-size:13px;font-weight:600;text-align:center;min-height:18px"></div>';
+  document.getElementById('sci-body').innerHTML=html;
+}
+
+function verifySciSetupCode(){
+  var code=(document.getElementById('sci-setup-code')||{}).value||'';
+  if(code.length!==6){document.getElementById('sci-setup-err').textContent='Enter the 6-digit code from the attendant';return;}
+  if(!fbReady||!db){document.getElementById('sci-setup-err').textContent='Not connected - try again';return;}
+  db.collection('sci_codes').where('code','==',code).where('used','==',false).get().then(function(snap){
+    if(snap.empty){document.getElementById('sci-setup-err').textContent='Invalid or expired code';return;}
+    var doc=snap.docs[0];
+    var data=doc.data();
+    // Check member is paid
+    var m=members.find(function(x){return x.id===data.memberId;});
+    if(!m){document.getElementById('sci-setup-err').textContent='Member not found';return;}
+    if(m.status!=='paid'){document.getElementById('sci-setup-err').textContent='Membership must be paid before setting up self check-in';return;}
+    sciMemberId=data.memberId;
+    // Mark code as used
+    db.collection('sci_codes').doc(doc.id).update({used:true,usedAt:Date.now()});
+    renderSciCreatePin(m);
+  }).catch(function(){document.getElementById('sci-setup-err').textContent='Error - try again';});
+}
+
+function renderSciCreatePin(m){
+  sciPin='';
+  var html='<div style="text-align:center">'
+    +'<div style="font-size:20px;font-weight:800;color:var(--bld);margin-bottom:4px">Hi, '+m.first+'!</div>'
+    +'<div style="font-size:14px;color:var(--mu);margin-bottom:20px">Create a 6-digit PIN for future check-ins</div>'
+    +'<div class="sci-dots" id="sci-create-dots">'
+    +[0,1,2,3,4,5].map(function(){return'<div class="sci-dot"></div>';}).join('')
+    +'</div></div>'
+    +'<div class="sci-pin-pad">'
+    +[1,2,3,4,5,6,7,8,9,'','0','⌫'].map(function(k){
+      return k===''?'<div></div>':'<button class="sci-pin-btn" onclick="sciCreatePinKey(&quot;'+k+'&quot;)">'+k+'</button>';
+    }).join('')
+    +'</div>'
+    +'<div id="sci-create-err" style="color:var(--re);font-size:13px;font-weight:600;text-align:center;min-height:18px"></div>';
+  document.getElementById('sci-body').innerHTML=html;
+  window._sciCreateStep='enter'; // enter then confirm
+  window._sciCreateFirst='';
+}
+
+function sciCreatePinKey(k){
+  if(k==='⌫'){sciPin=sciPin.slice(0,-1);}
+  else if(sciPin.length<6){sciPin+=k;}
+  // Update dots
+  var dots=document.querySelectorAll('#sci-create-dots .sci-dot');
+  dots.forEach(function(d,i){d.classList.toggle('on',i<sciPin.length);});
+  if(sciPin.length===6){
+    if(window._sciCreateStep==='enter'){
+      window._sciCreateFirst=sciPin;
+      sciPin='';
+      window._sciCreateStep='confirm';
+      dots.forEach(function(d){d.classList.remove('on');});
+      document.getElementById('sci-create-err').textContent='';
+      // Update header
+      var header=document.querySelector('#sci-body [style*="Create a 6-digit"]');
+      if(header) header.textContent='Confirm your PIN';
+    } else {
+      if(sciPin===window._sciCreateFirst){
+        // Save PIN hash and link device
+        sha256(sciPin).then(function(hash){
+          localStorage.setItem(SCI_DEVICE_KEY, sciMemberId);
+          localStorage.setItem(SCI_PIN_KEY+'_'+sciMemberId, hash);
+          if(fbReady&&db){
+            db.collection('sci_members').doc(sciMemberId).set({
+              memberId:sciMemberId,pinHash:hash,linkedAt:Date.now()
+            });
+          }
+          renderSciCheckin();
+        });
+      } else {
+        sciPin='';
+        window._sciCreateStep='enter';
+        window._sciCreateFirst='';
+        dots.forEach(function(d){d.classList.remove('on');});
+        document.getElementById('sci-create-err').textContent='PINs did not match - try again';
+      }
+    }
+  }
+}
+
+function renderSciPinEntry(){
+  sciPin='';
+  var m=members.find(function(x){return x.id===sciMemberId;})||{first:'Member'};
+  var html='<div style="text-align:center">'
+    +'<div style="font-size:20px;font-weight:800;color:var(--bld);margin-bottom:4px">Welcome back!</div>'
+    +'<div style="font-size:14px;color:var(--mu);margin-bottom:20px">Enter your 6-digit PIN</div>'
+    +'<div class="sci-dots" id="sci-pin-dots">'
+    +[0,1,2,3,4,5].map(function(){return'<div class="sci-dot"></div>';}).join('')
+    +'</div></div>'
+    +'<div class="sci-pin-pad">'
+    +[1,2,3,4,5,6,7,8,9,'','0','⌫'].map(function(k){
+      return k===''?'<div></div>':'<button class="sci-pin-btn" onclick="sciPinKey(&quot;'+k+'&quot;)">'+k+'</button>';
+    }).join('')
+    +'</div>'
+    +'<div id="sci-pin-err" style="color:var(--re);font-size:13px;font-weight:600;text-align:center;min-height:18px"></div>'
+    +'<button onclick="sciForgetDevice()" style="margin-top:12px;background:none;border:none;color:var(--mu);font-size:12px;cursor:pointer;font-family:Inter,sans-serif">Not '+m.first+'? Tap here</button>';
+  document.getElementById('sci-body').innerHTML=html;
+}
+
+function sciPinKey(k){
+  if(k==='⌫'){sciPin=sciPin.slice(0,-1);}
+  else if(sciPin.length<6){sciPin+=k;}
+  var dots=document.querySelectorAll('#sci-pin-dots .sci-dot');
+  dots.forEach(function(d,i){d.classList.toggle('on',i<sciPin.length);});
+  if(sciPin.length===6){
+    var storedHash=localStorage.getItem(SCI_PIN_KEY+'_'+sciMemberId);
+    sha256(sciPin).then(function(hash){
+      if(hash===storedHash){
+        renderSciCheckin();
+      } else {
+        sciPin='';
+        dots.forEach(function(d){d.classList.remove('on');});
+        document.getElementById('sci-pin-err').textContent='Incorrect PIN - try again';
+      }
+    });
+  }
+}
+
+function renderSciCheckin(){
+  var m=members.find(function(x){return x.id===sciMemberId;});
+  if(!m){sciForgetDevice();return;}
+  // Check paid status
+  if(m.status!=='paid'){
+    var daysUnpaid=getUnpaidDays(m.id);
+    if(daysUnpaid>=GRACE_DAYS){
+      document.getElementById('sci-body').innerHTML='<div style="text-align:center;padding:20px">'
+        +'<div style="font-size:48px;margin-bottom:12px">🚫</div>'
+        +'<div style="font-size:18px;font-weight:800;color:var(--re);margin-bottom:8px">Check-In Unavailable</div>'
+        +'<div style="font-size:14px;color:var(--mu);line-height:1.5">Your membership payment is overdue. Please see the check-in attendant to resolve.</div>'
+        +'</div>';
+      return;
+    }
+  }
+
+  var todayStr=new Date().toDateString();
+  var mv=visits.filter(function(v){return v.memberId===m.id;});
+  var checkedToday=mv.some(function(v){return new Date(v.ts).toDateString()===todayStr;});
+  var rem=m.guestsTotal-(m.guestsUsed||0);
+
+  // Build checklist
+  var adults=[];
+  if(m.first) adults.push({name:m.first+' '+m.last,id:'a0'});
+  if(m.secFirst||m.secLast) adults.push({name:((m.secFirst||'')+' '+(m.secLast||'')).trim(),id:'a1'});
+  var kids=(m.kids||[]);
+
+  var html='<div style="font-size:18px;font-weight:800;color:var(--bld)">'+m.first+' '+m.last+'</div>'
+    +'<div style="font-size:12px;color:var(--mu);margin-bottom:4px">'+m.type+(m.status==='paid'?' &middot; <span style="color:var(--gr);font-weight:700">Paid</span>':' &middot; <span style="color:var(--am);font-weight:700">'+m.status+'</span>')+'</div>';
+
+  if(checkedToday) html+='<div style="background:var(--grl);border-radius:9px;padding:8px 12px;font-size:13px;font-weight:600;color:var(--gr)">✓ Already checked in today</div>';
+
+  // Adults checklist
+  html+='<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--mu)">Who is checking in today?</div>';
+  html+='<div style="display:flex;flex-direction:column;gap:8px">';
+  adults.forEach(function(a){
+    html+='<div class="ci-check-item" id="sci-'+a.id+'" onclick="sciToggle(&quot;sci-&quot;+a.id)">'
+      +'<input type="checkbox" id="sci-chk-'+a.id+'" style="width:22px;height:22px;accent-color:var(--or);flex-shrink:0">'
+      +'<label for="sci-chk-'+a.id+'" style="font-size:16px;font-weight:600;cursor:pointer;flex:1">'+a.name+'</label>'
+      +'</div>';
+  });
+  kids.forEach(function(k,i){
+    html+='<div class="ci-check-item" id="sci-k'+i+'" onclick="sciToggle(&quot;sci-k&quot;+i)">'
+      +'<input type="checkbox" id="sci-chk-k'+i+'" style="width:22px;height:22px;accent-color:var(--or);flex-shrink:0">'
+      +'<label for="sci-chk-k'+i+'" style="font-size:16px;font-weight:600;cursor:pointer;flex:1">'+k+'</label>'
+      +'</div>';
+  });
+  html+='</div>';
+
+  // Guest passes
+  if(m.guestsTotal>0){
+    html+='<div style="border-top:1px solid var(--sand2);padding-top:12px">'
+      +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">'
+      +'<div><div style="font-size:13px;font-weight:700;color:var(--bld)">🎟 Guest Passes</div>'
+      +'<div style="font-size:11px;color:var(--mu)">'+rem+' of '+m.guestsTotal+' remaining</div></div>'
+      +'<div style="display:flex;align-items:center;gap:12px">'
+      +'<button onclick="sciAdjGuests(-1)" style="width:44px;height:44px;border-radius:50%;background:var(--or);border:none;color:#fff;font-size:22px;font-weight:700;cursor:pointer;font-family:Inter,sans-serif">−</button>'
+      +'<div style="font-size:22px;font-weight:800;color:var(--bld);min-width:24px;text-align:center" id="sci-guests-count">0</div>'
+      +'<button onclick="sciAdjGuests(1)" style="width:44px;height:44px;border-radius:50%;background:var(--or);border:none;color:#fff;font-size:22px;font-weight:700;cursor:pointer;font-family:Inter,sans-serif">+</button>'
+      +'</div></div>'
+      +'<div id="sci-gp-status"></div>'
+      +'</div>';
+  }
+
+  html+='<button onclick="sciSubmitCheckin(&quot;'+m.id+'&quot;)" style="width:100%;padding:18px;background:var(--or);border:none;color:#fff;border-radius:12px;font-size:18px;font-weight:800;font-family:Inter,sans-serif;cursor:pointer;margin-top:4px">✅ Check In</button>';
+
+  document.getElementById('sci-body').innerHTML=html;
+  window._sciGuests=0;
+}
+
+function sciToggle(id){
+  var item=document.getElementById(id); if(!item) return;
+  var chk=item.querySelector('input[type=checkbox]');
+  if(chk) chk.checked=!chk.checked;
+  item.classList.toggle('checked',chk?chk.checked:false);
+}
+
+function sciAdjGuests(delta){
+  var m=members.find(function(x){return x.id===sciMemberId;}); if(!m) return;
+  var rem=m.guestsTotal-(m.guestsUsed||0);
+  window._sciGuests=Math.max(0,Math.min((window._sciGuests||0)+delta,rem+5));
+  var el=document.getElementById('sci-guests-count');
+  if(el) el.textContent=window._sciGuests;
+  var status=document.getElementById('sci-gp-status');
+  if(status){
+    if(window._sciGuests===0){status.innerHTML='';}
+    else if(window._sciGuests<=rem){status.innerHTML='<div style="font-size:12px;color:var(--gr);font-weight:600">✓ '+window._sciGuests+' pass'+(window._sciGuests>1?'es':'')+' · '+(rem-window._sciGuests)+' remaining after</div>';}
+    else{status.innerHTML='<div style="font-size:12px;color:var(--re);font-weight:600">⚠ Exceeds balance — please see attendant for additional passes</div>';
+      window._sciGuests=rem; el.textContent=rem;}
+  }
+}
+
+function sciSubmitCheckin(memberId){
+  var m=members.find(function(x){return x.id===memberId;}); if(!m) return;
+  // Collect checked members
+  var checked=[];
+  var adults=[];
+  if(m.first) adults.push({name:m.first+' '+m.last,id:'a0'});
+  if(m.secFirst||m.secLast) adults.push({name:((m.secFirst||'')+' '+(m.secLast||'')).trim(),id:'a1'});
+  adults.forEach(function(a){
+    var chk=document.getElementById('sci-chk-'+a.id);
+    if(chk&&chk.checked) checked.push(a.name);
+  });
+  var kids=(m.kids||[]);
+  var checkedKids=[];
+  kids.forEach(function(k,i){
+    var chk=document.getElementById('sci-chk-k'+i);
+    if(chk&&chk.checked) checkedKids.push(k);
+  });
+  if(checked.length===0&&checkedKids.length===0&&(!window._sciGuests||window._sciGuests===0)){
+    alert('Please select at least one person checking in.');return;
+  }
+  var guests=window._sciGuests||0;
+  var v={id:uid(),memberId:m.id,ts:new Date().toISOString(),
+    adults:checked.length,children:checkedKids.length,
+    checkedAdults:checked,checkedKids:checkedKids,
+    guestPasses:guests,passesPurchased:0,
+    whileUnpaid:m.status!=='paid',selfCheckin:true};
+  // Update guest pass count
+  var updM=Object.assign({},m,{guestsUsed:(m.guestsUsed||0)+guests});
+  saveMember(updM);
+  saveVisit(v);
+  // Show success
+  var allNames=checked.concat(checkedKids);
+  document.getElementById('sci-success-name').textContent=m.first+' '+m.last;
+  document.getElementById('sci-success-sub').textContent=allNames.join(', ')+(guests>0?' · '+guests+' guest'+(guests>1?'s':''):'');
+  document.getElementById('sci-success').style.display='flex';
+  playChime();
+  setTimeout(function(){
+    document.getElementById('sci-success').style.display='none';
+    window._sciGuests=0;
+    renderSciPinEntry(); // Reset to PIN entry for next person
+  },5000);
+}
+
+function sciForgetDevice(){
+  localStorage.removeItem(SCI_DEVICE_KEY);
+  sciMemberId=null;
+  renderSciSetup();
+}
+
+// ── ATTENDANT: Generate setup code ────────────────────────────────────────────
+function generateSciCode(memberId){
+  var m=members.find(function(x){return x.id===memberId;}); if(!m) return;
+  if(m.status!=='paid'){showToast('Member must be paid to set up self check-in','warn');return;}
+  var code='';
+  for(var i=0;i<6;i++) code+=Math.floor(Math.random()*10);
+  if(fbReady&&db){
+    db.collection('sci_codes').add({
+      code:code,memberId:memberId,used:false,createdAt:Date.now()
+    }).then(function(){
+      // Show code in a modal-style alert
+      var msg='Setup code for '+m.first+' '+m.last+':\n\n'+code+'\n\nGive this to the member. It expires after first use.';
+
+
+
+
+      alert(msg);
+      showToast('Code generated: '+code,'ok');
+    });
+  }
+}
+
 function resetMigrationFlag(){
   if(!confirm('This will prompt every member to confirm their household info on next check-in. Continue?')) return;
   localStorage.removeItem('gsc_migration_2025_v1');
@@ -3094,6 +3812,26 @@ function doSeasonReset(){if(!confirm('Reset all guest pass counts for the new se
     </div>
   </div>
 </div>
+<!-- SELF CHECK-IN SHELL -->
+<div id="self-ci-shell">
+  <div class="sci-header">
+    <div style="font-size:36px">🐊</div>
+    <div class="sci-header-text">
+      <div class="sci-title">Gibsonville Swim Club</div>
+      <div class="sci-sub">Member Check-In</div>
+    </div>
+  </div>
+  <div class="sci-body" id="sci-body">
+    <!-- Content injected by JS -->
+  </div>
+  <!-- Success overlay -->
+  <div class="sci-success" id="sci-success" style="display:none">
+    <div class="sci-success-icon">✅</div>
+    <div class="sci-success-name" id="sci-success-name"></div>
+    <div class="sci-success-sub" id="sci-success-sub"></div>
+  </div>
+</div>
+
 <!-- LOGIN OVERLAY -->
 <div id="login-overlay" style="display:none;position:fixed;inset:0;z-index:9995;background:var(--bld);flex-direction:column;align-items:center;justify-content:center;padding:24px">
   <img src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐊</text></svg>" style="width:60px;height:60px;margin-bottom:8px">
