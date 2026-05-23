@@ -334,7 +334,7 @@ body{font-family:'Inter',sans-serif;background:var(--sand);color:var(--tx);min-h
 <!-- APP -->
 <div id="app">
   <div class="topbar">
-    <div class="topbar-l"><span style="font-size:24px">&#x1F40A;</span><div><div class="topbar-title">Gibsonville Swim Club</div><div class="topbar-sub" id="today-lbl"></div><div style="font-size:10px;color:rgba(255,255,255,.6);letter-spacing:.5px;margin-top:2px;font-weight:600">v1.7.7</div></div></div>
+    <div class="topbar-l"><span style="font-size:24px">&#x1F40A;</span><div><div class="topbar-title">Gibsonville Swim Club</div><div class="topbar-sub" id="today-lbl"></div><div style="font-size:10px;color:rgba(255,255,255,.6);letter-spacing:.5px;margin-top:2px;font-weight:600">v1.7.8</div></div></div>
     <div class="topbar-acts"><div id="sync-pill" style="display:none;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;align-items:center;gap:4px"></div><button class="ibtn" onclick="openSettings()">&#x2699;&#xFE0F;</button></div>
   </div>
   <div class="tabs">
@@ -1412,9 +1412,9 @@ function updateUIForRole(){
   }
   // Incident FAB
   var incFab=document.getElementById('inc-fab');
-  // Incidents tab visibility
+  // Incidents tab - always visible (attendants can file, logged-in users can view)
   var tbInc=document.getElementById('tb-inc');
-  if(tbInc) tbInc.style.display=can('canViewIncidents')?'':'none';
+  if(tbInc) tbInc.style.display='';
   // Reports tab
   var tbRep=document.getElementById('tb-rep');
   if(tbRep) tbRep.style.display=can('canViewReports')?'':'none';
@@ -2789,6 +2789,10 @@ function saveIncident(inc){
 
 function renderIncidents(){
   var el=document.getElementById('inc-body'); if(!el) return;
+  if(!can('canViewIncidents')){
+    el.innerHTML='<div class="empty" style="padding:40px 0"><div class="ico">&#x1F512;</div><p>Sign in to view incident history.</p></div>';
+    return;
+  }
   if(!incidents.length){
     el.innerHTML='<div class="empty" style="padding:40px 0"><div class="ico">&#x1F4CB;</div><p>No incidents recorded.</p></div>';
     return;
