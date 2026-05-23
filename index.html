@@ -264,6 +264,11 @@ body{font-family:'Inter',sans-serif;background:var(--sand);color:var(--tx);min-h
 .inc-meta{font-size:11px;color:var(--mu)}
 .inc-followup{display:inline-block;font-size:10px;font-weight:700;background:var(--rel);color:var(--re);padding:2px 8px;border-radius:10px;margin-top:4px}
 
+/* SETTINGS SECTIONS */
+.st-section{background:var(--sand);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:8px;border:1px solid var(--sand2)}
+.st-sec-hdr{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--bld)}
+.st-sec-subhdr{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--mu);padding-top:4px;border-top:1px solid var(--sand2)}
+
 /* AUTH */
 .role-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px}
 .role-admin{background:var(--orl);color:var(--ord)}
@@ -329,7 +334,7 @@ body{font-family:'Inter',sans-serif;background:var(--sand);color:var(--tx);min-h
 <!-- APP -->
 <div id="app">
   <div class="topbar">
-    <div class="topbar-l"><span style="font-size:24px">&#x1F40A;</span><div><div class="topbar-title">Gibsonville Swim Club</div><div class="topbar-sub" id="today-lbl"></div><div style="font-size:10px;color:rgba(255,255,255,.6);letter-spacing:.5px;margin-top:2px;font-weight:600">v1.7.5</div></div></div>
+    <div class="topbar-l"><span style="font-size:24px">&#x1F40A;</span><div><div class="topbar-title">Gibsonville Swim Club</div><div class="topbar-sub" id="today-lbl"></div><div style="font-size:10px;color:rgba(255,255,255,.6);letter-spacing:.5px;margin-top:2px;font-weight:600">v1.7.7</div></div></div>
     <div class="topbar-acts"><div id="sync-pill" style="display:none;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;align-items:center;gap:4px"></div><button class="ibtn" onclick="openSettings()">&#x2699;&#xFE0F;</button></div>
   </div>
   <div class="tabs">
@@ -365,6 +370,9 @@ body{font-family:'Inter',sans-serif;background:var(--sand);color:var(--tx);min-h
     <div class="dlist" id="dir-list"></div>
   </div>
   <div id="pane-inc" class="pane">
+    <div style="padding:12px;flex-shrink:0">
+      <button onclick="openNewIncident()" style="width:100%;padding:14px;background:var(--re);border:none;color:#fff;border-radius:11px;font-size:16px;font-weight:700;font-family:Inter,sans-serif;cursor:pointer">&#x26A0;&#xFE0F; Log New Incident</button>
+    </div>
     <div class="rep-scroll" id="inc-body"></div>
     <button class="fab" id="inc-fab" onclick="openNewIncident()" style="display:none">&#x2B;</button>
   </div>
@@ -376,7 +384,7 @@ body{font-family:'Inter',sans-serif;background:var(--sand);color:var(--tx);min-h
 <!-- EDIT MODAL -->
 <div class="overlay" id="ed-overlay" onclick="if(event.target===this)closeEdit()"><div class="sheet"><div class="mhandle"></div><div class="mhdr"><div class="mtitle" id="ed-title">Add Member</div><button class="mclose" onclick="closeEdit()">&#x2715;</button></div><div class="mbody" id="ed-body"></div></div></div>
 <!-- SETTINGS MODAL -->
-<div class="overlay" id="st-overlay" onclick="if(event.target===this)closeSettings()"><div class="sheet"><div class="mhandle"></div><div class="mhdr"><div class="mtitle">Settings</div><button class="mclose" onclick="closeSettings()">&#x2715;</button></div><div class="mbody" id="st-body"></div></div></div>
+<div class="overlay" id="st-overlay" onclick="if(event.target===this)closeSettings()"><div class="sheet"><div class="mhandle"></div><div class="mhdr"><div class="mtitle">Settings</div><button class="mclose" onclick="closeSettings()">&#x2715;</button></div><div class="mbody" id="st-body" style="display:flex;flex-direction:column;gap:12px"></div></div></div>
 <!-- GUEST PASS MODAL -->
 <div class="overlay" id="gp-overlay" onclick="if(event.target===this)closeGP()"><div class="sheet"><div class="mhandle"></div><div class="mhdr"><div class="mtitle">Guest Passes</div><button class="mclose" onclick="closeGP()">&#x2715;</button></div><div id="gp-inner"></div></div></div>
 <!-- ADMIN PIN MODAL -->
@@ -1561,17 +1569,20 @@ function checkAdminPin(){if(adminPinEntry===getPin()){document.getElementById('a
 function closeAdmin(){document.getElementById('admin-overlay').classList.remove('open');adminPinCallback=null;}
 
 function switchTab(name){
-  ['ci','dir','rep'].forEach(function(t){
-    document.getElementById('pane-'+t).classList.toggle('on',t===name);
-    document.getElementById('tb-'+t).classList.toggle('on',t===name);
+  ['ci','dir','rep','inc'].forEach(function(t){
+    var pane=document.getElementById('pane-'+t);
+    var tab=document.getElementById('tb-'+t);
+    if(pane) pane.classList.toggle('on',t===name);
+    if(tab) tab.classList.toggle('on',t===name);
   });
-  document.getElementById('fab').classList.toggle('show',name==='dir');
+  // Directory FAB (add member)
+  document.getElementById('fab').classList.toggle('show',name==='dir'&&can('canAddDeleteMembers'));
+  // Incidents FAB (log incident)
+  var incFab=document.getElementById('inc-fab');
+  if(incFab) incFab.style.display=name==='inc'?'flex':'none';
   if(name==='rep') renderRep();
-  if(name==='dir'){
-    rebuildFilterBtns();
-    renderDir();
-    setTimeout(_bindDirSearch, 50);
-  }
+  if(name==='dir'){rebuildFilterBtns();renderDir();setTimeout(_bindDirSearch,50);}
+  if(name==='inc') renderIncidents();
 }
 function setFilter(btn,f){dirFilter=f;document.querySelectorAll('.fbtn').forEach(function(b){b.classList.remove('on');});btn.classList.add('on');renderDir();}
 
@@ -2516,52 +2527,69 @@ function openSettings(){
       +'</div>';
   }).join('');
   document.getElementById('st-body').innerHTML=
-    '<div class="sec-lbl">Club Settings</div>'
-    +'<div class="fg"><label class="fl">Club Name</label><input class="fi" id="cfg-clubname" value="'+CONFIG.clubName+'"></div>'
-    +'<div class="fg"><label class="fl">Season Year</label><input class="fi" id="cfg-season" type="number" value="'+CONFIG.seasonYear+'"></div>'
-    +'<div class="sec-lbl" style="margin-top:4px">Guest Pass Settings</div>'
-    +'<div class="frow">'
-    +'<div class="fg"><label class="fl">Price per Pass ($)</label><input class="fi" id="cfg-price" type="number" min="0" step="0.50" value="'+CONFIG.guestPrice+'"></div>'
-    +'<div class="fg"><label class="fl">Unpaid Grace Days</label><input class="fi" id="cfg-grace" type="number" min="1" max="14" value="'+CONFIG.graceDays+'"></div>'
-    +'</div>'
-    +'<div class="sec-lbl" style="margin-top:4px">Notification Email</div>'
-    +'<div class="fg"><label class="fl">Send payment alerts to</label><input class="fi" id="cfg-email" type="email" value="'+CONFIG.notifyEmail+'"></div>'
-    +'<div class="sec-lbl" style="margin-top:4px">Membership Types</div>'
-    +'<p class="fnote">Edit names, pass allotments, and rules for each membership type.</p>'
-    +'<div id="cfg-types-list" style="display:flex;flex-direction:column;gap:8px">'+typesHTML+'</div>'
-    +'<button onclick="addMemberType()" class="btn-s" style="margin-top:6px">&#xFF0B; Add Membership Type</button>'
-    +'<button class="btn-p" style="margin-top:4px" onclick="saveAllConfig()">&#x1F4BE; Save All Settings</button>'
-    +'<div class="sec-lbl" style="margin-top:4px">Check-In Announcement</div>'
-    +'<p class="fnote">Shown at the top of the check-in screen until cleared. Leave blank to hide.</p>'
-    +'<div class="fg"><label class="fl">Message</label><input class="fi" id="st-announce" placeholder="e.g. Pool closes at 6pm today for a private event"></div>'
+    // ── SECTION: Announcement ──────────────────────────────────────
+    '<div class="st-section">'
+    +'<div class="st-sec-hdr">&#x1F4E3; Check-In Announcement</div>'
+    +'<p class="fnote">Shown at the top of the check-in screen until cleared.</p>'
+    +'<div class="fg"><label class="fl">Message</label><input class="fi" id="st-announce" placeholder="e.g. Pool closes at 6pm today"></div>'
     +'<div style="display:flex;gap:8px">'
-    +'<button class="btn-p" style="flex:1" onclick="saveAnnouncementFromSettings()">&#x1F4E3; Save Announcement</button>'
-    +'<button class="btn-d" style="flex:1" onclick="clearAnnouncement()">&#x2715; Clear</button>'
+    +'<button class="btn-p" style="flex:1" onclick="saveAnnouncementFromSettings()">Save</button>'
+    +'<button class="btn-d" style="flex:1" onclick="clearAnnouncement()">Clear</button>'
+    +'</div></div>'
+
+    // ── SECTION: Membership Types ──────────────────────────────────
+    +'<div class="st-section">'
+    +'<div class="st-sec-hdr">&#x1F3CA; Membership Types &amp; Passes</div>'
+    +'<div class="fg"><label class="fl">Guest Pass Price ($)</label><input class="fi" id="cfg-price" type="number" min="0" step="0.50" value="'+CONFIG.guestPrice+'"></div>'
+    +'<div class="fg"><label class="fl">Unpaid Grace Days</label><input class="fi" id="cfg-grace" type="number" min="1" max="14" value="'+CONFIG.graceDays+'"></div>'
+    +'<div class="fg"><label class="fl">Club Name</label><input class="fi" id="cfg-clubname" value="'+CONFIG.clubName+'"></div>'
+    +'<div class="fg"><label class="fl">Notification Email</label><input class="fi" id="cfg-email" type="email" value="'+CONFIG.notifyEmail+'"></div>'
+    +'<div class="st-sec-subhdr">Membership Types</div>'
+    +'<div id="cfg-types-list" style="display:flex;flex-direction:column;gap:8px">'+typesHTML+'</div>'
+    +'<button onclick="addMemberType()" class="btn-s" style="margin-top:6px">&#xFF0B; Add Type</button>'
+    +'<button class="btn-p" style="margin-top:8px" onclick="saveAllConfig()">&#x1F4BE; Save Config</button>'
     +'</div>'
-    +'<div class="sec-lbl" style="margin-top:4px">Change PIN</div>'
-    +'<p class="fnote">This PIN protects delete, payment status changes, import/export, and settings.</p>'
-    +'<div class="fg"><label class="fl">New PIN (4 digits)</label><input class="fi" id="np1" type="tel" maxlength="4" placeholder="New PIN"></div>'
-    +'<div class="fg"><label class="fl">Confirm PIN</label><input class="fi" id="np2" type="tel" maxlength="4" placeholder="Confirm"></div>'
-    +'<button class="btn-p" onclick="doChangePin()">&#x1F511; Update PIN</button>'
-    +'<div class="sec-lbl" style="margin-top:4px">Season Reset</div>'
-    +'<p class="fnote">Resets guest pass counts to 0 for all members. Profiles and visit history are kept.</p>'
-    +'<button class="btn-d" onclick="doSeasonReset()">&#x1F504; Reset for New Season</button>'
+
+    // ── SECTION: Users & Roles (master admin only) ─────────────────
     +(isMasterAdmin()?
-    '<div class="sec-lbl" style="margin-top:4px">User Management</div>'
-    +'<p class="fnote">Add board members and staff with custom roles and permissions.</p>'
-    +'<button class="btn-p" onclick="openUserManagement()">&#x1F465; Manage Users &amp; Roles</button>'
-    +'<div class="sec-lbl" style="margin-top:4px">Session Timeout</div>'
-    +'<p class="fnote">Auto sign-out after inactivity (minutes).</p>'
-    +'<div class="fg"><input class="fi" id="st-timeout" type="number" min="1" max="60" value="'+INACTIVITY_MINUTES+'" placeholder="5"></div>'
+    '<div class="st-section">'
+    +'<div class="st-sec-hdr">&#x1F465; Users &amp; Roles</div>'
+    +'<p class="fnote">Manage board members and staff access.</p>'
+    +'<button class="btn-p" onclick="openUserManagement()">Manage Users</button>'
+    +'<div class="st-sec-subhdr">Session Timeout</div>'
+    +'<div class="fg"><label class="fl">Auto sign-out after (minutes)</label><input class="fi" id="st-timeout" type="number" min="1" max="60" value="'+INACTIVITY_MINUTES+'"></div>'
     +'<button class="btn-s" onclick="saveTimeoutSetting()">Save Timeout</button>'
+    +'</div>'
     :'')
-    +'<div class="sec-lbl" style="margin-top:4px">Clear Check-In Records</div>'
-    +'<p class="fnote">Permanently deletes check-in visit records. Member profiles are not affected.</p>'
-    +'<button class="btn-d" onclick="closeSettings();clearTodayVisits()">&#x1F5D1; Clear Today\'s Check-Ins</button>'
-    +'<button class="btn-d" style="margin-top:6px" onclick="closeSettings();clearSeasonVisits()">&#x1F5D1; Clear All Season Check-Ins</button>'
-    +'<div class="sec-lbl" style="margin-top:4px">First Check-In Prompts</div>'
-    +'<p class="fnote">Forces every member to complete missing info on their next check-in.</p>'
-    +'<button class="btn-o" onclick="resetMigrationFlag()">&#x1F501; Reset First Check-In Prompts for All Members</button>';
+
+    // ── SECTION: Check-In Records ──────────────────────────────────
+    +'<div class="st-section">'
+    +'<div class="st-sec-hdr">&#x1F5D1; Check-In Records</div>'
+    +'<p class="fnote">Permanently deletes visit records. Member profiles are not affected.</p>'
+    +'<button class="btn-d" onclick="closeSettings();clearTodayVisits()">Clear Today</button>'
+    +'<button class="btn-d" style="margin-top:6px" onclick="closeSettings();clearSeasonVisits()">Clear Season</button>'
+    +'</div>'
+
+    // ── SECTION: Season ────────────────────────────────────────────
+    +'<div class="st-section">'
+    +'<div class="st-sec-hdr">&#x1F504; Season</div>'
+    +'<p class="fnote">Reset guest pass counts for new season. Profiles and history preserved.</p>'
+    +'<button class="btn-d" onclick="doSeasonReset()">Reset for New Season</button>'
+    +'<div class="st-sec-subhdr">First Check-In Prompts</div>'
+    +'<p class="fnote">Force all members to confirm household info on next check-in.</p>'
+    +'<button class="btn-o" onclick="resetMigrationFlag()">Reset First Check-In Prompts</button>'
+    +'</div>'
+
+    // ── SECTION: Change Password ───────────────────────────────────
+    +(isLoggedIn()?
+    '<div class="st-section">'
+    +'<div class="st-sec-hdr">&#x1F511; Change Password</div>'
+    +'<div class="fg"><label class="fl">New Password</label><input class="fi" id="np1" type="password" placeholder="New password"></div>'
+    +'<div class="fg"><label class="fl">Confirm Password</label><input class="fi" id="np2" type="password" placeholder="Confirm"></div>'
+    +'<button class="btn-p" onclick="doChangePin()">Update Password</button>'
+    +'</div>'
+    :'');
+
   document.getElementById('st-overlay').classList.add('open');
   // Load current announcement
   if(fbReady&&db){
