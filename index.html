@@ -281,7 +281,7 @@ body.layout-laptop .rstat-grid{grid-template-columns:repeat(6,1fr)}
       <div>
         <div class="topbar-title">Gibsonville Swim Club</div>
         <div class="topbar-date" id="topbar-date"></div>
-        <div style="font-size:9px;color:rgba(255,255,255,.35)">v2.1.3</div>
+        <div style="font-size:9px;color:rgba(255,255,255,.35)">v2.1.4</div>
       </div>
     </div>
     <div class="topbar-right">
@@ -455,7 +455,7 @@ body.layout-laptop .rstat-grid{grid-template-columns:repeat(6,1fr)}
 
 <script>
 
-var _APP_VERSION="v2.1.3";
+var _APP_VERSION="v2.1.4";
 
 // ── SELF CHECK-IN MODE ────────────────────────────────────────────────────────
 var SELF_CI_MODE = window.location.search.indexOf('selfcheckin=true') >= 0;
@@ -988,46 +988,46 @@ function openMissingInfo(memberId){
 function buildInlineMissingForm(m){
   var tc=getTypeConfig(m.type);
   var html='<div style="display:flex;flex-direction:column;gap:12px">';
-  html+='<div style="font-size:16px;font-weight:800;color:#fff">&#x26A0;&#xFE0F; Complete Member Info</div>';
-  html+='<div style="font-size:12px;color:rgba(255,255,255,.7)">This information is required before checking in. It will be saved permanently.</div>';
+  html+='<div style="font-size:16px;font-weight:800;color:var(--bld)">&#x26A0;&#xFE0F; Complete Member Info</div>';
+  html+='<div style="font-size:13px;color:var(--mu);line-height:1.5">This information is required before checking in. It will be saved permanently.</div>';
 
   // Contact fields
   var needsContact=!m.email||!m.phone||!m.street||!m.city||!m.state||!m.zip;
   if(needsContact){
-    html+='<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:rgba(255,255,255,.5)">Contact Information</div>';
-    if(!m.email) html+='<div class="fg"><label class="fl" style="color:rgba(255,255,255,.7)">Email</label><input class="fi" id="ilf-email" type="email" value="'+(m.email||'')+'" placeholder="email@example.com"></div>';
-    if(!m.phone) html+='<div class="fg"><label class="fl" style="color:rgba(255,255,255,.7)">Phone</label><input class="fi" id="ilf-phone" type="tel" value="'+(m.phone||'')+'" placeholder="(336) 555-0100"></div>';
+    html+='<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--mu)">Contact Information</div>';
+    if(!m.email) html+='<div class="fg"><label class="fl" style="color:var(--mu)">Email</label><input class="fi" id="ilf-email" type="email" value="'+(m.email||'')+'" placeholder="email@example.com"></div>';
+    if(!m.phone) html+='<div class="fg"><label class="fl" style="color:var(--mu)">Phone</label><input class="fi" id="ilf-phone" type="tel" value="'+(m.phone||'')+'" placeholder="(336) 555-0100"></div>';
     if(!m.street||!m.city||!m.zip){
-      html+='<div class="fg"><label class="fl" style="color:rgba(255,255,255,.7)">Street Address</label><input class="fi" id="ilf-street" value="'+(m.street||'')+'" placeholder="123 Main St"></div>';
+      html+='<div class="fg"><label class="fl" style="color:var(--mu)">Street Address</label><input class="fi" id="ilf-street" value="'+(m.street||'')+'" placeholder="123 Main St"></div>';
       html+='<div class="frow">';
-      html+='<div class="fg"><label class="fl" style="color:rgba(255,255,255,.7)">City</label><input class="fi" id="ilf-city" value="'+(m.city||'')+'" placeholder="Burlington"></div>';
-      html+='<div class="fg" style="max-width:70px"><label class="fl" style="color:rgba(255,255,255,.7)">State</label><input class="fi" id="ilf-state" value="'+(m.state||'NC')+'" maxlength="2"></div>';
-      html+='<div class="fg" style="max-width:90px"><label class="fl" style="color:rgba(255,255,255,.7)">Zip</label><input class="fi" id="ilf-zip" type="tel" value="'+(m.zip||'')+'" maxlength="5" placeholder="27249"></div>';
+      html+='<div class="fg"><label class="fl" style="color:var(--mu)">City</label><input class="fi" id="ilf-city" value="'+(m.city||'')+'" placeholder="Burlington"></div>';
+      html+='<div class="fg" style="max-width:70px"><label class="fl" style="color:var(--mu)">State</label><input class="fi" id="ilf-state" value="'+(m.state||'NC')+'" maxlength="2"></div>';
+      html+='<div class="fg" style="max-width:90px"><label class="fl" style="color:var(--mu)">Zip</label><input class="fi" id="ilf-zip" type="tel" value="'+(m.zip||'')+'" maxlength="5" placeholder="27249"></div>';
       html+='</div>';
     }
   }
 
   // Adults (for types that allow variable adults)
   if(tc.maxAdults>1){
-    html+='<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:rgba(255,255,255,.5)">Household — Adults</div>';
+    html+='<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--mu)">Household — Adults</div>';
     html+='<div style="display:flex;gap:8px">';
-    html+='<button id="ilf-a1" onclick="ilfSelectAdults(1)" style="flex:1;padding:14px;border-radius:10px;font-size:16px;font-weight:800;font-family:-apple-system,sans-serif;cursor:pointer;border:2px solid rgba(255,255,255,.3);background:rgba(255,255,255,.1);color:#fff">1 Adult</button>';
-    html+='<button id="ilf-a2" onclick="ilfSelectAdults(2)" style="flex:1;padding:14px;border-radius:10px;font-size:16px;font-weight:800;font-family:-apple-system,sans-serif;cursor:pointer;border:2px solid rgba(255,255,255,.3);background:rgba(255,255,255,.1);color:#fff">2 Adults</button>';
+    html+='<button id="ilf-a1" onclick="ilfSelectAdults(1)" style="flex:1;padding:14px;border-radius:10px;font-size:16px;font-weight:800;font-family:-apple-system,sans-serif;cursor:pointer;border:2px solid var(--sand2);background:var(--sand);color:var(--bld)">1 Adult</button>';
+    html+='<button id="ilf-a2" onclick="ilfSelectAdults(2)" style="flex:1;padding:14px;border-radius:10px;font-size:16px;font-weight:800;font-family:-apple-system,sans-serif;cursor:pointer;border:2px solid var(--sand2);background:var(--sand);color:var(--bld)">2 Adults</button>';
     html+='</div>';
     html+='<div id="ilf-sec-fields" style="display:none;flex-direction:column;gap:8px">';
-    html+='<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:rgba(255,255,255,.5)">Second Adult Name</div>';
-    html+='<div class="frow"><div class="fg"><label class="fl" style="color:rgba(255,255,255,.7)">First Name</label><input class="fi" id="ilf-sec-first" value="'+(m.secFirst||'')+'" placeholder="First"></div>';
-    html+='<div class="fg"><label class="fl" style="color:rgba(255,255,255,.7)">Last Name</label><input class="fi" id="ilf-sec-last" value="'+(m.secLast||'')+'" placeholder="Last"></div></div>';
+    html+='<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--mu)">Second Adult Name</div>';
+    html+='<div class="frow"><div class="fg"><label class="fl" style="color:var(--mu)">First Name</label><input class="fi" id="ilf-sec-first" value="'+(m.secFirst||'')+'" placeholder="First"></div>';
+    html+='<div class="fg"><label class="fl" style="color:var(--mu)">Last Name</label><input class="fi" id="ilf-sec-last" value="'+(m.secLast||'')+'" placeholder="Last"></div></div>';
     html+='</div>';
   } else if(tc.requireSecond&&!(m.secFirst&&m.secLast)){
-    html+='<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:rgba(255,255,255,.5)">Second Adult (Required)</div>';
-    html+='<div class="frow"><div class="fg"><label class="fl" style="color:rgba(255,255,255,.7)">First Name</label><input class="fi" id="ilf-sec-first" value="'+(m.secFirst||'')+'" placeholder="First"></div>';
-    html+='<div class="fg"><label class="fl" style="color:rgba(255,255,255,.7)">Last Name</label><input class="fi" id="ilf-sec-last" value="'+(m.secLast||'')+'" placeholder="Last"></div></div>';
+    html+='<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--mu)">Second Adult (Required)</div>';
+    html+='<div class="frow"><div class="fg"><label class="fl" style="color:var(--mu)">First Name</label><input class="fi" id="ilf-sec-first" value="'+(m.secFirst||'')+'" placeholder="First"></div>';
+    html+='<div class="fg"><label class="fl" style="color:var(--mu)">Last Name</label><input class="fi" id="ilf-sec-last" value="'+(m.secLast||'')+'" placeholder="Last"></div></div>';
   }
 
   // Children
   if(tc.allowChildren){
-    html+='<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:rgba(255,255,255,.5)">Children</div>';
+    html+='<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--mu)">Children</div>';
     html+='<div id="ilf-kids-list">';
     (m.kids||[]).forEach(function(k,i){
       html+='<div style="display:flex;gap:8px;align-items:center;margin-bottom:6px"><input class="fi ilf-kid" value="'+k+'" placeholder="Child name" style="flex:1"><button onclick="this.parentElement.remove()" style="background:var(--rel);border:none;color:var(--re);width:36px;height:36px;border-radius:8px;cursor:pointer;font-size:16px;flex-shrink:0">&#x2715;</button></div>';
