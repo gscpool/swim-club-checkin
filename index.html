@@ -2,249 +2,131 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<meta http-equiv="Pragma" content="no-cache">
-<meta http-equiv="Expires" content="0">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Gibsonville Swim Club</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐊</text></svg>">
-
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 :root{
   --or:#FA4616;--ord:#c93a12;--orl:#fff0ec;
-  --bl:#003087;--bld:#00205c;--bll:#dce6f7;
+  --bl:#003087;--bld:#00205C;--bll:#dce6f7;--bllt:#dce6f7;
   --wh:#fff;--sand:#fdf8f4;--sand2:#f0e9e1;
   --tx:#1a1a2e;--mu:#6b7280;
   --gr:#166534;--grl:#dcfce7;
   --re:#991b1b;--rel:#fee2e2;
   --am:#92400e;--aml:#fef3c7;
   --pu:#5b21b6;--pul:#ede9ff;
-  --r:13px;--sh:0 3px 16px rgba(0,48,135,.11);
+  /* Standardized radius scale: 8/12/16/22 */
+  --r:12px;--r-sm:8px;--r-lg:16px;--r-xl:22px;
+  /* Standardized spacing: 4pt grid */
+  --sp-xs:4px;--sp-sm:8px;--sp-md:12px;--sp-lg:16px;--sp-xl:20px;
+  --sh:0 2px 12px rgba(0,32,92,.08),0 1px 3px rgba(0,32,92,.06);
+  --sh-lg:0 8px 32px rgba(0,32,92,.14),0 2px 8px rgba(0,32,92,.08);
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-body{font-family:'Inter',sans-serif;background:var(--sand);color:var(--tx);min-height:100vh;overscroll-behavior:none}
-#pin-screen{position:fixed;inset:0;z-index:9999;background:var(--bld);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;padding:40px 24px}
-#pin-screen.hidden{display:none!important;pointer-events:none!important}
-.pin-logo{font-family:'Inter',sans-serif;color:var(--or);font-size:24px;text-align:center;line-height:1.2;font-weight:800;letter-spacing:-.5px}
-.pin-logo em{display:block;font-family:'Inter',sans-serif;font-size:11px;color:rgba(255,255,255,.5);margin-top:3px;letter-spacing:2px;text-transform:uppercase;font-style:normal;font-weight:600}
-.pin-dots{display:flex;gap:14px}
-.pin-dot{width:16px;height:16px;border-radius:50%;border:2px solid rgba(255,255,255,.3);background:transparent;transition:all .15s}
-.pin-dot.on{background:var(--or);border-color:var(--or)}
-.pin-pad{display:grid;grid-template-columns:repeat(3,68px);gap:10px}
-.pk{width:68px;height:68px;border-radius:50%;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.14);color:#fff;font-size:22px;font-family:'Inter',sans-serif;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .12s}
-.pk:active{background:var(--or);transform:scale(.93)}
-.pin-err{color:#fca5a5;font-size:13px;min-height:18px;text-align:center}
-#setup-banner{background:#fff8e1;border-bottom:3px solid var(--or);padding:9px 14px;font-size:12px;color:#7c4a00;display:none;text-align:center;line-height:1.5}
-#setup-banner.show{display:block}
-#app{display:flex;flex-direction:column;height:100dvh}
-.topbar{background:var(--bld);color:#fff;padding:9px 12px 8px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;border-bottom:3px solid var(--or)}
-.topbar-l{display:flex;align-items:center;gap:9px}
-.topbar-title{font-family:'Inter',sans-serif;font-size:18px;color:var(--or);line-height:1.2;font-weight:600;letter-spacing:-.2px}
-.topbar-sub{font-size:10px;color:rgba(255,255,255,.45);letter-spacing:1.5px;text-transform:uppercase}
-.topbar-acts{display:flex;gap:5px}
+html,body{height:100%;overflow:hidden;font-family:-apple-system,'SF Pro Display','Inter',sans-serif;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+body{background:var(--sand);color:var(--tx)}
+#app{display:flex;flex-direction:column;height:100%;overflow:hidden}
+.topbar{background:var(--bld);color:#fff;padding:max(9px,env(safe-area-inset-top)) 12px 8px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;border-bottom:3px solid var(--or)}
+.topbar-left{display:flex;align-items:center;gap:10px}
+.topbar-logo{width:38px;height:38px;border-radius:50%;object-fit:cover}
+.topbar-title{font-family:-apple-system,'SF Pro Display','Inter',sans-serif;font-size:18px;color:var(--or);line-height:1.2;font-weight:600;letter-spacing:-.2px}
+.topbar-date{font-size:11px;color:rgba(255,255,255,.55);margin-top:1px}
+.topbar-right{display:flex;align-items:center;gap:6px}
+.sync-pill{background:rgba(255,255,255,.1);border-radius:20px;padding:5px 10px;font-size:11px;font-weight:700;display:flex;align-items:center;gap:5px;color:#fff;white-space:nowrap;flex-shrink:0}
+
+.sync-dot{width:7px;height:7px;border-radius:50%;background:#4ade80;flex-shrink:0}
 .ibtn{background:rgba(255,255,255,.1);border:none;color:#fff;width:44px;height:44px;border-radius:9px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px}
 .ibtn:active{background:var(--or)}
 .tabs{background:var(--bl);display:flex;flex-shrink:0}
-.tab{flex:1;padding:10px 2px;border:none;background:none;font-family:'Inter',sans-serif;font-size:11px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;color:rgba(255,255,255,.55);cursor:pointer;border-bottom:3px solid transparent;transition:color .14s,border-color .14s;letter-spacing:.3px;text-transform:uppercase}
+.tab{flex:1;padding:11px 2px;border:none;background:none;font-family:-apple-system,'SF Pro Display','Inter',sans-serif;font-size:12px;font-weight:600;letter-spacing:.2px;text-transform:uppercase;color:rgba(255,255,255,.6);cursor:pointer;border-bottom:3px solid transparent;transition:color .15s,border-color .15s}
 .tab.on{color:var(--or);border-bottom:3px solid var(--or);background:rgba(250,70,22,.08)}
-.pane{display:none;flex:1;overflow-y:auto;flex-direction:column;-webkit-overflow-scrolling:touch}
+.pane{display:none;flex:1;overflow-y:auto;flex-direction:column;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
 .pane.on{display:flex}
-.pane.on{display:flex}
-.sbar{background:var(--sand);padding:14px 13px;border-bottom:2px solid var(--sand2);display:flex;gap:7px;align-items:center;flex-shrink:0}
-.sinput{flex:1;padding:13px 15px;border:2.5px solid var(--bl);border-radius:11px;font-size:17px;font-family:'Inter',sans-serif;background:var(--wh);outline:none;color:var(--tx);transition:border-color .15s,box-shadow .15s;box-shadow:0 2px 8px rgba(0,48,135,.12)}
-.sinput:focus{border-color:var(--or);background:var(--wh);box-shadow:0 2px 12px rgba(250,70,22,.18)}
-.sclr{background:none;border:none;font-size:18px;color:var(--mu);cursor:pointer;padding:5px}
-.rlist{flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:7px}
-.mcard{background:var(--wh);border-radius:var(--r);padding:14px 13px;box-shadow:var(--sh);display:flex;align-items:center;gap:11px;cursor:pointer;transition:transform .1s;border-left:4px solid var(--bll);border-top:none;border-right:none;border-bottom:none;-webkit-appearance:none;appearance:none}
-.mcard:active{transform:scale(.98)}
-.mcard.st-unpaid{border-left-color:var(--re);background:var(--rel)}
-.mcard.st-pending{border-left-color:var(--am);background:var(--aml)}
-.mcard.st-paid{border-left-color:var(--bl)}
-.mcard.st-comp{border-left-color:var(--pu)}
-.mcard.st-board{border-left-color:var(--or)}
-.mavatar{width:44px;height:44px;border-radius:50%;background:var(--bld);display:flex;align-items:center;justify-content:center;font-family:'Inter',sans-serif;font-size:17px;color:var(--or);flex-shrink:0;border:2px solid var(--or)}
+.rlist{display:flex;flex-direction:column;gap:8px;padding:10px;flex:1;overflow-y:auto}
+.mcard{background:var(--wh);border-radius:var(--r);padding:14px 16px;box-shadow:var(--sh);display:flex;align-items:center;gap:12px;cursor:pointer;transition:transform .12s;border-left:4px solid var(--bll);border:none;border-left:4px solid var(--bll);-webkit-appearance:none;appearance:none}
+.mcard:active{transform:scale(.97);box-shadow:none}
+#pane-ci .mcard{padding:16px 14px;min-height:72px}
+#pane-ci .mname{font-size:18px}
+#pane-ci .mmeta{font-size:12px}
+.mavatar{width:40px;height:40px;border-radius:50%;background:var(--bld);color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;flex-shrink:0}
 .minfo{flex:1;min-width:0}
-.mname{font-weight:700;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.2px}
-.mmeta{font-size:11px;color:var(--mu);display:flex;gap:5px;flex-wrap:wrap;margin-top:2px;align-items:center}
-.mroster{font-size:11px;color:var(--mu);margin-top:2px}
-.badge{display:inline-block;padding:2px 7px;border-radius:20px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px}
-.b-paid{background:var(--grl);color:var(--gr)}.b-unpaid{background:var(--rel);color:var(--re)}.b-pending{background:var(--aml);color:var(--am)}
-.b-ind{background:var(--bll);color:var(--bl)}.b-couples{background:#ede9ff;color:#4a0080}.b-family{background:var(--orl);color:var(--ord)}.b-boardtype{background:var(--aml);color:var(--am)}.b-comptype{background:#f3f4f6;color:#374151}
-.gchip{font-size:11px;font-weight:700;padding:4px 8px;border-radius:20px;white-space:nowrap;flex-shrink:0;background:var(--bll);color:var(--bl)}
-.gchip.low{background:var(--aml);color:var(--am)}.gchip.gone{background:var(--rel);color:var(--re)}.gchip.none{background:#f3f4f6;color:#9ca3af}
-.dir-controls{background:var(--wh);padding:10px 13px;border-bottom:1px solid var(--sand2);display:flex;flex-direction:column;gap:8px;flex-shrink:0}
-.dir-filters{display:flex;gap:5px;flex-wrap:wrap}
-.fbtn{padding:9px 14px;border-radius:20px;border:2px solid var(--sand2);background:var(--sand);font-size:12px;font-weight:700;color:var(--mu);cursor:pointer;transition:all .12s;text-transform:uppercase;letter-spacing:.4px}
-.alpha-btn{min-width:44px;height:44px;border-radius:10px;border:2px solid var(--sand2);background:#fff;font-size:15px;font-weight:700;color:var(--bl);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .12s;flex-shrink:0;box-shadow:0 1px 4px rgba(0,0,0,.07)}
+.mname{font-size:16px;font-weight:700;color:var(--bld);letter-spacing:-.2px}
+.mmeta{font-size:12px;color:var(--mu);margin-top:3px;display:flex;gap:6px;flex-wrap:wrap}
+.mroster{font-size:11px;color:var(--mu);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.3px}
+.badge-bl{background:var(--bll);color:var(--bl)}
+.badge-gr{background:var(--grl);color:var(--gr)}
+.badge-re{background:var(--rel);color:var(--re)}
+.badge-am{background:var(--aml);color:var(--am)}
+.badge-or{background:var(--orl);color:var(--ord)}
+.gchip{padding:4px 8px;border-radius:8px;font-size:10px;font-weight:700;white-space:nowrap;flex-shrink:0}
+.gchip.ok{background:var(--grl);color:var(--gr)}
+.gchip.warn{background:var(--aml);color:var(--am)}
+.gchip.err{background:var(--rel);color:var(--re)}
+.gchip.none{background:var(--sand);color:var(--mu)}
+.empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--mu);gap:8px;padding:40px;text-align:center}
+.empty .ico{font-size:46px}
+.empty p{font-size:14px;font-weight:500}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);z-index:100;display:flex;align-items:flex-end;opacity:0;pointer-events:none;transition:opacity .2s}
+.overlay.open{opacity:1;pointer-events:all}
+.mm-overlay .sheet{max-width:520px}
+.sheet{background:var(--wh);border-radius:20px 20px 0 0;padding:18px 16px max(32px,env(safe-area-inset-bottom));width:100%;max-height:92vh;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.sheet-handle{width:36px;height:5px;background:var(--sand2);border-radius:3px;margin:0 auto 16px}
+.mclose{background:var(--sand);border:none;width:44px;height:44px;border-radius:50%;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--mu)}
+.irow{display:flex;gap:8px;padding:5px 0;border-bottom:1px solid var(--sand)}
+.ilbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--mu);min-width:72px;padding-top:2px}
+.ival{font-size:13px;color:var(--tx);flex:1}
+.sec-lbl{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--mu)}
+.ci-panel{background:var(--wh);border-radius:var(--r-lg);padding:16px;display:flex;flex-direction:column;gap:12px;box-shadow:var(--sh-lg)}
+.ci-title{font-size:17px;font-weight:800;color:var(--bld)}
+.ci-row{display:flex;align-items:center;gap:12px;background:var(--sand);border-radius:var(--r-sm);padding:12px 14px;cursor:pointer;-webkit-appearance:none;border:none;width:100%;text-align:left;font-family:-apple-system,'SF Pro Display','Inter',sans-serif}
+.ci-row.checked{background:var(--bll)}
+.ci-name{font-size:15px;font-weight:600;color:var(--bld);flex:1}
+.ci-tag{font-size:10px;color:var(--mu);font-weight:500}
+.ci-chk{width:26px;height:26px;border-radius:7px;border:2px solid var(--sand2);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s}
+.ci-chk.on{background:var(--or);border-color:var(--or)}
+.ci-add{background:var(--sand);border:1.5px dashed var(--sand2);border-radius:10px;padding:10px 12px;cursor:pointer;color:var(--mu);font-size:13px;font-weight:600;font-family:-apple-system,'SF Pro Display','Inter',sans-serif;width:100%;text-align:left}
+.btn-p{width:100%;padding:15px;border-radius:var(--r);background:var(--bl);border:none;color:#fff;font-size:16px;font-weight:700;font-family:-apple-system,'SF Pro Display','Inter',sans-serif;cursor:pointer}
+.btn-s{width:100%;padding:13px;border-radius:var(--r);background:var(--sand);border:2px solid var(--sand2);color:var(--tx);font-size:14px;font-weight:600;font-family:-apple-system,'SF Pro Display','Inter',sans-serif;cursor:pointer}
+.btn-d{width:100%;padding:13px;border-radius:var(--r);background:var(--rel);border:2px solid var(--re);color:var(--re);font-size:14px;font-weight:700;font-family:-apple-system,'SF Pro Display','Inter',sans-serif;cursor:pointer}
+.btn-o{width:100%;padding:13px;border-radius:11px;background:var(--orl);border:2px solid var(--or);color:var(--ord);font-size:14px;font-weight:700;font-family:-apple-system,'SF Pro Display','Inter',sans-serif;cursor:pointer}
+.ci-checkin-btn{width:100%;padding:16px;border-radius:11px;background:var(--or);border:none;color:#fff;font-size:18px;font-weight:700;font-family:-apple-system,'SF Pro Display','Inter',sans-serif;cursor:pointer}
+.quick-ci-btn{width:100%;padding:10px;border:none;background:var(--or);color:#fff;font-size:13px;font-weight:700;font-family:-apple-system,'SF Pro Display','Inter',sans-serif;cursor:pointer;border-radius:9px;display:flex;align-items:center;justify-content:center;gap:5px}
+.quick-ci-btn:active{opacity:.85}
+.nanny-card{background:var(--pu)22;border:1.5px solid var(--pu);border-radius:10px;padding:10px 12px;font-size:12px;color:var(--pu)}
+.fab{position:fixed;bottom:max(80px,env(safe-area-inset-bottom,0px));right:16px;width:56px;height:56px;border-radius:50%;background:var(--or);border:none;color:#fff;font-size:26px;box-shadow:0 4px 18px rgba(250,70,22,.4);cursor:pointer;display:none;align-items:center;justify-content:center;z-index:50}
+.fab.show{display:flex}
+.sbar{padding:10px;background:var(--wh);border-bottom:1px solid var(--sand2)}
+.sinput{width:100%;padding:11px 14px;border:2px solid var(--sand2);border-radius:10px;font-size:15px;font-family:-apple-system,'SF Pro Display','Inter',sans-serif;background:var(--sand);outline:none}
+.sclr{position:absolute;right:20px;top:50%;transform:translateY(-50%);background:none;border:none;font-size:16px;color:var(--mu);cursor:pointer}
+.alpha-btn{min-width:44px;height:44px;min-height:44px;border-radius:10px;border:2px solid var(--sand2);background:#fff;font-size:15px;font-weight:700;color:var(--bl);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .12s;flex-shrink:0;box-shadow:0 1px 4px rgba(0,0,0,.07)}
 .alpha-btn.on{background:var(--or);border-color:var(--or);color:#fff;box-shadow:0 2px 8px rgba(250,70,22,.3)}
 .alpha-btn:active{transform:scale(.93)}
-.fbtn.on{background:var(--bl);border-color:var(--bl);color:#fff}
-.dlist{flex:1;overflow-y:auto;padding:8px 10px 80px}
-.alpha-hdr{font-family:'Inter',sans-serif;font-size:20px;color:var(--or);padding:8px 4px 2px;position:sticky;top:0;background:var(--sand);z-index:1;font-weight:800;letter-spacing:-.3px}
-.overlay{position:fixed;inset:0;background:rgba(0,32,92,.5);z-index:100;display:flex;align-items:flex-end;opacity:0;pointer-events:none;transition:opacity .2s}
-.overlay.open{opacity:1;pointer-events:all}
-.sheet{background:var(--wh);width:100%;border-radius:20px 20px 0 0;padding:0 0 36px;max-height:94dvh;overflow-y:auto;transform:translateY(100%);transition:transform .25s cubic-bezier(.32,1,.4,1)}
-.overlay.open .sheet{transform:translateY(0)}
-.mhandle{width:36px;height:4px;border-radius:2px;background:var(--sand2);margin:11px auto 0}
-.mhdr{padding:12px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid var(--sand2)}
-.mtitle{font-family:'Inter',sans-serif;font-size:20px;color:var(--bld);font-weight:800;letter-spacing:-.3px}
-.mclose{background:var(--sand);border:none;width:44px;height:44px;border-radius:50%;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--mu)}
-.mbody{padding:13px 16px;display:flex;flex-direction:column;gap:12px}
-.irow{display:flex;gap:9px;align-items:flex-start}
-.ilbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--mu);width:80px;flex-shrink:0;padding-top:2px}
-.ival{font-size:14px;color:var(--tx);flex:1;font-weight:500}
-.ci-panel{background:linear-gradient(135deg,var(--bld),var(--bl));border-radius:13px;padding:14px;display:flex;flex-direction:column;gap:11px}
-.ci-title{font-family:'Inter',sans-serif;font-size:17px;color:var(--or);font-weight:800;letter-spacing:.3px}
-.ci-row{display:flex;align-items:center;justify-content:space-between;gap:8px}
-.ci-lbl{font-size:13px;color:rgba(255,255,255,.85);font-weight:600}
-.ci-sub{font-size:11px;color:rgba(255,255,255,.55);margin-top:1px}
-.ctr{display:flex;align-items:center;gap:10px}
+.fi,.fs{padding:14px 13px;border:1.5px solid var(--sand2);border-radius:var(--r-sm);font-size:16px;font-family:-apple-system,'SF Pro Display','Inter',sans-serif;color:var(--tx);background:var(--sand);outline:none;width:100%;transition:border-color .15s}
+.fi:focus,.fs:focus{border-color:var(--bl)}
+.fl{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--mu);display:block;margin-bottom:6px}
+.fg{display:flex;flex-direction:column;gap:0;flex:1}
+.frow{display:flex;gap:8px}
+.fnote{font-size:12px;color:var(--mu);line-height:1.4}
+.vlog{display:flex;flex-direction:column;gap:4px}
+.vitem{display:flex;justify-content:space-between;font-size:12px;padding:5px 8px;background:var(--sand);border-radius:7px}
+.toast{position:fixed;bottom:max(20px,env(safe-area-inset-bottom,20px));left:50%;transform:translateX(-50%);background:rgba(26,26,46,.95);color:#fff;padding:12px 20px;border-radius:var(--r-xl);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);font-size:13px;font-weight:600;z-index:9999;opacity:0;pointer-events:none;transition:opacity .2s;white-space:nowrap;max-width:90vw}
+.toast.show{opacity:1}
+.toast.ok{background:var(--gr)}
+.toast.err,.toast.warn{background:var(--am)}
+.gp-row{display:flex;align-items:center;justify-content:space-between;background:var(--sand);border-radius:10px;padding:10px 12px;border:1px solid var(--sand2)}
 .cbtn{width:48px;height:48px;border-radius:50%;background:var(--or);border:none;color:#fff;font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0}
-.cval{font-size:24px;font-weight:700;color:#fff;min-width:26px;text-align:center;font-family:'Inter',sans-serif}
-.ci-already{font-size:12px;color:#86efac;font-weight:700}
-.ci-blocked{background:var(--rel);border:2px solid var(--re);border-radius:11px;padding:13px;color:var(--re);font-weight:700;text-align:center;font-size:14px}
-.ci-checkin-btn{width:100%;padding:16px;border-radius:11px;background:var(--or);border:none;color:#fff;font-size:18px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer}
-.ci-checkin-btn:active{background:var(--ord)}
-.ci-over-note{background:rgba(250,70,22,.25);border-radius:8px;padding:8px 10px;font-size:12px;color:#ffd4c8;font-weight:600;line-height:1.4}
-.ci-checklist{display:flex;flex-direction:column;gap:6px}
-.ci-check-item{display:flex;align-items:center;gap:10px;padding:9px 11px;background:rgba(255,255,255,.12);border-radius:9px;cursor:pointer;border:1.5px solid rgba(255,255,255,.15);transition:all .12s}
-.ci-check-item:active{background:rgba(255,255,255,.2)}
-.ci-check-item.checked{background:rgba(134,239,172,.2);border-color:rgba(134,239,172,.5)}
-.ci-check-item input[type=checkbox]{width:20px;height:20px;accent-color:#FA4616;cursor:pointer;flex-shrink:0;border-radius:5px}
-.ci-check-item label{font-size:14px;color:#fff;font-weight:600;cursor:pointer;flex:1;line-height:1.3}
-.ci-check-item.missing-name{background:rgba(250,70,22,.2);border-color:rgba(250,70,22,.4)}
-.ci-section-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,.55);margin-top:2px}
-.ci-add-btn{display:flex;align-items:center;gap:6px;padding:8px 11px;background:rgba(255,255,255,.08);border:1.5px dashed rgba(255,255,255,.3);border-radius:9px;cursor:pointer;font-size:13px;color:rgba(255,255,255,.7);font-family:Inter,sans-serif;font-weight:600;width:100%;text-align:left}
-.ci-add-btn:active{background:rgba(255,255,255,.15)}
-.ci-inline-input{flex:1;padding:7px 10px;border:1.5px solid rgba(255,255,255,.4);border-radius:7px;font-size:13px;background:rgba(255,255,255,.15);color:#fff;outline:none;font-family:Inter,sans-serif}
-.incomplete-banner{background:var(--aml);border:2px solid var(--am);border-radius:11px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;margin-bottom:8px}
-.incomplete-banner-title{font-weight:700;font-size:13px;color:var(--am)}
-.incomplete-field{display:flex;align-items:center;gap:8px}
-.incomplete-field input{flex:1;padding:8px 10px;border:1.5px solid var(--am);border-radius:8px;font-size:14px;font-family:'Inter',sans-serif;background:#fff;outline:none;color:var(--tx)}
-.fill-btn{padding:12px 18px;background:var(--am);border:none;color:#fff;border-radius:10px;font-size:14px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;align-self:flex-start}
-.unpaid-warning{background:#fff0ec;border:2px solid var(--or);border-radius:11px;padding:12px;text-align:center;display:flex;flex-direction:column;gap:5px}
-.unpaid-warning-title{font-family:'Inter',sans-serif;font-size:14px;color:var(--or)}
-.unpaid-warning p{font-size:12px;color:var(--tx);line-height:1.4}
-.unpaid-days{font-size:26px;font-weight:700;color:var(--re);font-family:'Inter',sans-serif}
-.gp-counter-row{display:flex;align-items:center;justify-content:space-between;gap:8px}
-.gp-counter-status{font-size:11px;font-weight:700;border-radius:20px;padding:3px 9px;display:inline-block}
-.gp-status-ok{background:rgba(255,255,255,.15);color:rgba(255,255,255,.85)}
-.gp-status-over{background:rgba(153,27,27,.4);color:#fca5a5}
-#gp-overlay .sheet{background:var(--bld)}
-#gp-overlay .mhdr{border-bottom-color:rgba(255,255,255,.15)}
-#gp-overlay .mtitle{color:var(--or)}
-#gp-overlay .mclose{background:rgba(255,255,255,.1);color:#fff}
-.gp-body{padding:18px 16px 8px;display:flex;flex-direction:column;align-items:center;gap:13px;text-align:center}
-.gp-icon{font-size:50px}
-.gp-headline{font-family:'Inter',sans-serif;font-size:21px;color:#fff;line-height:1.2}
-.gp-detail{font-size:14px;color:rgba(255,255,255,.65);line-height:1.5}
-.gp-breakdown{background:rgba(255,255,255,.07);border-radius:10px;padding:12px 16px;width:100%;display:flex;flex-direction:column;gap:6px}
-.gp-line{display:flex;justify-content:space-between;font-size:13px;color:rgba(255,255,255,.8);font-weight:600}
-.gp-total{display:flex;justify-content:space-between;font-size:17px;color:#fff;font-weight:700;border-top:1px solid rgba(255,255,255,.2);padding-top:8px;margin-top:2px}
-.gp-total span:last-child{color:var(--or);font-family:'Inter',sans-serif}
-.gp-btns{display:flex;flex-direction:column;gap:8px;width:100%;padding-bottom:4px}
-.gp-buy{width:100%;padding:14px;border-radius:12px;background:var(--or);border:none;color:#fff;font-size:17px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer}
-.gp-skip{width:100%;padding:12px;border-radius:12px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);color:rgba(255,255,255,.55);font-size:14px;font-weight:600;font-family:'Inter',sans-serif;cursor:pointer}
-.nanny-card{background:var(--orl);border:2px solid var(--or);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:6px}
-.nanny-title{font-family:'Inter',sans-serif;font-size:14px;color:var(--ord);margin-bottom:2px}
-.nanny-row{display:flex;gap:8px;align-items:baseline}
-.nanny-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--or);width:50px;flex-shrink:0}
-.nanny-val{font-size:13px;color:var(--tx);font-weight:500}
-.toggle-wrap{position:relative;display:inline-block;width:46px;height:26px;flex-shrink:0}
-.toggle-wrap input{opacity:0;width:0;height:0}
-.toggle-slider{position:absolute;cursor:pointer;inset:0;background:var(--sand2);border-radius:26px;transition:.2s}
-.toggle-slider:before{position:absolute;content:"";height:20px;width:20px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.2s}
-.toggle-wrap input:checked+.toggle-slider{background:var(--or)}
-.toggle-wrap input:checked+.toggle-slider:before{transform:translateX(20px)}
-.vlog{display:flex;flex-direction:column;gap:4px;max-height:160px;overflow-y:auto}
-.vitem{display:flex;justify-content:space-between;align-items:center;font-size:12px;padding:5px 0;border-bottom:1px solid var(--sand2)}
-.vitem:last-child{border-bottom:none}
-.fg{display:flex;flex-direction:column;gap:5px}
-.fl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--mu)}
-.fi,.fs{padding:14px 13px;border:2px solid var(--sand2);border-radius:10px;font-size:16px;font-family:'Inter',sans-serif;color:var(--tx);background:var(--sand);outline:none;width:100%;transition:border-color .15s}
-.fi:focus,.fs:focus{border-color:var(--bl);background:var(--wh)}
-.frow{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.btn-p{width:100%;padding:15px;border-radius:11px;background:var(--bl);border:none;color:#fff;font-size:16px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer}
-.btn-s{width:100%;padding:13px;border-radius:11px;background:var(--sand);border:2px solid var(--sand2);color:var(--tx);font-size:14px;font-weight:600;font-family:'Inter',sans-serif;cursor:pointer}
-.btn-d{width:100%;padding:13px;border-radius:11px;background:var(--rel);border:2px solid var(--re);color:var(--re);font-size:14px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer}
-.btn-o{width:100%;padding:13px;border-radius:11px;background:var(--orl);border:2px solid var(--or);color:var(--ord);font-size:14px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer}
-.sec-lbl{font-size:11px;font-weight:700;color:var(--bld);border-bottom:2px solid var(--sand2);padding-bottom:5px;text-transform:uppercase;letter-spacing:.6px}
-.fnote{font-size:12px;color:var(--mu);line-height:1.4;font-style:italic}
+.gp-buy{width:100%;padding:11px;border-radius:11px;background:var(--or);border:none;color:#fff;font-size:14px;font-weight:700;font-family:-apple-system,'SF Pro Display','Inter',sans-serif;cursor:pointer}
+.gp-skip{width:100%;padding:11px;border-radius:11px;background:var(--sand);border:2px solid var(--sand2);color:var(--tx);font-size:14px;font-weight:700;font-family:-apple-system,'SF Pro Display','Inter',sans-serif;cursor:pointer}
+.exp-btn{width:100%;padding:11px;border-radius:10px;background:var(--bll);border:1.5px solid var(--bl);color:var(--bld);font-size:13px;font-weight:700;font-family:-apple-system,'SF Pro Display','Inter',sans-serif;cursor:pointer;text-align:left}
+.imp-btn{width:100%;padding:11px;border-radius:10px;background:var(--orl);border:1.5px solid var(--or);color:var(--ord);font-size:13px;font-weight:700;font-family:-apple-system,'SF Pro Display','Inter',sans-serif;cursor:pointer;text-align:left}
+.rep-list{display:flex;flex-direction:column;gap:4px}
+.rep-row{padding:8px 10px;background:var(--sand);border-radius:8px;display:flex;flex-direction:column;gap:2px}
+.rep-name{font-size:13px;font-weight:700;color:var(--bld)}
 .rep-scroll{padding:12px;display:flex;flex-direction:column;gap:12px;overflow-y:visible}
-.rcard{background:var(--wh);border-radius:var(--r);padding:14px;box-shadow:var(--sh)}
-.rcard h3{font-family:'Inter',sans-serif;font-size:18px;color:var(--bld);margin-bottom:10px;font-weight:800;letter-spacing:.3px}
-.sgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.sbox{background:var(--sand);border-radius:10px;padding:10px;text-align:center;border-bottom:3px solid var(--bll)}
-.snum{font-size:28px;font-weight:800;color:var(--bl);font-family:'Inter',sans-serif;letter-spacing:.5px}
-.slbl{font-size:10px;color:var(--mu);margin-top:1px;text-transform:uppercase;letter-spacing:.5px;font-weight:600}
-.exp-btn{display:flex;align-items:center;gap:9px;padding:12px;border-radius:11px;background:var(--bll);border:2px solid var(--bl);color:var(--bld);font-size:14px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;width:100%}
-.imp-btn{display:flex;align-items:center;gap:9px;padding:12px;border-radius:11px;background:var(--orl);border:2px solid var(--or);color:var(--ord);font-size:14px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;width:100%}
-.urow{display:flex;justify-content:space-between;align-items:center;padding:8px 11px;background:var(--rel);border-radius:9px;font-size:13px;font-weight:500}
-.trow{display:flex;justify-content:space-between;padding:7px 10px;background:var(--sand);border-radius:8px;font-size:12px}
-.csv-drop{border:2px dashed var(--sand2);border-radius:12px;padding:24px;text-align:center;color:var(--mu);font-size:14px;cursor:pointer}
-.csv-preview{max-height:160px;overflow-y:auto;font-size:12px;border:1px solid var(--sand2);border-radius:8px}
-.csv-preview table{width:100%;border-collapse:collapse}
-.csv-preview th{background:var(--bld);color:#fff;padding:5px 8px;font-size:11px;text-align:left}
-.csv-preview td{padding:5px 8px;border-bottom:1px solid var(--sand2)}
-#admin-overlay .sheet{background:var(--bld)}
-#admin-overlay .mhdr{border-bottom-color:rgba(255,255,255,.15)}
-#admin-overlay .mtitle{color:var(--or)}
-#admin-overlay .mclose{background:rgba(255,255,255,.1);color:#fff}
-.admin-body{padding:20px 16px;display:flex;flex-direction:column;align-items:center;gap:18px}
-.admin-dots{display:flex;gap:12px}
-.admin-dot{width:14px;height:14px;border-radius:50%;border:2px solid rgba(255,255,255,.3);background:transparent;transition:all .15s}
-.admin-dot.on{background:var(--or);border-color:var(--or)}
-.admin-pad{display:grid;grid-template-columns:repeat(3,60px);gap:8px}
-.apk{width:60px;height:60px;border-radius:50%;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.14);color:#fff;font-size:20px;font-family:'Inter',sans-serif;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .12s}
-.apk:active{background:var(--or);transform:scale(.93)}
-.admin-err{color:#fca5a5;font-size:12px;min-height:16px;text-align:center}
-.fab{position:fixed;bottom:26px;right:16px;z-index:50;width:54px;height:54px;border-radius:50%;background:var(--or);border:none;color:#fff;font-size:26px;box-shadow:0 4px 20px rgba(250,70,22,.4);cursor:pointer;display:none;align-items:center;justify-content:center}
-.fab.show{display:flex}
-.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(14px);background:var(--bld);color:#fff;padding:10px 18px;border-radius:11px;font-size:13px;font-weight:600;z-index:9999;opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;white-space:nowrap;max-width:92vw;text-align:center}
-.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-.toast.ok{background:var(--gr)}.toast.warn{background:var(--am)}.toast.err{background:var(--re)}
-.empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--mu);gap:8px;padding:40px;text-align:center}
-.empty .ico{font-size:46px}.empty p{font-size:14px;font-weight:500}
-
-/* SWIPE TO CHECK IN */
-.mcard-ci{position:relative;overflow:hidden;touch-action:pan-y;}
-.mcard-ci .swipe-hint{position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:11px;font-weight:700;color:var(--bl);opacity:.35;pointer-events:none}
-
-/* QUICK CHECK-IN BUTTON ON CARD */
-.quick-ci-btn{padding:10px 14px;background:var(--or);border:none;color:#fff;border-radius:9px;font-size:13px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;flex-shrink:0;white-space:nowrap}
-.quick-ci-btn:active{background:var(--ord)}
-
-/* SUCCESS FLASH */
-#ci-success-flash{position:fixed;inset:0;z-index:9998;background:var(--gr);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;opacity:0;pointer-events:none;transition:opacity .15s}
-#ci-success-flash .flash-check{font-size:100px;line-height:1}
-#ci-success-flash .flash-name{font-size:22px;font-weight:800;color:#fff;font-family:'Inter',sans-serif;text-align:center;padding:0 20px}
-#ci-success-flash.show{opacity:1}
-
-/* LANDSCAPE LAYOUT */
-@media(orientation:landscape) and (min-width:700px){
-  #pane-ci{flex-direction:row}
-  #pane-ci > div:first-child{width:260px;flex-shrink:0;border-right:2px solid var(--sand2);overflow-y:auto}
-  #ci-list{flex:1}
-}
-
-/* LARGER CHECK-IN CARDS */
-#ci-list .mcard{padding:16px 14px;min-height:72px}
-#ci-list .mname{font-size:18px}
-#ci-list .mmeta{font-size:12px}
-
-.rsec{background:var(--wh);border-radius:var(--r);box-shadow:var(--sh);padding:16px 14px;display:flex;flex-direction:column;gap:12px}
-.rsec-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--mu)}
-.rstat-grid{display:grid;gap:10px}
-.rstat{background:var(--sand);border-radius:10px;padding:14px 12px;display:flex;flex-direction:column;gap:2px;border-bottom:3px solid var(--rcolor,var(--bl))}
-.rstat-val{font-size:26px;font-weight:800;line-height:1;color:var(--rcolor,var(--bld));font-variant-numeric:tabular-nums}
-.rstat-lbl{font-size:10px;font-weight:600;color:var(--mu);text-transform:uppercase;letter-spacing:.5px}
-
-/* ANNOUNCEMENT BANNER */
-#announce-bar{background:var(--or);padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-shrink:0}
-.announce-text{font-size:13px;font-weight:700;color:#fff;font-family:'Inter',sans-serif;line-height:1.4;flex:1}
-
-/* MEMBER NOTES */
 .note-item{background:var(--sand);border-radius:9px;padding:10px 12px;border-left:3px solid var(--or)}
 .note-item.visible{border-left-color:var(--gr)}
 .note-ts{font-size:10px;color:var(--mu);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px}
@@ -252,8 +134,6 @@ body{font-family:'Inter',sans-serif;background:var(--sand);color:var(--tx);min-h
 .note-tag{display:inline-block;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:2px 7px;border-radius:10px;margin-top:5px}
 .note-tag.visible{background:var(--grl);color:var(--gr)}
 .note-tag.internal{background:var(--bll);color:var(--bl)}
-
-/* INCIDENTS */
 .inc-card{background:var(--wh);border-radius:var(--r);box-shadow:var(--sh);padding:14px;border-left:4px solid var(--re);cursor:pointer;transition:transform .1s}
 .inc-card:active{transform:scale(.98)}
 .inc-card.severity-low{border-left-color:var(--am)}
@@ -263,36 +143,24 @@ body{font-family:'Inter',sans-serif;background:var(--sand);color:var(--tx);min-h
 .inc-desc{font-size:14px;font-weight:600;color:var(--tx);margin:3px 0}
 .inc-meta{font-size:11px;color:var(--mu)}
 .inc-followup{display:inline-block;font-size:10px;font-weight:700;background:var(--rel);color:var(--re);padding:2px 8px;border-radius:10px;margin-top:4px}
-
-/* SETTINGS SECTIONS */
+.rsec{background:var(--wh);border-radius:var(--r);box-shadow:var(--sh);padding:16px 14px;display:flex;flex-direction:column;gap:12px}
+.rsec-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--mu)}
+.rstat-grid{display:grid;gap:10px}
+.rstat{background:var(--sand);border-radius:10px;padding:14px 12px;display:flex;flex-direction:column;gap:2px;border-bottom:3px solid var(--rcolor,var(--bl))}
+.rstat-val{font-size:26px;font-weight:800;line-height:1;color:var(--rcolor,var(--bld));font-variant-numeric:tabular-nums}
+.rstat-lbl{font-size:10px;font-weight:600;color:var(--mu);text-transform:uppercase;letter-spacing:.5px}
 .st-section{background:var(--sand);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:8px;border:1px solid var(--sand2)}
 .st-sec-hdr{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--bld)}
 .st-sec-subhdr{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--mu);padding-top:4px;border-top:1px solid var(--sand2)}
-
-/* SELF CHECK-IN */
-#self-ci-shell{display:none;position:fixed;inset:0;z-index:9980;flex-direction:column;background:var(--sand);overflow-y:auto}
-.sci-header{background:var(--bld);padding:16px 18px;display:flex;align-items:center;gap:12px;border-bottom:4px solid var(--or);flex-shrink:0}
-.sci-header-text{display:flex;flex-direction:column}
-.sci-title{font-size:18px;font-weight:800;color:var(--or);line-height:1.2}
-.sci-sub{font-size:12px;color:rgba(255,255,255,.6);margin-top:2px}
-.sci-body{flex:1;padding:20px 16px;display:flex;flex-direction:column;gap:16px;max-width:480px;margin:0 auto;width:100%}
-.sci-pin-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:300px;margin:0 auto}
-.sci-pin-btn{height:64px;border-radius:12px;border:2px solid var(--sand2);background:#fff;font-size:24px;font-weight:700;color:var(--bld);cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.08);transition:all .1s;font-family:Inter,sans-serif}
-.sci-pin-btn:active{background:var(--or);color:#fff;border-color:var(--or)}
-.sci-dots{display:flex;gap:12px;justify-content:center;margin:8px 0}
-.sci-dot{width:14px;height:14px;border-radius:50%;background:var(--sand2);transition:background .15s}
-.sci-dot.on{background:var(--or)}
-.sci-success{position:fixed;inset:0;z-index:9999;background:rgba(22,101,52,.95);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px}
-.sci-success-icon{font-size:80px;line-height:1}
-.sci-success-name{font-size:24px;font-weight:800;color:#fff;text-align:center;padding:0 24px}
-.sci-success-sub{font-size:15px;color:rgba(255,255,255,.75);text-align:center}
-
-/* AUTH */
 .role-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px}
 .role-admin{background:var(--orl);color:var(--ord)}
 .role-board{background:var(--bll);color:var(--bl)}
 .role-attendant{background:var(--sand);color:var(--mu)}
-
+#ci-success-flash{position:fixed;inset:0;background:rgba(22,101,52,.92);z-index:9998;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;opacity:0;pointer-events:none;transition:opacity .2s}
+#ci-success-flash.show{opacity:1;pointer-events:all}
+#ci-success-flash .flash-check{font-size:100px;line-height:1}
+#ci-success-flash .flash-name{font-size:24px;font-weight:800;color:#fff;text-align:center;padding:0 24px}
+#ci-success-flash .flash-sub{font-size:15px;color:rgba(255,255,255,.75);text-align:center}
 /* SELF CHECK-IN MODE */
 #sci-shell{display:none;flex-direction:column;height:100%;background:var(--bld)}
 #sci-shell.on{display:flex}
@@ -307,70 +175,75 @@ body{font-family:'Inter',sans-serif;background:var(--sand);color:var(--tx);min-h
 .sci-pin-dot{width:16px;height:16px;border-radius:50%;background:var(--sand2);transition:background .1s}
 .sci-pin-dot.filled{background:var(--bld)}
 .sci-numpad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-.sci-num{background:var(--sand);border:none;border-radius:12px;font-size:22px;font-weight:700;padding:16px;cursor:pointer;font-family:Inter,sans-serif;color:var(--bld);transition:transform .1s;-webkit-appearance:none}
+.sci-num{background:var(--sand);border:none;border-radius:12px;font-size:22px;font-weight:700;padding:16px;cursor:pointer;font-family:-apple-system,'SF Pro Display','Inter',sans-serif;color:var(--bld);transition:transform .1s;-webkit-appearance:none}
 .sci-num:active{transform:scale(.93);background:var(--sand2)}
 .sci-success{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;gap:12px;text-align:center}
 .sci-check{font-size:80px;line-height:1}
 .sci-success-name{font-size:22px;font-weight:800;color:var(--gr)}
 .sci-success-sub{font-size:14px;color:var(--mu)}
-
-/* CHECK-IN TAB QUICK FIND */
-.ci-section-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--mu);padding:10px 13px 5px;background:var(--sand)}
-.miss-step-title{font-size:15px;font-weight:800;color:var(--bld);margin-bottom:4px}
-.miss-step-sub{font-size:12px;color:var(--mu);margin-bottom:14px}
-.miss-adult-choice{display:flex;gap:10px;margin:10px 0}
-.miss-adult-btn{flex:1;padding:16px;border:2.5px solid var(--sand2);border-radius:12px;background:var(--sand);font-size:18px;font-weight:800;color:var(--bld);cursor:pointer;font-family:'Inter',sans-serif;text-align:center;transition:all .15s}
-.miss-adult-btn.selected{border-color:var(--or);background:var(--orl);color:var(--or)}
-.miss-child-row{display:flex;gap:8px;align-items:center;margin-bottom:6px}
-.ci-alpha-row{display:flex;flex-wrap:wrap;gap:7px;padding:10px 13px 12px;background:var(--sand);border-bottom:1px solid var(--sand2);justify-content:center;align-content:center}
-.ci-alpha-btn{min-width:44px;height:44px;padding:0 8px;border-radius:10px;border:2px solid var(--sand2);background:#fff;font-size:16px;font-weight:700;color:var(--bl);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .12s;box-shadow:0 1px 4px rgba(0,0,0,.07)}
+/* ANNOUNCEMENTS */
+#announce-bar{background:var(--or);padding:10px 14px;display:flex;align-items:center;gap:10px;flex:0 0 auto;width:100%;z-index:10;max-height:44px;overflow:hidden}
+.announce-text{font-size:14px;font-weight:600;color:#fff;font-family:-apple-system,'SF Pro Display','Inter',sans-serif;line-height:1.3;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* CHECK-IN TAB */
+.ci-section-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--mu);padding:10px 13px 5px;background:var(--sand);flex-shrink:0}
+.ci-alpha-row{display:flex;flex-wrap:wrap;gap:7px;padding:10px 13px 12px;background:var(--sand);border-bottom:1px solid var(--sand2);justify-content:center;align-content:center;flex-shrink:0}
+.ci-alpha-btn{min-width:44px;height:44px;min-height:44px;padding:0 8px;border-radius:10px;border:2px solid var(--sand2);background:#fff;font-size:16px;font-weight:700;color:var(--bl);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .12s;box-shadow:0 1px 4px rgba(0,0,0,.07)}
 .ci-alpha-btn.on{background:var(--or);border-color:var(--or);color:#fff;box-shadow:0 2px 8px rgba(250,70,22,.3)}
 .ci-alpha-btn:active{transform:scale(.93)}
 .predict-card{background:#fff;border-radius:var(--r);padding:14px 13px;box-shadow:var(--sh);display:flex;align-items:center;gap:10px;cursor:pointer;border-left:4px solid var(--or);transition:transform .1s;min-height:60px}
 .predict-card:active{transform:scale(.98)}
-.predict-meta{font-size:10px;color:var(--mu);margin-top:2px}
-
-/* SUCCESS FLASH */
-#ci-success-flash{position:fixed;inset:0;background:rgba(22,101,52,.92);z-index:9998;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;opacity:0;pointer-events:none;transition:opacity .2s}
-#ci-success-flash.show{opacity:1;pointer-events:all}
-#ci-success-flash .flash-check{font-size:100px;line-height:1}
-#ci-success-flash .flash-name{font-size:24px;font-weight:800;color:#fff;text-align:center;padding:0 24px}
-#ci-success-flash .flash-sub{font-size:15px;color:rgba(255,255,255,.75);text-align:center}
-
-/* QUICK CHECK-IN BUTTON ON CARD */
-
-
-/* LARGER CHECK-IN CARDS */
-#pane-ci .mcard{padding:16px 13px;min-height:72px}
-#pane-ci .mname{font-size:18px}
-#pane-ci .mmeta{font-size:12px}
-
-/* LANDSCAPE SUPPORT */
-@media(orientation:landscape) and (min-width:700px){
-  #pane-ci{flex-direction:row;flex-wrap:wrap}
-  #pane-ci .ci-alpha-row{width:100%}
-  #ci-list{flex:1;min-width:300px}
-  .mm-overlay .sheet{max-width:520px}
-}
 @media(min-width:600px){.sheet{max-width:560px;margin:0 auto;border-radius:20px;align-self:center}.overlay{align-items:center}}
+@media(orientation:landscape) and (min-width:700px){#pane-ci{flex-direction:row;flex-wrap:wrap}#pane-ci .ci-alpha-row{width:100%}#ci-list{flex:1;min-width:300px}.mm-overlay .sheet{max-width:520px}}
+@media(min-width:400px){.rstat-grid{grid-template-columns:repeat(3,1fr)}}
+@media(min-width:600px){.rstat-grid{grid-template-columns:repeat(4,1fr)}}
+
+#login-overlay{transition:opacity .2s;}
+/* LAYOUT MODES */
+body.layout-ipad #app{max-width:1024px;margin:0 auto}
+body.layout-ipad .tabs .tab{font-size:13px;padding:12px 8px}
+body.layout-ipad .mcard{padding:16px}
+body.layout-ipad .mname{font-size:16px}
+body.layout-ipad .ci-alpha-btn{min-width:52px;height:52px;font-size:18px}
+body.layout-ipad .rstat-grid{grid-template-columns:repeat(4,1fr)}
+
+body.layout-iphone #app{max-width:430px;margin:0 auto}
+body.layout-iphone .tabs .tab{font-size:10px;padding:8px 2px}
+body.layout-iphone .ci-alpha-btn{min-width:40px;height:40px;font-size:14px}
+body.layout-iphone .mname{font-size:14px}
+
+body.layout-laptop #app{max-width:1280px;margin:0 auto}
+body.layout-laptop .pane.on{display:flex}
+body.layout-laptop .mcard{padding:12px 14px}
+body.layout-laptop .rstat-grid{grid-template-columns:repeat(6,1fr)}
+
+
+/* ── MEMBER CHECK-IN PANEL ──────────────────────────────────────── */
+.ci-section-lbl{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--mu);padding:4px 0 8px;margin-top:2px}
+.ci-checklist{display:flex;flex-direction:column;gap:6px;margin-bottom:4px}
+.ci-check-item{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--sand);border-radius:var(--r-sm);cursor:pointer;transition:background .1s;-webkit-appearance:none;border:none;width:100%;text-align:left;font-family:-apple-system,sans-serif}
+.ci-check-item:active{background:var(--sand2)}
+.ci-check-item input[type=checkbox]{width:22px;height:22px;accent-color:var(--or);flex-shrink:0;cursor:pointer}
+.ci-check-item label{font-size:15px;font-weight:600;color:var(--bld);cursor:pointer;flex:1;line-height:1.3}
+.ci-add-btn{display:flex;align-items:center;gap:8px;padding:10px 14px;background:transparent;border:1.5px dashed var(--sand2);border-radius:var(--r-sm);cursor:pointer;color:var(--mu);font-size:13px;font-weight:600;font-family:-apple-system,sans-serif;width:100%;text-align:left;transition:background .1s}
+.ci-add-btn:active{background:var(--sand)}
+/* Guest passes row */
+.gp-counter-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.ci-lbl{font-size:14px;font-weight:700;color:var(--bld)}
+.ci-sub{font-size:12px;color:var(--mu);margin-top:2px}
+.ctr{display:flex;align-items:center;gap:14px}
+.cval{font-size:22px;font-weight:800;color:var(--bld);min-width:28px;text-align:center;font-variant-numeric:tabular-nums}
+.cbtn{width:44px;height:44px;border-radius:50%;background:var(--or);border:none;color:#fff;font-size:22px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:transform .1s,background .1s}
+.cbtn:active{transform:scale(.9);background:var(--ord)}
+/* Guest pass section card */
+.gp-section{background:var(--sand);border-radius:var(--r-sm);padding:12px 14px;border:1px solid var(--sand2)}
+/* Already checked in */
+.ci-already{background:var(--grl);color:var(--gr);font-size:13px;font-weight:700;padding:10px 14px;border-radius:var(--r-sm);text-align:center;border:1.5px solid var(--gr)}
+
 </style>
 </head>
 <body>
-<!-- PIN -->
-<div id="pin-screen" class="hidden" style="display:none">
-  <div style="font-size:50px">&#x1F40A;</div>
-  <div class="pin-logo">Gibsonville Swim Club<em>Staff Access</em></div>
-  <div class="pin-dots"><div class="pin-dot" id="d0"></div><div class="pin-dot" id="d1"></div><div class="pin-dot" id="d2"></div><div class="pin-dot" id="d3"></div></div>
-  <div class="pin-err" id="pin-err"></div>
-  <div class="pin-pad" id="pin-pad">
-    <button class="pk" onclick="pinKeyPress('1')">1</button><button class="pk" onclick="pinKeyPress('2')">2</button><button class="pk" onclick="pinKeyPress('3')">3</button>
-    <button class="pk" onclick="pinKeyPress('4')">4</button><button class="pk" onclick="pinKeyPress('5')">5</button><button class="pk" onclick="pinKeyPress('6')">6</button>
-    <button class="pk" onclick="pinKeyPress('7')">7</button><button class="pk" onclick="pinKeyPress('8')">8</button><button class="pk" onclick="pinKeyPress('9')">9</button>
-    <button class="pk" onclick="pinKeyPress('back')">&#x232B;</button><button class="pk" onclick="pinKeyPress('0')">0</button><button class="pk" onclick="pinKeyPress('clear')" style="font-size:12px">CLR</button>
-  </div>
-</div>
-<div id="setup-banner">&#x26A0;&#xFE0F; Firebase not configured &mdash; <strong>local-only mode</strong>. See <strong>setup-guide.html</strong>.</div>
-<!-- APP -->
+
+<!-- SELF CHECK-IN SHELL -->
 <div id="sci-shell">
   <div class="sci-header">
     <div class="sci-logo">🐊</div>
@@ -382,91 +255,207 @@ body{font-family:'Inter',sans-serif;background:var(--sand);color:var(--tx);min-h
     <div class="sci-sub2">Loading...</div>
   </div>
 </div>
-<div id="app">
-  <div class="topbar">
-    <div class="topbar-l"><span style="font-size:24px">&#x1F40A;</span><div><div class="topbar-title">Gibsonville Swim Club</div><div class="topbar-sub" id="today-lbl"></div><div style="font-size:10px;color:rgba(255,255,255,.6);letter-spacing:.5px;margin-top:2px;font-weight:600">v1.8.7</div></div></div>
-    <div class="topbar-acts"><div id="sync-pill" style="display:none;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;align-items:center;gap:4px"></div><button class="ibtn" id="login-btn" onclick="openLogin()"><span id="login-icon">🔒</span><span id="login-username-display" style="font-size:10px;font-weight:700;max-width:50px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-left:2px"></span></button><button class="ibtn" id="settings-btn" onclick="openSettings()" style="display:none">&#x2699;&#xFE0F;</button></div>
+
+<!-- APPLICATION FORM -->
+<div id="apply-shell" style="display:none;position:fixed;inset:0;z-index:9980;background:var(--sand);overflow-y:auto;-webkit-overflow-scrolling:touch">
+  <div style="max-width:600px;margin:0 auto;padding:20px 16px 40px">
+    <div style="background:var(--bld);border-radius:14px;padding:20px;margin-bottom:20px;text-align:center">
+      <div style="font-size:36px;margin-bottom:6px">🐊</div>
+      <div style="font-size:20px;font-weight:800;color:var(--or)">Gibsonville Swim Club</div>
+      <div style="font-size:13px;color:rgba(255,255,255,.7);margin-top:4px">Membership Application</div>
+    </div>
+    <div style="background:#fff;border-radius:14px;padding:18px;margin-bottom:14px;font-size:13px;color:var(--tx);line-height:1.6">
+      Thank you for your interest in joining Gibsonville Swim Club! Please complete this application. The board will review and contact you within 72 hours.<br><br>
+      <b>Note:</b> This membership covers a Primary Member, their spouse (if applicable), and all dependents residing in the same household. Per our bylaws, all secondary members and dependents <b>must</b> be immediate family members living under the same roof.
+    </div>
+    <div id="apply-body"></div>
   </div>
+</div>
+
+<div id="app">
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <img src='/mnt/user-data/uploads/GSC1png_4x__1_.jpg' class='topbar-logo' onerror="this.style.display='none'">
+      <div>
+        <div class="topbar-title">Gibsonville Swim Club</div>
+        <div class="topbar-date" id="topbar-date"></div>
+        <div style="font-size:9px;color:rgba(255,255,255,.35)">v2.1.2</div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="sync-pill" id="sync-pill"><div class="sync-dot" id="sync-dot"></div><span id="sync-txt">...</span></div>
+      <div style="display:flex;align-items:center;gap:4px;font-size:11px;font-weight:700;align-items:center;gap:4px"><span id="login-username-display" style="font-size:10px;font-weight:700;color:rgba(255,255,255,.8);max-width:50px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span></div><button class="ibtn" id="login-btn" onclick="openLogin()"><span id="login-icon">🔒</span></button><button id="layout-btn" onclick="cycleLayout()" style="background:rgba(255,255,255,.1);border:none;color:#fff;height:36px;padding:0 8px;border-radius:9px;font-size:11px;font-weight:700;font-family:-apple-system,sans-serif;cursor:pointer;white-space:nowrap;letter-spacing:.3px">VIEW</button><button class="ibtn" id="settings-btn" onclick="openSettings()" style="display:none">⚙️</button>
+    </div>
+  </div>
+
+  <!-- TABS -->
   <div class="tabs">
     <button class="tab on" id="tb-ci" onclick="switchTab('ci')">Check-In</button>
     <button class="tab" id="tb-dir" onclick="switchTab('dir')">Directory</button>
     <button class="tab" id="tb-rep" onclick="switchTab('rep')">Reports</button>
     <button class="tab" id="tb-inc" onclick="switchTab('inc')">Incidents</button>
+    <button class="tab" id="tb-app" onclick="switchTab('app')" style="display:none">Applications</button>
   </div>
+
+  <!-- ANNOUNCEMENT BAR - full width above all panes -->
+  <div id="announce-bar" style="display:none;flex-shrink:0"><div class="announce-text" id="announce-text"></div></div>
+
+  <!-- CHECK-IN PANE -->
   <div id="pane-ci" class="pane on">
-    <!-- Announcement Banner -->
-    <div id="announce-bar" style="display:none">
-      <div class="announce-text" id="announce-text"></div>
-    </div>
-    <!-- Last name alpha strip -->
     <div class="ci-section-title" id="ci-ln-label">Step 1 — Tap member's last name initial</div>
     <div class="ci-alpha-row" id="ci-ln-strip"></div>
-    <!-- First name alpha strip (shown after last name selected) -->
     <div id="ci-fn-section" style="display:none">
       <div class="ci-section-title" id="ci-fn-label">Step 2 — First name (last name: ?)</div>
       <div class="ci-alpha-row" id="ci-fn-strip"></div>
     </div>
-    <!-- Results / predictive list -->
     <div class="rlist" id="ci-list"></div>
   </div>
-  <div id="pane-dir" class="pane"><div class="sbar" style="display:none"><input class="sinput" id="dir-search" type="text" placeholder="Search..." oninput="renderDir()" autocomplete="off"></div>
-    <div class="dir-controls">
-      <div class="dir-filters" id="dir-filter-btns">
-        <button class="fbtn on" onclick="setFilter(this,'all')">All</button>
-        <button class="fbtn" onclick="setFilter(this,'unpaid')">Unpaid</button>
-      </div>
-      <div id="dir-alpha-strip" style="display:flex;flex-wrap:wrap;gap:6px;padding:8px 13px 10px;justify-content:center;align-content:center;background:var(--sand);border-bottom:1px solid var(--sand2)"></div>
+
+  <!-- DIRECTORY PANE -->
+  <div id="pane-dir" class="pane">
+    <div class="sbar" style="display:none"><input class="sinput" id="dir-search" type="text" placeholder="Search..." oninput="renderDir()" autocomplete="off"></div>
+    <div style="padding:8px 13px 0;background:var(--sand)">
+      <div id="dir-filter-strip" style="display:flex;gap:6px;flex-wrap:wrap;padding-bottom:8px"></div>
     </div>
-    <div class="dlist" id="dir-list"></div>
+    <div id="dir-alpha-strip" style="display:flex;flex-wrap:wrap;gap:6px;padding:8px 13px 10px;justify-content:center;align-content:center;background:var(--sand);border-bottom:1px solid var(--sand2);flex-shrink:0"></div>
+    <div class="rlist" id="dir-list"></div>
   </div>
+
+  <!-- APPLICATIONS PANE -->
+  <div id="pane-app" class="pane"><div class="rep-scroll" id="app-body"></div></div>
+
+  <!-- REPORTS PANE -->
+  <div id="pane-rep" class="pane"><div class="rep-scroll" id="rep-body"></div></div>
+
+  <!-- INCIDENTS PANE -->
   <div id="pane-inc" class="pane">
     <div style="padding:12px;flex-shrink:0">
-      <button onclick="openNewIncident()" style="width:100%;padding:14px;background:var(--re);border:none;color:#fff;border-radius:11px;font-size:16px;font-weight:700;font-family:Inter,sans-serif;cursor:pointer">&#x26A0;&#xFE0F; Log New Incident</button>
+      <button onclick="openNewIncident()" style="width:100%;padding:14px;background:var(--re);border:none;color:#fff;border-radius:11px;font-size:16px;font-weight:700;font-family:-apple-system,sans-serif;cursor:pointer" onclick="openNewIncident()">⚠️ Log New Incident</button>
     </div>
     <div class="rep-scroll" id="inc-body"></div>
-    <button class="fab" id="inc-fab" onclick="openNewIncident()" style="display:none">&#x2B;</button>
+    <button class="fab" id="inc-fab" onclick="openNewIncident()" style="display:none">+</button>
   </div>
-  <div id="pane-rep" class="pane"><div class="rep-scroll" id="rep-body"></div></div>
-  <button class="fab" id="fab" onclick="openEdit(null)">&#xFF0B;</button>
-</div>
-<!-- MEMBER MODAL -->
-<div class="overlay" id="mm-overlay" onclick="if(event.target===this)closeMM()"><div class="sheet"><div class="mhandle"></div><div class="mhdr"><div class="mtitle" id="mm-title">Member</div><button class="mclose" onclick="closeMM()">&#x2715;</button></div><div class="mbody" id="mm-body"></div></div></div>
-<!-- EDIT MODAL -->
-<div class="overlay" id="ed-overlay" onclick="if(event.target===this)closeEdit()"><div class="sheet"><div class="mhandle"></div><div class="mhdr"><div class="mtitle" id="ed-title">Add Member</div><button class="mclose" onclick="closeEdit()">&#x2715;</button></div><div class="mbody" id="ed-body"></div></div></div>
-<!-- SETTINGS MODAL -->
-<div class="overlay" id="st-overlay" onclick="if(event.target===this)closeSettings()"><div class="sheet"><div class="mhandle"></div><div class="mhdr"><div class="mtitle">Settings</div><button class="mclose" onclick="closeSettings()">&#x2715;</button></div><div class="mbody" id="st-body" style="display:flex;flex-direction:column;gap:12px"></div></div></div>
-<!-- GUEST PASS MODAL -->
-<div class="overlay" id="gp-overlay" onclick="if(event.target===this)closeGP()"><div class="sheet"><div class="mhandle"></div><div class="mhdr"><div class="mtitle">Guest Passes</div><button class="mclose" onclick="closeGP()">&#x2715;</button></div><div id="gp-inner"></div></div></div>
-<!-- ADMIN PIN MODAL -->
-<div class="overlay" id="admin-overlay" onclick="if(event.target===this)closeAdmin()">
-  <div class="sheet"><div class="mhandle"></div>
-    <div class="mhdr"><div class="mtitle">PIN Required</div><button class="mclose" onclick="closeAdmin()">&#x2715;</button></div>
-    <div class="admin-body">
-      <p style="color:rgba(255,255,255,.7);font-size:13px;text-align:center">Enter the PIN to continue.</p>
-      <div class="admin-dots"><div class="admin-dot" id="ad0"></div><div class="admin-dot" id="ad1"></div><div class="admin-dot" id="ad2"></div><div class="admin-dot" id="ad3"></div></div>
-      <div class="admin-err" id="admin-err"></div>
-      <div class="admin-pad">
-        <button class="apk" onclick="adminKeyPress('1')">1</button><button class="apk" onclick="adminKeyPress('2')">2</button><button class="apk" onclick="adminKeyPress('3')">3</button>
-        <button class="apk" onclick="adminKeyPress('4')">4</button><button class="apk" onclick="adminKeyPress('5')">5</button><button class="apk" onclick="adminKeyPress('6')">6</button>
-        <button class="apk" onclick="adminKeyPress('7')">7</button><button class="apk" onclick="adminKeyPress('8')">8</button><button class="apk" onclick="adminKeyPress('9')">9</button>
-        <button class="apk" onclick="adminKeyPress('back')">&#x232B;</button><button class="apk" onclick="adminKeyPress('0')">0</button><button class="apk" onclick="adminKeyPress('clear')" style="font-size:12px">CLR</button>
+
+  <!-- FAB -->
+  <button class="fab" id="fab" onclick="openEdit(null)">+</button>
+
+  <!-- SUCCESS FLASH -->
+  <div id="ci-success-flash">
+    <div class="flash-check">✅</div>
+    <div class="flash-name" id="flash-name"></div>
+    <div class="flash-sub" id="flash-sub"></div>
+  </div>
+
+  <!-- TOAST -->
+  <div class="toast" id="toast"></div>
+
+  <!-- MEMBER MODAL -->
+  <div class="overlay mm-overlay" id="mm-overlay" onclick="if(event.target===this)closeMM()">
+    <div class="sheet">
+      <div class="sheet-handle"></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div style="font-size:20px;font-weight:800;color:var(--bld)" id="mm-title"></div>
+        <button class="mclose" onclick="closeMM()">✕</button>
+      </div>
+      <div id="mm-body"></div>
+    </div>
+  </div>
+
+  <!-- EDIT MODAL -->
+  <div class="overlay" id="ed-overlay" onclick="if(event.target===this)closeEdit()">
+    <div class="sheet" style="max-height:92vh;overflow-y:auto">
+      <div class="sheet-handle"></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div style="font-size:18px;font-weight:800;color:var(--bld)" id="ed-title">Edit Member</div>
+        <button class="mclose" onclick="closeEdit()">✕</button>
+      </div>
+      <div id="ed-body"></div>
+    </div>
+  </div>
+
+  <!-- SETTINGS OVERLAY -->
+  <div class="overlay" id="st-overlay" onclick="if(event.target===this)closeSettings()">
+    <div class="sheet" style="max-height:92vh;overflow-y:auto">
+      <div class="sheet-handle"></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <div style="font-size:18px;font-weight:800;color:var(--bld)">Settings</div>
+        <button class="mclose" onclick="closeSettings()">✕</button>
+      </div>
+      <div id="st-body" style="display:flex;flex-direction:column;gap:12px"></div>
+    </div>
+  </div>
+
+  <!-- PIN overlays removed -->
+<div class="sci-pin-dot" id="p1"></div>
+      <div class="sci-pin-dot" id="p2"></div><div class="sci-pin-dot" id="p3"></div>
+    </div>
+  </div>
+
+  <!-- LOGIN OVERLAY -->
+  <div id="login-overlay" style="display:none;position:fixed;inset:0;z-index:9999;background:var(--bld);flex-direction:column;align-items:center;justify-content:center;padding:24px">
+    <div style="font-size:40px;margin-bottom:8px">🐊</div>
+    <div style="font-size:22px;font-weight:800;color:var(--or);margin-bottom:4px">Gibsonville Swim Club</div>
+    <div style="font-size:13px;color:rgba(255,255,255,.5);margin-bottom:28px">Staff Login</div>
+    <div style="width:100%;max-width:340px;display:flex;flex-direction:column;gap:12px">
+      <div class="fg"><label class="fl" style="color:rgba(255,255,255,.6)">Username</label><input class="fi" id="login-user" type="text" autocomplete="username" autocorrect="off" autocapitalize="off" placeholder="Enter username"></div>
+      <div class="fg"><label class="fl" style="color:rgba(255,255,255,.6)">Password</label><input class="fi" id="login-pass" type="password" autocomplete="current-password" placeholder="Enter password" onkeydown="if(event.key==='Enter')doLogin()"></div>
+      <div id="login-err" style="color:#fca5a5;font-size:13px;font-weight:600;text-align:center;min-height:18px"></div>
+      <button onclick="doLogin()" style="width:100%;padding:15px;background:var(--or);border:none;color:#fff;border-radius:11px;font-size:16px;font-weight:700;font-family:-apple-system,sans-serif;cursor:pointer">Sign In</button>
+      <button onclick="closeLogin()" style="width:100%;padding:12px;background:rgba(255,255,255,.08);border:1.5px solid rgba(255,255,255,.15);color:rgba(255,255,255,.6);border-radius:11px;font-size:14px;font-weight:600;font-family:-apple-system,sans-serif;cursor:pointer">Continue as Attendant</button>
+    </div>
+  </div>
+
+  <!-- MISSING MEMBER INFO MODAL -->
+  <div class="overlay" id="mi-overlay" style="display:none;z-index:9990">
+    <div class="sheet" id="mi-sheet" style="max-height:85vh;overflow-y:auto">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+        <div style="font-size:18px;font-weight:800;color:var(--bld)">⚠️ Missing Member Info</div>
+        <div style="font-size:11px;color:var(--mu);font-weight:600" id="mi-progress"></div>
+      </div>
+      <p style="font-size:13px;color:var(--mu);margin:0 0 14px">Please complete this information before checking in.</p>
+      <div id="mi-step-body"></div>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <button class="btn-s" id="mi-back-btn" onclick="miBack()" style="display:none">← Back</button>
+        <button class="btn-p" id="mi-next-btn" onclick="miNext()">Next →</button>
       </div>
     </div>
   </div>
-</div>
-<!-- CSV IMPORT MODAL -->
-<div class="overlay" id="csv-overlay" onclick="if(event.target===this)closeCSV()"><div class="sheet"><div class="mhandle"></div><div class="mhdr"><div class="mtitle">Import Members (CSV)</div><button class="mclose" onclick="closeCSV()">&#x2715;</button></div><div class="mbody" id="csv-body"></div></div></div>
-<div id="ci-success-flash">
-  <div class="flash-check">&#x2705;</div>
-  <div class="flash-name" id="flash-name"></div>
-  <div class="flash-sub" id="flash-sub"></div>
-</div>
-<div class="toast" id="toast"></div>
-<div id="ci-success-flash"><div class="flash-check">&#x2705;</div><div class="flash-name" id="flash-name"></div></div>
-<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+  <!-- INCIDENT MODAL -->
+  <div class="overlay" id="inc-overlay" style="display:none;z-index:200">
+    <div class="sheet" style="max-height:90vh;overflow-y:auto">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div style="font-size:18px;font-weight:800;color:var(--bld)" id="inc-modal-title">New Incident</div>
+        <button class="mclose" onclick="closeIncident()">✕</button>
+      </div>
+      <div id="inc-modal-body"></div>
+    </div>
+  </div>
+
+  <!-- APPLICATION REVIEW MODAL -->
+  <div class="overlay" id="appreview-overlay" style="display:none;z-index:9985">
+    <div class="sheet" style="max-height:90vh;overflow-y:auto">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div style="font-size:18px;font-weight:800;color:var(--bld)" id="appreview-title">Application</div>
+        <button class="mclose" onclick="closeAppReview()">✕</button>
+      </div>
+      <div id="appreview-body"></div>
+    </div>
+  </div>
+
+</div><!-- end #app -->
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+<!-- EmailJS SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+
 <script>
+
+var _APP_VERSION="v2.1.2";
+
 // ── SELF CHECK-IN MODE ────────────────────────────────────────────────────────
 var SELF_CI_MODE = window.location.search.indexOf('selfcheckin=true') >= 0;
 
@@ -544,7 +533,7 @@ var db=null,fbReady=false;
     window._delMemberFB=function(id){_db.collection('members').doc(id).delete().catch(function(e){console.error(e);});};
     window._saveVisitFB=function(v){var c=Object.assign({},v);var id=c.id;delete c.id;_db.collection('visits').doc(id).set(c).catch(function(e){console.error(e);});};
     fbReady=true;
-    document.getElementById('setup-banner').classList.remove('show');
+    var _sb=document.getElementById('setup-banner');if(_sb)_sb.classList.remove('show');
     setSyncPill('online');
     // Load config first, then boot
     _db.collection('config').doc('settings').get().then(function(doc){
@@ -556,9 +545,11 @@ var db=null,fbReady=false;
         }
       }
       rebuildFromConfig();
-      document.getElementById('today-lbl').textContent=new Date().toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
-      initPin();
-      if(!SCI_MODE){updateUIForRole();renderAll();}
+      var _tl=document.getElementById('topbar-date');if(_tl)_tl.textContent=new Date().toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}).toUpperCase();
+      if(!SCI_MODE&&!APPLY_MODE){updateUIForRole();renderAll();}
+      if(APPLY_MODE){initApplyMode();}
+  initLayout();
+      if(!APPLY_MODE&&!SCI_MODE){loadApplications();}
       renderAnnouncement();
       checkRenewalExpiry();
       loadIncidents();
@@ -574,9 +565,11 @@ var db=null,fbReady=false;
       });
     }).catch(function(){
       rebuildFromConfig();
-      document.getElementById('today-lbl').textContent=new Date().toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
-      initPin();
-      if(!SCI_MODE){updateUIForRole();renderAll();}
+      var _tl=document.getElementById('topbar-date');if(_tl)_tl.textContent=new Date().toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}).toUpperCase();
+      if(!SCI_MODE&&!APPLY_MODE){updateUIForRole();renderAll();}
+      if(APPLY_MODE){initApplyMode();}
+  initLayout();
+      if(!APPLY_MODE&&!SCI_MODE){loadApplications();}
       renderAnnouncement();
       checkRenewalExpiry();
       loadIncidents();
@@ -731,7 +724,7 @@ function openMissModal(memberId){
   _missSteps=buildMissSteps(m);
   if(!_missSteps.length){openMember(memberId,true);return;}
   document.getElementById('miss-member-name').textContent=m.first+' '+m.last;
-  document.getElementById('miss-overlay').style.display='flex';
+  var _mso=document.getElementById('miss-overlay');if(_mso){_mso.style.display='flex';_mso.classList.add('open');}
   renderMissStep();
 }
 
@@ -1017,8 +1010,8 @@ function buildInlineMissingForm(m){
   if(tc.maxAdults>1){
     html+='<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:rgba(255,255,255,.5)">Household — Adults</div>';
     html+='<div style="display:flex;gap:8px">';
-    html+='<button id="ilf-a1" onclick="ilfSelectAdults(1)" style="flex:1;padding:14px;border-radius:10px;font-size:16px;font-weight:800;font-family:Inter,sans-serif;cursor:pointer;border:2px solid rgba(255,255,255,.3);background:rgba(255,255,255,.1);color:#fff">1 Adult</button>';
-    html+='<button id="ilf-a2" onclick="ilfSelectAdults(2)" style="flex:1;padding:14px;border-radius:10px;font-size:16px;font-weight:800;font-family:Inter,sans-serif;cursor:pointer;border:2px solid rgba(255,255,255,.3);background:rgba(255,255,255,.1);color:#fff">2 Adults</button>';
+    html+='<button id="ilf-a1" onclick="ilfSelectAdults(1)" style="flex:1;padding:14px;border-radius:10px;font-size:16px;font-weight:800;font-family:-apple-system,sans-serif;cursor:pointer;border:2px solid rgba(255,255,255,.3);background:rgba(255,255,255,.1);color:#fff">1 Adult</button>';
+    html+='<button id="ilf-a2" onclick="ilfSelectAdults(2)" style="flex:1;padding:14px;border-radius:10px;font-size:16px;font-weight:800;font-family:-apple-system,sans-serif;cursor:pointer;border:2px solid rgba(255,255,255,.3);background:rgba(255,255,255,.1);color:#fff">2 Adults</button>';
     html+='</div>';
     html+='<div id="ilf-sec-fields" style="display:none;flex-direction:column;gap:8px">';
     html+='<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:rgba(255,255,255,.5)">Second Adult Name</div>';
@@ -1039,11 +1032,11 @@ function buildInlineMissingForm(m){
       html+='<div style="display:flex;gap:8px;align-items:center;margin-bottom:6px"><input class="fi ilf-kid" value="'+k+'" placeholder="Child name" style="flex:1"><button onclick="this.parentElement.remove()" style="background:var(--rel);border:none;color:var(--re);width:36px;height:36px;border-radius:8px;cursor:pointer;font-size:16px;flex-shrink:0">&#x2715;</button></div>';
     });
     html+='</div>';
-    html+='<button onclick="ilfAddKid()" style="width:100%;padding:10px;background:rgba(255,255,255,.1);border:1.5px dashed rgba(255,255,255,.3);border-radius:9px;color:rgba(255,255,255,.7);font-size:13px;font-weight:600;font-family:Inter,sans-serif;cursor:pointer">&#xFF0B; Add Child</button>';
+    html+='<button onclick="ilfAddKid()" style="width:100%;padding:10px;background:rgba(255,255,255,.1);border:1.5px dashed rgba(255,255,255,.3);border-radius:9px;color:rgba(255,255,255,.7);font-size:13px;font-weight:600;font-family:-apple-system,sans-serif;cursor:pointer">&#xFF0B; Add Child</button>';
   }
 
   // Save button
-  html+='<button onclick="ilfSave(\''+m.id+'\')" style="width:100%;padding:15px;background:var(--or);border:none;color:#fff;border-radius:11px;font-size:17px;font-weight:800;font-family:Inter,sans-serif;cursor:pointer;margin-top:4px">&#x2713; Save &amp; Continue to Check-In</button>';
+  html+='<button onclick="ilfSave(\''+m.id+'\')" style="width:100%;padding:15px;background:var(--or);border:none;color:#fff;border-radius:11px;font-size:17px;font-weight:800;font-family:-apple-system,sans-serif;cursor:pointer;margin-top:4px">&#x2713; Save &amp; Continue to Check-In</button>';
   html+='</div>';
   return html;
 }
@@ -1054,8 +1047,8 @@ function ilfSelectAdults(n){
   var b1=document.getElementById('ilf-a1');
   var b2=document.getElementById('ilf-a2');
   var sec=document.getElementById('ilf-sec-fields');
-  if(b1) b1.style.cssText='flex:1;padding:14px;border-radius:10px;font-size:16px;font-weight:800;font-family:Inter,sans-serif;cursor:pointer;border:2px solid '+(n===1?'var(--or)':'rgba(255,255,255,.3)')+';background:'+(n===1?'var(--or)':'rgba(255,255,255,.1)')+';color:#fff';
-  if(b2) b2.style.cssText='flex:1;padding:14px;border-radius:10px;font-size:16px;font-weight:800;font-family:Inter,sans-serif;cursor:pointer;border:2px solid '+(n===2?'var(--or)':'rgba(255,255,255,.3)')+';background:'+(n===2?'var(--or)':'rgba(255,255,255,.1)')+';color:#fff';
+  if(b1) b1.style.cssText='flex:1;padding:14px;border-radius:10px;font-size:16px;font-weight:800;font-family:-apple-system,sans-serif;cursor:pointer;border:2px solid '+(n===1?'var(--or)':'rgba(255,255,255,.3)')+';background:'+(n===1?'var(--or)':'rgba(255,255,255,.1)')+';color:#fff';
+  if(b2) b2.style.cssText='flex:1;padding:14px;border-radius:10px;font-size:16px;font-weight:800;font-family:-apple-system,sans-serif;cursor:pointer;border:2px solid '+(n===2?'var(--or)':'rgba(255,255,255,.3)')+';background:'+(n===2?'var(--or)':'rgba(255,255,255,.1)')+';color:#fff';
   if(sec) sec.style.display=n===2?'flex':'none';
 }
 
@@ -1185,8 +1178,8 @@ function miSelectAdults(n){
   // Update button styles
   var b1=document.getElementById('mi-a1');
   var b2=document.getElementById('mi-a2');
-  if(b1) b1.style.cssText='flex:1;font-size:18px;font-weight:800;padding:18px;width:100%;border-radius:11px;cursor:pointer;font-family:Inter,sans-serif;'+(n===1?'background:var(--or);color:#fff;border:2px solid var(--or)':'background:var(--sand);color:var(--tx);border:2px solid var(--sand2)');
-  if(b2) b2.style.cssText='flex:1;font-size:18px;font-weight:800;padding:18px;width:100%;border-radius:11px;cursor:pointer;font-family:Inter,sans-serif;'+(n===2?'background:var(--or);color:#fff;border:2px solid var(--or)':'background:var(--sand);color:var(--tx);border:2px solid var(--sand2)');
+  if(b1) b1.style.cssText='flex:1;font-size:18px;font-weight:800;padding:18px;width:100%;border-radius:11px;cursor:pointer;font-family:-apple-system,sans-serif;'+(n===1?'background:var(--or);color:#fff;border:2px solid var(--or)':'background:var(--sand);color:var(--tx);border:2px solid var(--sand2)');
+  if(b2) b2.style.cssText='flex:1;font-size:18px;font-weight:800;padding:18px;width:100%;border-radius:11px;cursor:pointer;font-family:-apple-system,sans-serif;'+(n===2?'background:var(--or);color:#fff;border:2px solid var(--or)':'background:var(--sand);color:var(--tx);border:2px solid var(--sand2)');
   // If 2 adults selected, ensure second-adult step is in the list
   if(n===2&&miSteps.indexOf('second-adult')===-1){
     var ci=miSteps.indexOf('adults');
@@ -1276,7 +1269,7 @@ function miNext(){
     // Update local members array immediately so getMissingSteps won't loop
     var localIdx=members.findIndex(function(x){return x.id===miMemberId;});
     if(localIdx>=0) members[localIdx]=Object.assign({},members[localIdx],miData);
-    document.getElementById('mi-overlay').style.display='none';
+    var _mc=document.getElementById('mi-overlay');_mc.style.display='none';_mc.classList.remove('open');
     showToast('Member info saved ✓','ok');
     // Short delay to let Firebase sync, then proceed
     setTimeout(function(){
@@ -1347,7 +1340,7 @@ var DEFAULT_PERMISSIONS={
   },
   attendant:{
     canCheckin:true,canEditMembers:false,canChangePayment:false,
-    canAddDeleteMembers:false,canImportExport:false,canViewReports:false,
+    canAddDeleteMembers:false,canImportExport:false,canViewReports:true,
     canViewIncidents:false,canFileIncidents:true,canVoteApplications:false,
     canViewApplications:false,canManageAnnouncements:false,canAccessSettings:false,
     canManageUsers:false
@@ -1359,6 +1352,8 @@ var inactivityTimer=null;
 var INACTIVITY_MINUTES=5; // configurable
 
 function can(permission){
+  // Master admin can do everything
+  if(isMasterAdmin()) return true;
   if(!currentUser) return DEFAULT_PERMISSIONS.attendant[permission]||false;
   var perms=currentUser.permissions||DEFAULT_PERMISSIONS[currentUser.roleType]||DEFAULT_PERMISSIONS.attendant;
   return perms[permission]||false;
@@ -1468,9 +1463,12 @@ function updateUIForRole(){
   // Incidents tab - always visible (attendants can file, logged-in users can view)
   var tbInc=document.getElementById('tb-inc');
   if(tbInc) tbInc.style.display='';
+  // Applications tab - only for admin and board members with permission
+  var tbApp=document.getElementById('tb-app');
+  if(tbApp) tbApp.style.display=(isLoggedIn()&&can('canViewApplications'))?'':'none';
   // Reports tab
   var tbRep=document.getElementById('tb-rep');
-  if(tbRep) tbRep.style.display=can('canViewReports')?'':'none';
+  if(tbRep) tbRep.style.display=can('canViewReports')?'':'none'; // attendants see reports by default
 }
 
 function resetInactivityTimer(){
@@ -1552,7 +1550,7 @@ function sciShowSetup() {
   body.innerHTML = '<div class="sci-title">First Time Setup</div>'
     + '<div class="sci-sub2">Enter the 6-digit setup code provided by the attendant at the gate.</div>'
     + '<div class="fg"><label class="fl">Setup Code</label><input class="fi" id="sci-setup-inp" type="tel" maxlength="6" placeholder="••••••" style="font-size:24px;text-align:center;letter-spacing:8px" oninput="this.value=this.value.replace(/\D/g,\'\')"></div>'
-    + '<button onclick="sciVerifySetupCode()" style="width:100%;padding:14px;background:var(--or);border:none;color:#fff;border-radius:11px;font-size:16px;font-weight:700;font-family:Inter,sans-serif;cursor:pointer">Continue</button>';
+    + '<button onclick="sciVerifySetupCode()" style="width:100%;padding:14px;background:var(--or);border:none;color:#fff;border-radius:11px;font-size:16px;font-weight:700;font-family:-apple-system,sans-serif;cursor:pointer">Continue</button>';
 }
 
 function sciVerifySetupCode() {
@@ -1583,7 +1581,7 @@ function sciShowCreatePin(isReset) {
     + '<div class="sci-sub2">Choose a 6-digit PIN you will use every visit.</div>'
     + '<div class="sci-pin-display" id="sci-dots">' + sciRenderDots(0) + '</div>'
     + sciNumpad('sciEnterCreatePin')
-    + '<button onclick="sciClearPin()" style="background:none;border:none;color:var(--mu);font-size:13px;font-family:Inter,sans-serif;cursor:pointer;padding:4px">Clear</button>';
+    + '<button onclick="sciClearPin()" style="background:none;border:none;color:var(--mu);font-size:13px;font-family:-apple-system,sans-serif;cursor:pointer;padding:4px">Clear</button>';
 }
 
 function sciEnterCreatePin(n) {
@@ -1603,7 +1601,7 @@ function sciShowConfirmPin(firstPin) {
     + '<div class="sci-sub2">Enter your PIN again to confirm.</div>'
     + '<div class="sci-pin-display" id="sci-dots">' + sciRenderDots(0) + '</div>'
     + sciNumpad('sciEnterConfirmPin')
-    + '<button onclick="sciShowCreatePin()" style="background:none;border:none;color:var(--mu);font-size:13px;font-family:Inter,sans-serif;cursor:pointer;padding:4px">Back</button>';
+    + '<button onclick="sciShowCreatePin()" style="background:none;border:none;color:var(--mu);font-size:13px;font-family:-apple-system,sans-serif;cursor:pointer;padding:4px">Back</button>';
   window._sciFirstPin = firstPin;
 }
 
@@ -1650,8 +1648,8 @@ function sciShowPinEntry() {
     + '<div class="sci-pin-display" id="sci-dots">' + sciRenderDots(0) + '</div>'
     + sciNumpad('sciEnterPin')
     + '<div style="display:flex;justify-content:center;gap:16px;margin-top:4px">'
-    + '<button onclick="sciClearPin()" style="background:none;border:none;color:var(--mu);font-size:13px;font-family:Inter,sans-serif;cursor:pointer;padding:4px">Clear</button>'
-    + '<button onclick="sciForgetDevice()" style="background:none;border:none;color:var(--mu);font-size:13px;font-family:Inter,sans-serif;cursor:pointer;padding:4px">Not you?</button>'
+    + '<button onclick="sciClearPin()" style="background:none;border:none;color:var(--mu);font-size:13px;font-family:-apple-system,sans-serif;cursor:pointer;padding:4px">Clear</button>'
+    + '<button onclick="sciForgetDevice()" style="background:none;border:none;color:var(--mu);font-size:13px;font-family:-apple-system,sans-serif;cursor:pointer;padding:4px">Not you?</button>'
     + '</div>';
 }
 
@@ -1722,11 +1720,11 @@ function sciShowCheckin() {
     + '<div><div style="font-size:13px;font-weight:700;color:var(--bld)">Guest Passes</div>'
     + '<div style="font-size:11px;color:var(--mu)">' + rem + ' remaining</div></div>'
     + '<div style="display:flex;align-items:center;gap:12px">'
-    + '<button onclick="sciAdjGuests(-1)" style="width:36px;height:36px;border-radius:50%;background:var(--or);border:none;color:#fff;font-size:20px;font-weight:700;cursor:pointer;font-family:Inter,sans-serif">-</button>'
+    + '<button onclick="sciAdjGuests(-1)" style="width:36px;height:36px;border-radius:50%;background:var(--or);border:none;color:#fff;font-size:20px;font-weight:700;cursor:pointer;font-family:-apple-system,sans-serif">-</button>'
     + '<span id="sci-guests" style="font-size:20px;font-weight:800;min-width:24px;text-align:center">0</span>'
-    + '<button onclick="sciAdjGuests(1)" style="width:36px;height:36px;border-radius:50%;background:var(--or);border:none;color:#fff;font-size:20px;font-weight:700;cursor:pointer;font-family:Inter,sans-serif">+</button>'
+    + '<button onclick="sciAdjGuests(1)" style="width:36px;height:36px;border-radius:50%;background:var(--or);border:none;color:#fff;font-size:20px;font-weight:700;cursor:pointer;font-family:-apple-system,sans-serif">+</button>'
     + '</div></div></div>';
-  html += '<button onclick="sciSubmitCheckin()" style="width:100%;padding:16px;background:var(--or);border:none;color:#fff;border-radius:11px;font-size:18px;font-weight:800;font-family:Inter,sans-serif;cursor:pointer">Check In</button>';
+  html += '<button onclick="sciSubmitCheckin()" style="width:100%;padding:16px;background:var(--or);border:none;color:#fff;border-radius:11px;font-size:18px;font-weight:800;font-family:-apple-system,sans-serif;cursor:pointer">Check In</button>';
   body.innerHTML = html;
   window._sciGuestRem = rem;
 }
@@ -1738,7 +1736,7 @@ function sciAdjGuests(d) {
   if (_sciGuests > rem) {
     document.getElementById('sci-body').innerHTML = '<div class="sci-title" style="color:var(--am)">No Passes Remaining</div>'
       + '<div class="sci-sub2">You have no guest passes left. Please see the attendant for assistance.</div>'
-      + '<button onclick="sciShowCheckin()" style="width:100%;padding:14px;background:var(--sand);border:1.5px solid var(--sand2);border-radius:11px;font-size:15px;font-weight:700;font-family:Inter,sans-serif;cursor:pointer;color:var(--tx)">Back</button>';
+      + '<button onclick="sciShowCheckin()" style="width:100%;padding:14px;background:var(--sand);border:1.5px solid var(--sand2);border-radius:11px;font-size:15px;font-weight:700;font-family:-apple-system,sans-serif;cursor:pointer;color:var(--tx)">Back</button>';
     return;
   }
   var el = document.getElementById('sci-guests');
@@ -1875,6 +1873,557 @@ function generateSciCode(memberId) {
   }
 }
 
+// ── MEMBERSHIP APPLICATIONS ───────────────────────────────────────────────────
+var applications = [];
+var APP_ACCESS_CODE = 'joingsc';
+
+function loadApplications(){
+  if(fbReady&&db){
+    db.collection('applications').orderBy('submittedAt','desc').onSnapshot(function(snap){
+      applications = snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
+      if(document.getElementById('pane-app').classList.contains('on')) renderApplications();
+    });
+  }
+}
+
+function notifyGroupMe(msg){
+  fetch('https://api.groupme.com/v3/bots/post',{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({bot_id:'bf2630a093ac93852c07cac522',text:msg})
+  }).catch(function(e){console.error('GroupMe:',e);});
+}
+function saveApplication(app){
+  if(fbReady&&db){
+    var copy=Object.assign({},app); var id=copy.id; delete copy.id;
+    db.collection('applications').doc(id).set(copy).catch(function(e){console.error(e);});
+  }
+}
+
+function initApplyMode(){
+  if(!APPLY_MODE) return;
+  document.getElementById('app').style.display='none';
+  document.getElementById('apply-shell').style.display='block';
+  renderApplyForm();
+}
+
+function renderApplyForm(){
+  var body=document.getElementById('apply-body'); if(!body) return;
+  // Step 1: Access code gate
+  body.innerHTML='<div style="display:flex;flex-direction:column;gap:14px">'
+    +'<div style="background:#fff;border-radius:12px;padding:16px">'
+    +'<div style="font-size:15px;font-weight:800;color:var(--bld);margin-bottom:8px">Access Code Required</div>'
+    +'<div style="font-size:13px;color:var(--mu);margin-bottom:12px">Please enter the access code provided by a current member or the club.</div>'
+    +'<div class="fg"><label class="fl">Access Code</label><input class="fi" id="apply-code" placeholder="Enter code" autocapitalize="none" autocorrect="off"></div>'
+    +'<button onclick="verifyApplyCode()" style="width:100%;padding:14px;background:var(--or);border:none;color:#fff;border-radius:11px;font-size:16px;font-weight:700;font-family:-apple-system,sans-serif;cursor:pointer;margin-top:8px">Continue</button>'
+    +'</div></div>';
+}
+
+function verifyApplyCode(){
+  var inp=document.getElementById('apply-code');
+  if(!inp||inp.value.trim().toLowerCase()!==APP_ACCESS_CODE){
+    showApplyError('Invalid access code. Please check with your referring member.');
+    return;
+  }
+  renderApplyTypeSelect();
+}
+
+function renderApplyTypeSelect(){
+  var body=document.getElementById('apply-body'); if(!body) return;
+  var types=[
+    {key:'Individual',label:'Individual',icon:'🧑',desc:'Just you. One adult member.',adults:1,children:false},
+    {key:'Couples',label:'Couples',icon:'👫',desc:'Two adults. No children.',adults:2,children:false},
+    {key:'Family',label:'Family',icon:'👨‍👩‍👧‍👦',desc:'One or two adults plus children living in your household.',adults:2,children:true},
+  ];
+  body.innerHTML='<div style="display:flex;flex-direction:column;gap:12px">'
+    +'<div style="background:#fff;border-radius:12px;padding:16px">'
+    +'<div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--or);margin-bottom:12px">Select Membership Type</div>'
+    +'<div style="font-size:13px;color:var(--mu);margin-bottom:14px">Choose the membership type that best fits your household.</div>'
+    +'<div style="display:flex;flex-direction:column;gap:10px">'
+    +types.map(function(t){
+      return'<button data-type="'+t.key+'" onclick="selectApplyType(this.dataset.type)" style="width:100%;padding:16px;background:'+(applyData.mtype===t.key?'var(--bld)':'var(--sand)')+';border:2px solid '+(applyData.mtype===t.key?'var(--bld)':'var(--sand2)')+';border-radius:12px;cursor:pointer;text-align:left;font-family:-apple-system,sans-serif;transition:all .15s">'
+        +'<div style="display:flex;align-items:center;gap:12px">'
+        +'<div style="font-size:28px">'+t.icon+'</div>'
+        +'<div><div style="font-size:16px;font-weight:800;color:'+(applyData.mtype===t.key?'#fff':'var(--bld)')+'">'+t.label+'</div>'
+        +'<div style="font-size:12px;color:'+(applyData.mtype===t.key?'rgba(255,255,255,.7)':'var(--mu)')+'">'+t.desc+'</div></div>'
+        +'</div></button>';
+    }).join('')
+    +'</div></div>'
+    +'<button id="apply-type-next" onclick="applyTypeNext()" style="width:100%;padding:14px;background:var(--or);border:none;color:#fff;border-radius:11px;font-size:16px;font-weight:700;font-family:-apple-system,sans-serif;cursor:pointer;'+(applyData.mtype?'':'opacity:.5')+'">Next →</button>'
+    +'</div>';
+}
+
+function selectApplyType(type){
+  applyData.mtype=type;
+  renderApplyTypeSelect();
+}
+
+function applyTypeNext(){
+  if(!applyData.mtype){showApplyError('Please select a membership type.');return;}
+  renderApplyStep1();
+}
+
+function showApplyError(msg){
+  var existing=document.getElementById('apply-err');
+  if(existing) existing.remove();
+  var d=document.createElement('div');
+  d.id='apply-err';
+  d.style.cssText='background:var(--rel);border:1.5px solid var(--re);border-radius:9px;padding:10px 12px;font-size:13px;font-weight:600;color:var(--re);margin-bottom:8px';
+  d.textContent=msg;
+  var body=document.getElementById('apply-body');
+  if(body) body.insertBefore(d,body.firstChild);
+  setTimeout(function(){if(d.parentNode)d.parentNode.removeChild(d);},4000);
+}
+
+var applyData={};
+
+function typeStepLabel(step,total){
+  var typeBadge='<span style="background:var(--bll);color:var(--bl);border-radius:8px;padding:2px 8px;font-size:10px;font-weight:700;margin-left:8px">'+applyData.mtype+'</span>';
+  return'<div style="display:flex;align-items:center;margin-bottom:12px"><div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--or)">Step '+step+' of '+total+' — Primary Member</div>'+typeBadge+'</div>';
+}
+
+function renderApplyStep1(){
+  var body=document.getElementById('apply-body'); if(!body) return;
+  var tc=getTypeConfig(applyData.mtype);
+  var totalSteps=applyData.mtype==='Individual'?3:(tc.allowChildren?4:4);
+  body.innerHTML='<div style="display:flex;flex-direction:column;gap:12px">'
+    +'<div style="background:#fff;border-radius:12px;padding:16px">'
+    +typeStepLabel(1,totalSteps)
+    +'<div class="frow"><div class="fg"><label class="fl">First Name *</label><input class="fi" id="af-first" value="'+(applyData.first||'')+'"></div>'
+    +'<div class="fg"><label class="fl">Last Name *</label><input class="fi" id="af-last" value="'+(applyData.last||'')+'"></div></div>'
+    +'<div class="fg"><label class="fl">Date of Birth *</label><input class="fi" id="af-dob" type="date" value="'+(applyData.dob||'')+'"></div>'
+    +'<div class="fg"><label class="fl">Email *</label><input class="fi" id="af-email" type="email" value="'+(applyData.email||'')+'"></div>'
+    +'<div class="fg"><label class="fl">Phone *</label><input class="fi" id="af-phone" type="tel" value="'+(applyData.phone||'')+'" oninput="this.value=formatPhone(this.value)"></div>'
+    +'<div class="fg"><label class="fl">Street Address *</label><input class="fi" id="af-street" value="'+(applyData.street||'')+'"></div>'
+    +'<div class="frow"><div class="fg"><label class="fl">City *</label><input class="fi" id="af-city" value="'+(applyData.city||'')+'"></div>'
+    +'<div class="fg" style="max-width:70px"><label class="fl">State</label><input class="fi" id="af-state" value="'+(applyData.state||'NC')+'" maxlength="2"></div>'
+    +'<div class="fg" style="max-width:90px"><label class="fl">Zip *</label><input class="fi" id="af-zip" type="tel" value="'+(applyData.zip||'')+'" maxlength="5"></div></div>'
+    +'<div class="fg"><label class="fl">Membership Type *</label><select class="fs" id="af-type">'
+    +CONFIG.membershipTypes.map(function(t){return'<option'+(applyData.mtype===t.key?' selected':'')+' value="'+t.key+'">'+t.label+'</option>';}).join('')
+    +'</select></div>'
+    +'</div>'
+    +'<div style="display:flex;gap:8px">'
+    +'<button onclick="renderApplyTypeSelect()" style="flex:1;padding:13px;background:var(--sand);border:1.5px solid var(--sand2);border-radius:11px;font-size:15px;font-weight:700;font-family:-apple-system,sans-serif;cursor:pointer;color:var(--tx)">&larr; Back</button>'
+    +'<button onclick="applyStep1Next()" style="flex:2;padding:14px;background:var(--or);border:none;color:#fff;border-radius:11px;font-size:15px;font-weight:700;font-family:-apple-system,sans-serif;cursor:pointer">Next &rarr;</button>'
+    +'</div>'
+    +'</div>';
+}
+
+function applyStep1Next(){
+  var f=document.getElementById('af-first'),l=document.getElementById('af-last'),
+    dob=document.getElementById('af-dob'),em=document.getElementById('af-email'),
+    ph=document.getElementById('af-phone'),st=document.getElementById('af-street'),
+    ci=document.getElementById('af-city'),zp=document.getElementById('af-zip');
+  if(!f.value.trim()||!l.value.trim()||!dob.value||!em.value.trim()||!ph.value.trim()||!st.value.trim()||!ci.value.trim()||!zp.value.trim()){
+    showApplyError('Please fill in all required fields.');return;
+  }
+  applyData.first=f.value.trim();applyData.last=l.value.trim();applyData.dob=dob.value;
+  applyData.email=em.value.trim();applyData.phone=ph.value.trim();applyData.street=st.value.trim();
+  applyData.city=ci.value.trim();applyData.state=document.getElementById('af-state').value.trim()||'NC';
+  applyData.zip=zp.value.trim();applyData.mtype=document.getElementById('af-type').value;
+  // Individual has no household step - skip to step 3 (renumbered step 2)
+  if(applyData.mtype==='Individual'){
+    renderApplyStep3();
+  } else {
+    renderApplyStep2();
+  }
+}
+
+function renderApplyStep2(){
+  var body=document.getElementById('apply-body'); if(!body) return;
+  var tc=getTypeConfig(applyData.mtype);
+  var needsSec=tc.maxAdults>1;
+  var requiresSec=applyData.mtype==='Couples';
+  body.innerHTML='<div style="display:flex;flex-direction:column;gap:12px">'
+    +'<div style="background:#fff;border-radius:12px;padding:16px">'
+    +(function(){var tc=getTypeConfig(applyData.mtype);var total=applyData.mtype==='Individual'?3:4;return'<div style="display:flex;align-items:center;margin-bottom:12px"><div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--or)">Step 2 of '+total+' — Household Members</div><span style="background:var(--bll);color:var(--bl);border-radius:8px;padding:2px 8px;font-size:10px;font-weight:700;margin-left:8px">'+applyData.mtype+'</span></div>';}())
+    +(needsSec?'<div style="font-size:13px;font-weight:700;color:var(--bld);margin-bottom:8px">Secondary Adult'+(applyData.mtype==="Couples"?' <span style="color:var(--re);font-size:11px">(required)</span>':' (if applicable)')+'</div>'
+    +'<div class="frow"><div class="fg"><label class="fl">First Name</label><input class="fi" id="af-sec-first" value="'+(applyData.secFirst||'')+'"></div>'
+    +'<div class="fg"><label class="fl">Last Name</label><input class="fi" id="af-sec-last" value="'+(applyData.secLast||'')+'"></div></div>'
+    +'<div class="fg"><label class="fl">Date of Birth</label><input class="fi" id="af-sec-dob" type="date" value="'+(applyData.secDob||'')+'"></div>'
+    +'<div class="fg"><label class="fl">Phone</label><input class="fi" id="af-sec-phone" type="tel" value="'+(applyData.secPhone||'')+'" oninput="this.value=formatPhone(this.value)"></div>'
+    +'<div class="fg"><label class="fl">Email</label><input class="fi" id="af-sec-email" type="email" value="'+(applyData.secEmail||'')+'"></div>':'')
+    +(tc.allowChildren?'<div style="font-size:13px;font-weight:700;color:var(--bld);margin:'+(needsSec?'12px':'0')+'px 0 8px">Children</div>'
+    +'<div id="af-kids-list">'+((applyData.kids||[]).map(function(k){
+      return'<div style="display:flex;gap:8px;align-items:center;margin-bottom:6px">'
+        +'<input class="fi af-kid-name" placeholder="Child first name" value="'+k.name+'" style="flex:1">'
+        +'<input class="fi af-kid-dob" type="date" value="'+k.dob+'" style="flex:1">'
+        +'<button onclick="this.parentElement.remove()" style="background:var(--rel);border:none;color:var(--re);width:36px;height:36px;border-radius:8px;cursor:pointer;flex-shrink:0;font-size:16px">&#x2715;</button>'
+        +'</div>';
+    })).join('')+'</div>'
+    +'<button onclick="afAddKid()" style="width:100%;padding:10px;background:var(--sand);border:1.5px dashed var(--sand2);border-radius:9px;font-size:13px;font-weight:600;font-family:-apple-system,sans-serif;cursor:pointer;color:var(--mu)">&#xFF0B; Add Child</button>':'')
+    +'</div>'
+    +'<div style="display:flex;gap:8px">'
+    +'<button onclick="renderApplyStep1()" style="flex:1;padding:13px;background:var(--sand);border:1.5px solid var(--sand2);border-radius:11px;font-size:15px;font-weight:700;font-family:-apple-system,sans-serif;cursor:pointer;color:var(--tx)">&larr; Back</button>'
+    +'<button onclick="applyStep2Next()" style="flex:2;padding:13px;background:var(--or);border:none;color:#fff;border-radius:11px;font-size:15px;font-weight:700;font-family:-apple-system,sans-serif;cursor:pointer">Next &rarr;</button>'
+    +'</div></div>';
+}
+
+function afAddKid(){
+  var list=document.getElementById('af-kids-list'); if(!list) return;
+  var row=document.createElement('div');
+  row.style.cssText='display:flex;gap:8px;align-items:center;margin-bottom:6px';
+  row.innerHTML='<input class="fi af-kid-name" placeholder="Child first name" style="flex:1">'
+    +'<input class="fi af-kid-dob" type="date" style="flex:1">'
+    +'<button onclick="this.parentElement.remove()" style="background:var(--rel);border:none;color:var(--re);width:36px;height:36px;border-radius:8px;cursor:pointer;flex-shrink:0;font-size:16px">&#x2715;</button>';
+  list.appendChild(row);
+  row.querySelector('input').focus();
+}
+
+function applyStep2Next(){
+  var tc=getTypeConfig(applyData.mtype);
+  // Couples requires second adult name
+  if(applyData.mtype==='Couples'){
+    var sf=document.getElementById('af-sec-first');
+    var sl=document.getElementById('af-sec-last');
+    if(!sf||!sf.value.trim()||!sl||!sl.value.trim()){showApplyError('Couples membership requires both adults\' names.');return;}
+  }
+  if(tc.maxAdults>1){
+    var sf=document.getElementById('af-sec-first');
+    var sl=document.getElementById('af-sec-last');
+    if(sf) applyData.secFirst=sf.value.trim();
+    if(sl) applyData.secLast=sl.value.trim();
+    var sd=document.getElementById('af-sec-dob');
+    var sp2=document.getElementById('af-sec-phone');
+    var se=document.getElementById('af-sec-email');
+    if(sd) applyData.secDob=sd.value;
+    if(sp2) applyData.secPhone=sp2.value.trim();
+    if(se) applyData.secEmail=se.value.trim();
+  }
+  if(tc.allowChildren){
+    var names=document.querySelectorAll('.af-kid-name');
+    var dobs=document.querySelectorAll('.af-kid-dob');
+    applyData.kids=[];
+    names.forEach(function(n,i){if(n.value.trim()) applyData.kids.push({name:n.value.trim(),dob:dobs[i]?dobs[i].value:''});});
+  }
+  renderApplyStep3();
+}
+
+function renderApplyStep3(){
+  var body=document.getElementById('apply-body'); if(!body) return;
+  body.innerHTML='<div style="display:flex;flex-direction:column;gap:12px">'
+    +'<div style="background:#fff;border-radius:12px;padding:16px">'
+    +'<div style="display:flex;align-items:center;margin-bottom:12px"><div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--or)">Step 3 of 4 — About Your Application</div><span style="background:var(--bll);color:var(--bl);border-radius:8px;padding:2px 8px;font-size:10px;font-weight:700;margin-left:8px">' +applyData.mtype+ '</span></div>'
+    +'<div class="fg"><label class="fl">Current GSC Member Reference * <span style="font-size:11px;color:var(--mu)">(type "None" if you have none)</span></label>'
+    +'<input class="fi" id="af-ref" value="'+(applyData.reference||'')+'" placeholder="Member first and last name or None"></div>'
+    +'<div class="fg"><label class="fl">How did you hear about the club? *</label>'
+    +'<select class="fs" id="af-heard">'
+    +'<option value="">Select one...</option>'
+    +['Current member referral','Social media','Neighbor / word of mouth','Drove by the pool','Community board / flyer','Other'].map(function(o){return'<option'+(applyData.heard===o?' selected':'')+'>'+o+'</option>';}).join('')
+    +'</select></div>'
+    +'<div class="fg"><label class="fl">Why do you want to join Gibsonville Swim Club? *</label>'
+    +'<textarea class="fi" id="af-why" rows="3" style="resize:vertical" placeholder="Tell us a bit about your family and why you want to join...">'+(applyData.why||'')+'</textarea></div>'
+    +'</div>'
+    +'<div style="display:flex;gap:8px">'
+    +'<button onclick="renderApplyStep2()" style="flex:1;padding:13px;background:var(--sand);border:1.5px solid var(--sand2);border-radius:11px;font-size:15px;font-weight:700;font-family:-apple-system,sans-serif;cursor:pointer;color:var(--tx)">&larr; Back</button>'
+    +'<button onclick="applyStep3Next()" style="flex:2;padding:13px;background:var(--or);border:none;color:#fff;border-radius:11px;font-size:15px;font-weight:700;font-family:-apple-system,sans-serif;cursor:pointer">Next &rarr;</button>'
+    +'</div></div>';
+}
+
+function applyStep3Next(){
+  var ref=document.getElementById('af-ref'),heard=document.getElementById('af-heard'),why=document.getElementById('af-why');
+  if(!ref.value.trim()||!heard.value||!why.value.trim()){showApplyError('Please fill in all required fields.');return;}
+  applyData.reference=ref.value.trim();
+  applyData.heard=heard.value;
+  applyData.why=why.value.trim();
+  renderApplyStep4();
+}
+
+function renderApplyStep4(){
+  var body=document.getElementById('apply-body'); if(!body) return;
+  var waiverText='In consideration of participating in the sport of swimming, I hereby agree to release and discharge from liability arising from negligence Gibsonville Swim (& Racquet) Club and its owners, directors, officers employees, agents, volunteers, participants, and all other persons or entities acting for them (hereinafter collectively referred to as "Releasees"), on behalf of myself and my children, parents, heirs, assigns, personal representative and estate.<br><br>I acknowledge that the sport of swimming involves known and unanticipated risks which could result in physical or emotional injury, paralysis or permanent disability, death, and property damage. I expressly accept and assume all of the risks inherent in this activity. I voluntarily release, forever discharge, and agree to indemnify and hold harmless Releasees from any and all claims, demands, or causes of action which are in any way connected with my participation in this activity.<br><br>I represent that I have adequate insurance to cover any injury or damage I may suffer while participating in this activity. I confirm that all persons on my membership reside in my household and are immediate family members.';
+  body.innerHTML='<div style="display:flex;flex-direction:column;gap:12px">'
+    +'<div style="background:#fff;border-radius:12px;padding:16px">'
+    +'<div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--or);margin-bottom:12px">Step 4 of 4 — Release & Waiver</div>'
+    +'<div style="background:var(--sand);border-radius:10px;padding:14px;font-size:12px;color:var(--tx);line-height:1.6;max-height:220px;overflow-y:auto;margin-bottom:14px">'+waiverText+'</div>'
+    +'<label style="display:flex;align-items:flex-start;gap:10px;margin-bottom:10px;cursor:pointer">'
+    +'<input type="checkbox" id="af-confirm-household" style="width:20px;height:20px;margin-top:2px;accent-color:var(--or);flex-shrink:0">'
+    +'<span style="font-size:13px;color:var(--tx)">I confirm that all persons on my membership reside in my household.</span></label>'
+    +'<label style="display:flex;align-items:flex-start;gap:10px;margin-bottom:10px;cursor:pointer">'
+    +'<input type="checkbox" id="af-confirm-rules" style="width:20px;height:20px;margin-top:2px;accent-color:var(--or);flex-shrink:0">'
+    +'<span style="font-size:13px;color:var(--tx)">I have read and understand the pool rules and I agree to follow them.</span></label>'
+    +'<label style="display:flex;align-items:flex-start;gap:10px;margin-bottom:14px;cursor:pointer">'
+    +'<input type="checkbox" id="af-confirm-waiver" style="width:20px;height:20px;margin-top:2px;accent-color:var(--or);flex-shrink:0">'
+    +'<span style="font-size:13px;color:var(--tx)">I have read, understand, and agree to the Release, Indemnification and Hold Harmless Agreement above.</span></label>'
+    +'<div class="fg"><label class="fl">Digital Signature * <span style="font-size:11px;color:var(--mu)">(type your full name as your legal signature)</span></label>'
+    +'<input class="fi" id="af-sig" placeholder="Full legal name" value="'+(applyData.signature||'')+'"></div>'
+    +'<div class="fg"><label class="fl">Date</label><input class="fi" id="af-sigdate" type="date" value="'+(applyData.sigDate||new Date().toISOString().slice(0,10))+'"></div>'
+    +'</div>'
+    +'<div style="display:flex;gap:8px">'
+    +'<button onclick="renderApplyStep3()" style="flex:1;padding:13px;background:var(--sand);border:1.5px solid var(--sand2);border-radius:11px;font-size:15px;font-weight:700;font-family:-apple-system,sans-serif;cursor:pointer;color:var(--tx)">&larr; Back</button>'
+    +'<button onclick="submitApplication()" style="flex:2;padding:13px;background:var(--or);border:none;color:#fff;border-radius:11px;font-size:15px;font-weight:700;font-family:-apple-system,sans-serif;cursor:pointer">Submit Application</button>'
+    +'</div></div>';
+}
+
+function submitApplication(){
+  var ch=document.getElementById('af-confirm-household');
+  var cr=document.getElementById('af-confirm-rules');
+  var cw=document.getElementById('af-confirm-waiver');
+  var sig=document.getElementById('af-sig');
+  var sd=document.getElementById('af-sigdate');
+  if(!ch||!ch.checked){showApplyError('Please confirm all persons reside in your household.');return;}
+  if(!cr||!cr.checked){showApplyError('Please confirm you have read and will follow the pool rules.');return;}
+  if(!cw||!cw.checked){showApplyError('Please confirm you have read and agree to the Release & Waiver.');return;}
+  if(!sig||!sig.value.trim()){showApplyError('Please enter your digital signature.');return;}
+  applyData.signature=sig.value.trim();
+  applyData.sigDate=sd?sd.value:new Date().toISOString().slice(0,10);
+  applyData.submittedAt=Date.now();
+  applyData.status='pending';
+  applyData.votes={approve:[],reject:[]};
+  applyData.id=uid();
+  saveApplication(applyData);
+  // Notify board GroupMe
+  var _k=(applyData.kids&&applyData.kids.length)?(' + '+applyData.kids.length+' child'+(applyData.kids.length>1?'ren':'')):'';
+  var _s=applyData.secFirst?' + '+applyData.secFirst:'';
+  var _t=new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+  notifyGroupMe('[GSC App] New Membership Application\nApplicant: '+applyData.first+' '+applyData.last+_s+_k+'\nType: '+applyData.mtype+'\nReference: '+(applyData.reference||'None')+'\nSubmitted: '+_t+'\nhttps://gscpool.github.io/swim-club-checkin/');
+  // Show confirmation
+  document.getElementById('apply-body').innerHTML='<div style="background:#fff;border-radius:14px;padding:30px;text-align:center">'
+    +'<div style="font-size:60px;margin-bottom:12px">&#x2705;</div>'
+    +'<div style="font-size:20px;font-weight:800;color:var(--gr);margin-bottom:8px">Application Submitted!</div>'
+    +'<div style="font-size:14px;color:var(--mu);line-height:1.6">Thank you, '+applyData.first+'! The board will review your application and contact you at '+applyData.email+' within 72 hours.</div>'
+    +'</div>';
+  applyData={};
+}
+
+// ── APPLICATIONS REVIEW (admin & board) ──────────────────────────────────────
+function renderApplications(){
+  var el=document.getElementById('app-body'); if(!el) return;
+  if(!can('canViewApplications')){
+    el.innerHTML='<div class="empty"><div class="ico">&#x1F512;</div><p>Sign in to view applications.</p></div>';
+    return;
+  }
+  var pending=applications.filter(function(a){return a.status==='pending';});
+  var approved=applications.filter(function(a){return a.status==='approved';});
+  var rejected=applications.filter(function(a){return a.status==='rejected';});
+  var totalBoard=members.filter(function(m){return m.type==='Board';}).length||9;
+  var majority=Math.floor(totalBoard/2)+1;
+  var html='<div style="padding:12px;display:flex;flex-direction:column;gap:10px">';
+  html+='<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--mu)">Pending ('+pending.length+') — '+majority+' votes needed for approval</div>';
+  if(!pending.length) html+='<div class="empty" style="padding:20px 0"><div class="ico">&#x1F44D;</div><p>No pending applications.</p></div>';
+  pending.forEach(function(a){html+=appCard(a,majority);});
+  if(approved.length){
+    html+='<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--gr);margin-top:4px">Approved ('+approved.length+')</div>';
+    approved.forEach(function(a){html+=appCard(a,majority);});
+  }
+  if(rejected.length){
+    html+='<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--re);margin-top:4px">Rejected ('+rejected.length+')</div>';
+    rejected.forEach(function(a){html+=appCard(a,majority);});
+  }
+  html+='</div>';
+  el.innerHTML=html;
+}
+
+function appCard(a,majority){
+  var approveCount=(a.votes&&a.votes.approve)?a.votes.approve.length:0;
+  var rejectCount=(a.votes&&a.votes.reject)?a.votes.reject.length:0;
+  var myVote='';
+  if(currentUser&&a.votes){
+    if(a.votes.approve&&a.votes.approve.indexOf(currentUser.username)>=0) myVote='approve';
+    if(a.votes.reject&&a.votes.reject.indexOf(currentUser.username)>=0) myVote='reject';
+  }
+  var statusColor=a.status==='approved'?'var(--gr)':a.status==='rejected'?'var(--re)':'var(--am)';
+  var borderColor=a.status==='approved'?'var(--gr)':a.status==='rejected'?'var(--re)':'var(--bl)';
+  return'<div style="background:#fff;border-radius:var(--r);box-shadow:var(--sh);padding:14px;border-left:4px solid '+borderColor+'">'
+    +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">'
+    +'<div style="font-size:16px;font-weight:800;color:var(--bld)">'+a.first+' '+a.last+'</div>'
+    +'<span style="font-size:10px;font-weight:700;text-transform:uppercase;color:'+statusColor+';background:var(--sand);padding:3px 8px;border-radius:10px">'+a.status+'</span>'
+    +'</div>'
+    +(function(){var bg=a.mtype==='Family'?'var(--bll)':a.mtype==='Couples'?'var(--pul)':'var(--aml)';var fg=a.mtype==='Family'?'var(--bl)':a.mtype==='Couples'?'var(--pu)':'var(--am)';return'<div style="font-size:12px;margin-bottom:4px"><span style="background:'+bg+';color:'+fg+';border-radius:8px;padding:2px 8px;font-size:10px;font-weight:700">'+a.mtype+'</span> <span style="color:var(--mu)">Submitted '+new Date(a.submittedAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})+'</span></div>';}())
+    +'<div style="font-size:12px;color:var(--mu);margin-bottom:8px">Ref: '+(a.reference||'None')+'</div>'
+    +(a.status==='pending'?'<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">'
+    +'<div style="flex:1;background:var(--grl);border-radius:8px;padding:6px;text-align:center;font-size:12px;font-weight:700;color:var(--gr)">'+approveCount+' Approve</div>'
+    +'<div style="flex:1;background:var(--rel);border-radius:8px;padding:6px;text-align:center;font-size:12px;font-weight:700;color:var(--re)">'+rejectCount+' Reject</div>'
+    +'<div style="font-size:11px;color:var(--mu)">Need '+majority+'</div>'
+    +'</div>':'')
+    +'<div style="display:flex;gap:8px">'
+    +'<button data-appid="'+a.id+'" onclick="openAppReview(this.dataset.appid)" style="flex:2;padding:9px;background:var(--sand);border:1.5px solid var(--sand2);border-radius:9px;font-size:13px;font-weight:700;font-family:-apple-system,sans-serif;cursor:pointer;color:var(--tx)">View Details</button>'
+    +(a.status==='pending'&&can('canVoteApplications')&&!myVote?
+      '<button data-appid="'+a.id+'" onclick="voteApplication(this.dataset.appid,&quot;approve&quot;)" style="flex:1;padding:9px;background:var(--grl);border:1.5px solid var(--gr);border-radius:9px;font-size:12px;font-weight:700;font-family:-apple-system,sans-serif;cursor:pointer;color:var(--gr)">✔ Approve</button>'
+      +'<button data-appid="'+a.id+'" onclick="voteApplication(this.dataset.appid,&quot;reject&quot;)" style="flex:1;padding:9px;background:var(--rel);border:1.5px solid var(--re);border-radius:9px;font-size:12px;font-weight:700;font-family:-apple-system,sans-serif;cursor:pointer;color:var(--re)">✖ Reject</button>'
+    :myVote?'<div style="flex:2;padding:9px;text-align:center;font-size:12px;font-weight:700;color:var(--mu)">Voted: '+myVote+'</div>':'')
+    +'</div></div>';
+}
+
+function openAppReview(appId){
+  var a=applications.find(function(x){return x.id===appId;}); if(!a) return;
+  var el=document.getElementById('appreview-title');
+  if(el) el.textContent=a.first+' '+a.last+' — Application';
+  var body=document.getElementById('appreview-body'); if(!body) return;
+  var majority=Math.floor(((members.filter(function(m){return m.type==='Board';}).length)||9)/2)+1;
+  var approveCount=(a.votes&&a.votes.approve)?a.votes.approve.length:0;
+  var rejectCount=(a.votes&&a.votes.reject)?a.votes.reject.length:0;
+  var html='<div style="display:flex;flex-direction:column;gap:10px">';
+  // Details
+  var details=[
+    ['Name',a.first+' '+a.last],['DOB',a.dob||'Not provided'],['Email',a.email],['Phone',a.phone||''],
+    ['Address',(a.street||'')+', '+(a.city||'')+' '+(a.state||'')+' '+(a.zip||'')],
+    ['Membership Type',a.mtype],['Reference',a.reference||'None'],
+    ['How they heard',a.heard||''],['Why join',a.why||''],
+    ['Submitted',new Date(a.submittedAt).toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})],
+    ['Signature',a.signature+' ('+a.sigDate+')'],
+  ];
+  if(a.secFirst) details.push(['Secondary Adult',a.secFirst+' '+(a.secLast||'')+(a.secDob?' (DOB: '+a.secDob+')':'')]);
+  if(a.kids&&a.kids.length) details.push(['Children',a.kids.map(function(k){return k.name+(k.dob?' (DOB: '+k.dob+')':'');}).join(', ')]);
+  html+='<div style="background:var(--sand);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:6px">';
+  details.forEach(function(d){
+    html+='<div style="display:flex;gap:8px"><div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--mu);min-width:110px;padding-top:1px">'+d[0]+'</div>'
+      +'<div style="font-size:13px;color:var(--tx);flex:1">'+d[1]+'</div></div>';
+  });
+  html+='</div>';
+  // Votes
+  html+='<div style="background:var(--sand);border-radius:10px;padding:12px">'
+    +'<div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--mu);margin-bottom:8px">Votes ('+majority+' needed)</div>'
+    +'<div style="display:flex;gap:8px;margin-bottom:8px">'
+    +'<div style="flex:1;background:var(--grl);border-radius:8px;padding:10px;text-align:center"><div style="font-size:22px;font-weight:800;color:var(--gr)">'+approveCount+'</div><div style="font-size:10px;color:var(--gr);font-weight:700">APPROVE</div></div>'
+    +'<div style="flex:1;background:var(--rel);border-radius:8px;padding:10px;text-align:center"><div style="font-size:22px;font-weight:800;color:var(--re)">'+rejectCount+'</div><div style="font-size:10px;color:var(--re);font-weight:700">REJECT</div></div>'
+    +'</div>';
+  if(a.votes&&a.votes.approve&&a.votes.approve.length) html+='<div style="font-size:11px;color:var(--gr)">Approved by: '+a.votes.approve.join(', ')+'</div>';
+  if(a.votes&&a.votes.reject&&a.votes.reject.length) html+='<div style="font-size:11px;color:var(--re)">Rejected by: '+a.votes.reject.join(', ')+'</div>';
+  html+='</div>';
+  // Vote buttons
+  if(a.status==='pending'&&can('canVoteApplications')){
+    var myVote='';
+    if(currentUser&&a.votes){
+      if(a.votes.approve&&a.votes.approve.indexOf(currentUser.username)>=0) myVote='approve';
+      if(a.votes.reject&&a.votes.reject.indexOf(currentUser.username)>=0) myVote='reject';
+    }
+    if(!myVote){
+      html+='<div style="display:flex;gap:8px">'
+        +'<button data-appid="'+a.id+'" onclick="voteApplication(this.dataset.appid,&quot;approve&quot;);closeAppReview();" style="flex:1;padding:13px;background:var(--grl);border:2px solid var(--gr);border-radius:11px;font-size:15px;font-weight:700;font-family:-apple-system,sans-serif;cursor:pointer;color:var(--gr)">✔ Approve</button>'
+        +'<button data-appid="'+a.id+'" onclick="voteApplication(this.dataset.appid,&quot;reject&quot;);closeAppReview();" style="flex:1;padding:13px;background:var(--rel);border:2px solid var(--re);border-radius:11px;font-size:15px;font-weight:700;font-family:-apple-system,sans-serif;cursor:pointer;color:var(--re)">✖ Reject</button>'
+        +'</div>';
+    } else {
+      html+='<div style="text-align:center;font-size:13px;font-weight:700;color:var(--mu);padding:8px">You voted: '+myVote+'</div>';
+    }
+  }
+  // Admin: override approve/reject and convert
+  if(isMasterAdmin()&&a.status==='pending'){
+    html+='<div style="border-top:1px solid var(--sand2);padding-top:10px;display:flex;flex-direction:column;gap:8px">'
+      +'<div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--mu)">Admin Override</div>'
+      +'<div style="display:flex;gap:8px">'
+      +'<button data-appid="'+a.id+'" onclick="adminApproveApp(this.dataset.appid)" style="flex:1;padding:11px;background:var(--gr);border:none;border-radius:10px;font-size:13px;font-weight:700;font-family:-apple-system,sans-serif;cursor:pointer;color:#fff">Force Approve</button>'
+      +'<button data-appid="'+a.id+'" onclick="adminRejectApp(this.dataset.appid)" style="flex:1;padding:11px;background:var(--re);border:none;border-radius:10px;font-size:13px;font-weight:700;font-family:-apple-system,sans-serif;cursor:pointer;color:#fff">Force Reject</button>'
+      +'</div></div>';
+  }
+  // Admin notes
+  html+='<div class="fg"><label class="fl">Admin Notes</label>'
+    +'<textarea class="fi" id="app-admin-note" rows="2" style="resize:vertical" placeholder="Internal notes about this application...">'+(a.adminNotes||'')+'</textarea></div>'
+    +'<button data-appid="'+a.id+'" onclick="saveAppNote(this.dataset.appid)" style="width:100%;padding:11px;background:var(--bl);border:none;color:#fff;border-radius:10px;font-size:13px;font-weight:700;font-family:-apple-system,sans-serif;cursor:pointer">Save Notes</button>';
+  html+='</div>';
+  body.innerHTML=html;
+  var _ao=document.getElementById('appreview-overlay');_ao.style.display='flex';_ao.classList.add('open');
+}
+
+function closeAppReview(){
+  var _ac=document.getElementById('appreview-overlay');_ac.style.display='none';_ac.classList.remove('open');
+}
+
+function voteApplication(appId, vote){
+  if(!currentUser){showToast('Please sign in to vote','warn');return;}
+  var a=applications.find(function(x){return x.id===appId;}); if(!a) return;
+  var votes=a.votes||{approve:[],reject:[]};
+  // Remove any existing vote
+  votes.approve=votes.approve.filter(function(u){return u!==currentUser.username;});
+  votes.reject=votes.reject.filter(function(u){return u!==currentUser.username;});
+  votes[vote].push(currentUser.username);
+  // Check majority
+  var totalBoard=(members.filter(function(m){return m.type==='Board';}).length)||9;
+  var majority=Math.floor(totalBoard/2)+1;
+  var newStatus=a.status;
+  if(votes.approve.length>=majority) newStatus='approved';
+  if(votes.reject.length>=majority) newStatus='rejected';
+  var updated=Object.assign({},a,{votes:votes,status:newStatus});
+  if(newStatus==='approved'&&a.status!=='approved') convertApplicationToMember(updated);
+  saveApplication(updated);
+  var i=applications.findIndex(function(x){return x.id===appId;});
+  if(i>=0) applications[i]=updated;
+  showToast('Vote recorded: '+vote+(newStatus!==a.status?' — Application '+newStatus:''),'ok');
+  renderApplications();
+}
+
+function adminApproveApp(appId){
+  if(!confirm('Approve this application and create member record?')) return;
+  var a=applications.find(function(x){return x.id===appId;}); if(!a) return;
+  var updated=Object.assign({},a,{status:'approved'});
+  convertApplicationToMember(updated);
+  saveApplication(updated);
+  var i=applications.findIndex(function(x){return x.id===appId;});
+  if(i>=0) applications[i]=updated;
+  closeAppReview();
+  showToast('Application approved — member record created','ok');
+  renderApplications();
+}
+
+function adminRejectApp(appId){
+  if(!confirm('Reject this application?')) return;
+  var a=applications.find(function(x){return x.id===appId;}); if(!a) return;
+  var updated=Object.assign({},a,{status:'rejected'});
+  saveApplication(updated);
+  var i=applications.findIndex(function(x){return x.id===appId;});
+  if(i>=0) applications[i]=updated;
+  closeAppReview();
+  showToast('Application rejected','ok');
+  renderApplications();
+}
+
+function convertApplicationToMember(a){
+  var tc=getTypeConfig(a.mtype);
+  var newMember={
+    id:uid(),first:a.first,last:a.last,email:a.email,phone:a.phone||'',
+    street:a.street||'',city:a.city||'',state:a.state||'NC',zip:a.zip||'',
+    type:a.mtype,status:'pending',
+    adults:a.secFirst?2:1,children:(a.kids&&a.kids.length)||0,
+    kids:(a.kids||[]).map(function(k){return k.name;}),
+    secFirst:a.secFirst||'',secLast:a.secLast||'',
+    secPhone:a.secPhone||'',secEmail:a.secEmail||'',
+    guestsUsed:0,guestsTotal:tc.guestPasses||0,
+    notes_history:[{id:uid(),ts:Date.now(),text:'Membership application approved. Reference: '+(a.reference||'None'),showAtCheckin:false}],
+    rosterConfirmed:true,renewalYear:new Date().getFullYear(),
+    applicationId:a.id
+  };
+  saveMember(newMember);
+  members.push(newMember);
+  renderDir();
+}
+
+function saveAppNote(appId){
+  var inp=document.getElementById('app-admin-note'); if(!inp) return;
+  var a=applications.find(function(x){return x.id===appId;}); if(!a) return;
+  var updated=Object.assign({},a,{adminNotes:inp.value.trim()});
+  saveApplication(updated);
+  var i=applications.findIndex(function(x){return x.id===appId;});
+  if(i>=0) applications[i]=updated;
+  showToast('Notes saved','ok');
+}
+
+// ── APPLY MODE DETECTION ──────────────────────────────────────────────────────
+var APPLY_MODE = window.location.search.indexOf('apply=true') >= 0;
+
+function cycleLayout(){
+  var modes=['','layout-ipad','layout-iphone','layout-laptop'];
+  var labels=['Default','iPad Mini','iPhone','Laptop'];
+  var body=document.body;
+  var current=modes.findIndex(function(m){return m&&body.classList.contains(m);});
+  if(current<0) current=0; else modes.forEach(function(m){if(m)body.classList.remove(m);});
+  var next=(current+1)%modes.length;
+  if(modes[next]) body.classList.add(modes[next]);
+  var btn=document.getElementById('layout-btn');
+  if(btn){btn.title='Layout: '+labels[next];btn.textContent=labels[next].toUpperCase();}
+  try{localStorage.setItem('gsc_layout',modes[next]);}catch(e){}
+  showToast('Layout: '+labels[next]);
+}
+function initLayout(){
+  try{
+    var saved=localStorage.getItem('gsc_layout');
+    if(saved){
+      document.body.classList.add(saved);
+      var labels={'':'VIEW','layout-ipad':'IPAD','layout-iphone':'IPHONE','layout-laptop':'LAPTOP'};
+      var btn=document.getElementById('layout-btn');
+      if(btn) btn.textContent=labels[saved]||'VIEW';
+    }
+  }catch(e){}
+}
+
 function renderAll(){renderCI();renderDir();renderRep();renderAnnouncement();}
 
 function renderAnnouncement(){
@@ -1976,28 +2525,24 @@ function seedDemo(){
 
 var pinEntry='';
 function initPin(){}
-function updDots(){for(var i=0;i<4;i++)document.getElementById('d'+i).classList.toggle('on',i<pinEntry.length);}
-function pinKeyPress(k){
-  if(k==='clear'){pinEntry='';updDots();document.getElementById('pin-err').textContent='';return;}
-  if(k==='back'){pinEntry=pinEntry.slice(0,-1);updDots();return;}
-  if(pinEntry.length>=4)return;
-  pinEntry+=k;updDots();
-  if(pinEntry.length===4)setTimeout(checkPin,150);
-}function checkPin(){
-  if(pinEntry===getPin()){
-    var ps=document.getElementById('pin-screen');ps.classList.add('hidden');ps.style.display='none';
-    pinEntry='';updDots();renderAll();
-  }else{document.getElementById('pin-err').textContent='Incorrect PIN';pinEntry='';updDots();}
-}
+function updDots(){}
+function pinKeyPress(){}function checkPin(){}
 function lockApp(){var ps=document.getElementById('pin-screen');ps.style.display='flex';ps.classList.remove('hidden');}
 
-function requireAdminPin(cb){adminPinCallback=cb;adminPinEntry='';for(var i=0;i<4;i++)document.getElementById('ad'+i).classList.remove('on');document.getElementById('admin-err').textContent='';document.getElementById('admin-overlay').classList.add('open');}
-function adminKeyPress(k){if(k==='back')adminPinEntry=adminPinEntry.slice(0,-1);else if(k==='clear')adminPinEntry='';else if(adminPinEntry.length<4)adminPinEntry+=k;for(var i=0;i<4;i++)document.getElementById('ad'+i).classList.toggle('on',i<adminPinEntry.length);if(adminPinEntry.length===4)setTimeout(checkAdminPin,150);}
+function requireAdminPin(cb){
+  // PIN removed - use permission system
+  if(can('canAccessSettings')||can('canImportExport')||can('canAddDeleteMembers')||can('canChangePayment')){
+    cb(); return;
+  }
+  showToast('Admin login required for this action','warn');
+  openLogin();
+}
+function adminKeyPress(){}
 function checkAdminPin(){if(adminPinEntry===getPin()){document.getElementById('admin-overlay').classList.remove('open');adminPinEntry='';if(adminPinCallback){adminPinCallback();adminPinCallback=null;}}else{document.getElementById('admin-err').textContent='Incorrect PIN.';adminPinEntry='';for(var i=0;i<4;i++)document.getElementById('ad'+i).classList.remove('on');}}
 function closeAdmin(){document.getElementById('admin-overlay').classList.remove('open');adminPinCallback=null;}
 
 function switchTab(name){
-  ['ci','dir','rep','inc'].forEach(function(t){
+  ['ci','dir','rep','inc','app'].forEach(function(t){
     var pane=document.getElementById('pane-'+t);
     var tab=document.getElementById('tb-'+t);
     if(pane) pane.classList.toggle('on',t===name);
@@ -2011,6 +2556,7 @@ function switchTab(name){
   if(name==='rep') renderRep();
   if(name==='dir'){rebuildFilterBtns();renderDir();setTimeout(_bindDirSearch,50);}
   if(name==='inc') renderIncidents();
+  if(name==='app') renderApplications();
 }
 function setFilter(btn,f){dirFilter=f;document.querySelectorAll('.fbtn').forEach(function(b){b.classList.remove('on');});btn.classList.add('on');renderDir();}
 
@@ -2036,7 +2582,7 @@ function doQuickCI(mid,evt){
 function cardHTML(m,ciMode){
   var chip=chipInfo(m);
   var chipHtml='<div class="gchip '+chip.cls+'">'+chip.lbl+'</div>';
-  return'<button class="mcard '+cardCls(m)+'" onclick="openMember(&quot;'+m.id+'&quot;,'+ciMode+')" style="width:100%;text-align:left;font-family:Inter,sans-serif">'
+  return'<button class="mcard '+cardCls(m)+'" onclick="openMember(&quot;'+m.id+'&quot;,'+ciMode+')" style="width:100%;text-align:left;font-family:-apple-system,sans-serif">'
     +'<div class="mavatar">'+(m.last||'?')[0]+'</div>'
     +'<div class="minfo">'
     +'<div class="mname">'+m.last+', '+m.first+'</div>'
@@ -2168,7 +2714,7 @@ function renderCI(){
       var timeLabel=nowH<12?'this morning':nowH<17?'this afternoon':'this evening';
       el.innerHTML='<div class="ci-section-title" style="background:var(--sand)">&#x1F52E; Likely here '+timeLabel+' (based on history)</div>'
         +predicted.map(function(m){
-          return '<button class="predict-card" onclick="openMember(&quot;'+m.id+'&quot;,true)" style="width:100%;text-align:left;font-family:Inter,sans-serif;border:none;cursor:pointer">'
+          return '<button class="predict-card" onclick="openMember(&quot;'+m.id+'&quot;,true)" style="width:100%;text-align:left;font-family:-apple-system,sans-serif;border:none;cursor:pointer">'
             +'<div class="mavatar">'+(m.last||'?')[0]+'</div>'
             +'<div class="minfo"><div class="mname">'+m.last+', '+m.first+'</div>'
             +'<div class="predict-meta">'+m.type+' &middot; '+(m.status==='paid'?'<span style="color:var(--gr);font-weight:700">Paid</span>':'<span style="color:var(--re);font-weight:700">'+m.status+'</span>')+'</div>'
@@ -2298,7 +2844,7 @@ function openMember(id,ciMode){
       var unpaidWarn='';
       if(m.status==='unpaid'){
         var mid=m.id;
-        unpaidWarn='<div class="unpaid-warning"><div class="unpaid-warning-title">&#x26A0;&#xFE0F; Payment Outstanding</div><p>This membership has not paid for the current season.</p><div class="unpaid-days">'+unpaidDays+' / '+GRACE_DAYS+' grace days used</div><p style="font-size:12px;color:var(--re);font-weight:600">Check-in blocked after day 3 without payment.</p><div id="pay-alert-container"><button id="pay-alert-btn" data-mid="'+mid+'" onclick="sendPaymentAlert(this.dataset.mid)" style="width:100%;margin-top:4px;padding:10px;background:var(--or);border:none;color:#fff;border-radius:9px;font-size:13px;font-weight:700;font-family:Inter,sans-serif;cursor:pointer">&#x1F4E7; Member has paid — Submit for Review</button></div></div>';
+        unpaidWarn='<div class="unpaid-warning"><div class="unpaid-warning-title">&#x26A0;&#xFE0F; Payment Outstanding</div><p>This membership has not paid for the current season.</p><div class="unpaid-days">'+unpaidDays+' / '+GRACE_DAYS+' grace days used</div><p style="font-size:12px;color:var(--re);font-weight:600">Check-in blocked after day 3 without payment.</p><div id="pay-alert-container"><button id="pay-alert-btn" data-mid="'+mid+'" onclick="sendPaymentAlert(this.dataset.mid)" style="width:100%;margin-top:4px;padding:10px;background:var(--or);border:none;color:#fff;border-radius:9px;font-size:13px;font-weight:700;font-family:-apple-system,sans-serif;cursor:pointer">&#x1F4E7; Member has paid — Submit for Review</button></div></div>';
       }
       else if(m.status==='pending'){unpaidWarn='<div style="background:var(--aml);border:2px solid var(--am);border-radius:10px;padding:10px 13px;font-size:13px;color:var(--am);font-weight:600;text-align:center">&#x23F3; Payment pending &mdash; please follow up</div>';}
       var adultNames=[];
@@ -2317,12 +2863,12 @@ function openMember(id,ciMode){
       var canAddSec=getTypeConfig(m.type).maxAdults>1&&!getTypeConfig(m.type).requireSecond&&!(m.secFirst||m.secLast);
       var adultsSection='<div class="ci-section-lbl">Adults</div><div class="ci-checklist" id="ci-adult-list">';
       // Primary adult
-      adultsSection+='<div class="ci-check-item" id="ci-a0" onclick="ciToggle(\'ci-a0\')"><input type="checkbox" id="chk-a0" onchange="ciToggle(\'ci-a0\')"><label for="chk-a0">'+m.first+' '+m.last+' <span style="opacity:.5;font-size:11px">(primary)</span></label></div>';
+      adultsSection+='<button class="ci-check-item" id="ci-a0" onclick="ciToggle(\'ci-a0\')"><input type="checkbox" id="chk-a0" checked><label for="chk-a0">'+m.first+' '+m.last+'<span style="opacity:.5;font-size:11px;font-weight:400;margin-left:6px">(primary)</span></label></button>';
       // Secondary adult
       if(m.secFirst||m.secLast){
         adultsSection+='<div class="ci-check-item" id="ci-a1" onclick="ciToggle(\'ci-a1\')"><input type="checkbox" id="chk-a1" onchange="ciToggle(\'ci-a1\')"><label for="chk-a1">'+(m.secFirst||'')+' '+(m.secLast||'')+'</label></div>';
       } else if(needsSecondName){
-        adultsSection+='<div class="ci-check-item missing-name"><span style="font-size:13px;color:#ffd4c8">&#x26A0; Second adult name required for Couples membership</span><button onclick="ciPromptSecondAdult(\''+m.id+'\')" style="margin-left:auto;padding:5px 10px;background:var(--or);border:none;color:#fff;border-radius:7px;font-size:12px;font-weight:700;font-family:Inter,sans-serif;cursor:pointer;white-space:nowrap">Add Name</button></div>';
+        adultsSection+='<div class="ci-check-item missing-name"><span style="font-size:13px;color:#ffd4c8">&#x26A0; Second adult name required for Couples membership</span><button onclick="ciPromptSecondAdult(\''+m.id+'\')" style="margin-left:auto;padding:5px 10px;background:var(--or);border:none;color:#fff;border-radius:7px;font-size:12px;font-weight:700;font-family:-apple-system,sans-serif;cursor:pointer;white-space:nowrap">Add Name</button></div>';
       } else if(canAddSec){
         adultsSection+='<button class="ci-add-btn" onclick="ciPromptSecondAdult(\''+m.id+'\')" id="ci-add-sec-btn">&#xFF0B; Add second adult</button>';
       }
@@ -2341,7 +2887,7 @@ function openMember(id,ciMode){
       }
       // Guest passes counter
       var gpSection=m.guestsTotal>0
-        ?'<div style="border-top:1px solid rgba(255,255,255,.15);padding-top:10px"><div class="gp-counter-row"><div><div class="ci-lbl">&#x1F3AB; Guest Passes</div><div class="ci-sub">'+m.guestsTotal+' allotted &middot; '+(m.guestsUsed||0)+' used &middot; '+rem+' remaining</div></div><div class="ctr"><button class="cbtn" onclick="adjGuests(-1)">&minus;</button><div class="cval" id="ci-guests">0</div><button class="cbtn" onclick="adjGuests(1)">+</button></div></div><div id="gp-live-status" style="margin-top:6px"></div></div>'
+        ?'<div class="gp-section"><div class="gp-counter-row"><div><div class="ci-lbl">🎟 Guest Passes</div><div class="ci-sub">'+m.guestsTotal+' allotted · '+(m.guestsUsed||0)+' used · '+rem+' remaining</div></div><div class="ctr"><button class="cbtn" onclick="adjGuests(-1)">−</button><div class="cval" id="ci-guests">0</div><button class="cbtn" onclick="adjGuests(1)">+</button></div></div><div id="gp-live-status" style="margin-top:6px"></div></div>'
         :'';
       // Build missing info prompt if needed
       var missing=getMissingSteps(m);
@@ -2350,17 +2896,15 @@ function openMember(id,ciMode){
         missingBanner='<div style="background:#fef3c7;border:2px solid #f59e0b;border-radius:10px;padding:12px;margin-bottom:4px">'
         +'<div style="font-weight:800;font-size:13px;color:#92400e;margin-bottom:6px">&#x26A0;&#xFE0F; Missing Member Info Required</div>'
         +'<div style="font-size:12px;color:#92400e;margin-bottom:8px">Please complete all required info before checking in.</div>'
-        +'<button onclick="openMissingInfo(\''+m.id+'\')" style="width:100%;padding:13px;background:#f59e0b;border:none;color:#fff;border-radius:9px;font-size:15px;font-weight:700;font-family:Inter,sans-serif;cursor:pointer;margin-top:2px">&#x270F;&#xFE0F; Complete Member Info</button>'
+        +'<button onclick="openMissingInfo(\''+m.id+'\')" style="width:100%;padding:13px;background:#f59e0b;border:none;color:#fff;border-radius:9px;font-size:15px;font-weight:700;font-family:-apple-system,sans-serif;cursor:pointer;margin-top:2px">&#x270F;&#xFE0F; Complete Member Info</button>'
         +'</div>';
       }
-      var panelBg=m.status==='paid'
-        ?'linear-gradient(135deg,#064e3b,#065f46)'
-        :(m.status==='unpaid'?'linear-gradient(135deg,#7f1d1d,#991b1b)':'linear-gradient(135deg,#78350f,#92400e)');
+      var panelBg=m.status==='paid'?'var(--wh)':'var(--wh)';
       var statusBar=m.status==='paid'
-        ?'<div style="background:rgba(134,239,172,.2);border:1.5px solid rgba(134,239,172,.4);color:#bbf7d0;font-weight:800;font-size:14px;padding:8px 12px;border-radius:9px;text-align:center">&#x2705; PAID &mdash; Good to go!</div>'
+        ?'<div style="background:var(--grl);border:2px solid var(--gr);color:var(--gr);font-weight:800;font-size:14px;padding:10px 12px;border-radius:9px;text-align:center">✅ PAID — Good to go!</div>'
         :(m.status==='unpaid'
-          ?'<div style="background:rgba(254,202,202,.2);border:1.5px solid rgba(254,202,202,.4);color:#fecaca;font-weight:800;font-size:14px;padding:8px 12px;border-radius:9px;text-align:center">&#x1F6AB; UNPAID &mdash; Payment required</div>'
-          :'<div style="background:rgba(253,230,138,.2);border:1.5px solid rgba(253,230,138,.4);color:#fde68a;font-weight:800;font-size:14px;padding:8px 12px;border-radius:9px;text-align:center">&#x23F3; PENDING &mdash; Follow up on payment</div>');
+          ?'<div style="background:var(--rel);border:2px solid var(--re);color:var(--re);font-weight:800;font-size:14px;padding:10px 12px;border-radius:9px;text-align:center">&#x1F6AB; UNPAID — Payment required</div>'
+          :'<div style="background:var(--aml);border:2px solid var(--am);color:var(--am);font-weight:800;font-size:14px;padding:10px 12px;border-radius:9px;text-align:center">⏳ PENDING — Follow up on payment</div>');
       html+='<div class="ci-panel" style="background:'+panelBg+'">'
         +'<div class="ci-title">&#x1F40A; Today\'s Visit</div>'
         +missingBanner
@@ -2371,7 +2915,7 @@ function openMember(id,ciMode){
         +kidsSection
         +gpSection
         +'<div id="ci-over-note"></div>'
-        +(canQuickCheckIn(m)?'<button class="quick-ci-btn" style="border-radius:9px;margin-bottom:4px;font-size:15px;padding:13px" onclick="quickCheckIn(\''+m.id+'\',event)">&#x26A1; Quick Check In All &nbsp;&mdash;&nbsp; one tap</button>':'')
+        +(canQuickCheckIn(m)?'<button class="quick-ci-btn" onclick="quickCheckIn(\''+m.id+'\',event)">⚡ Quick Check In All — one tap</button>':'')
         +'<button class="ci-checkin-btn" onclick="doCheckin(\''+m.id+'\')">&#x2705; Check In'+(checkedToday?' Again':'')+'</button></div>';
     }
   }
@@ -2414,7 +2958,7 @@ function ciPromptSecondAdult(memberId){
   row.className='ci-check-item';
   row.style.gap='6px';
   row.innerHTML='<input class="ci-inline-input" id="ci-sec-name-input" placeholder="Second adult first &amp; last name" autofocus>'
-    +'<button onclick="ciSaveSecondAdult(\''+memberId+'\')" style="padding:6px 10px;background:var(--or);border:none;color:#fff;border-radius:7px;font-size:12px;font-weight:700;font-family:Inter,sans-serif;cursor:pointer">Save</button>';
+    +'<button onclick="ciSaveSecondAdult(\''+memberId+'\')" style="padding:6px 10px;background:var(--or);border:none;color:#fff;border-radius:7px;font-size:12px;font-weight:700;font-family:-apple-system,sans-serif;cursor:pointer">Save</button>';
   btn.parentNode.replaceChild(row,btn);
   setTimeout(function(){var inp=document.getElementById('ci-sec-name-input');if(inp)inp.focus();},50);
 }
@@ -2440,7 +2984,7 @@ function ciAddKidInline(){
   row.style.cssText='display:flex;gap:6px;align-items:center';
   var newId='ci-k-new-'+Date.now();
   row.innerHTML='<input class="ci-inline-input" id="'+newId+'" placeholder="Child first name">'
-    +'<button onclick="ciConfirmNewKid(\''+newId+'\')" style="padding:6px 10px;background:var(--or);border:none;color:#fff;border-radius:7px;font-size:12px;font-weight:700;font-family:Inter,sans-serif;cursor:pointer;white-space:nowrap">Add</button>';
+    +'<button onclick="ciConfirmNewKid(\''+newId+'\')" style="padding:6px 10px;background:var(--or);border:none;color:#fff;border-radius:7px;font-size:12px;font-weight:700;font-family:-apple-system,sans-serif;cursor:pointer;white-space:nowrap">Add</button>';
   list.insertBefore(row,addBtn);
   setTimeout(function(){var inp=document.getElementById(newId);if(inp)inp.focus();},50);
 }
@@ -2560,7 +3104,7 @@ document.getElementById('ed-body').innerHTML=
   +'<div class="frow"><div class="fg"><label class="fl">City</label><input class="fi" id="ef-city" value="'+(m.city||'')+'" placeholder="Gibsonville"></div><div class="fg"><label class="fl">State</label><input class="fi" id="ef-state" value="'+(m.state||'NC')+'" placeholder="NC"></div></div>'
   +'<div class="fg"><label class="fl">Zip Code</label><input class="fi" id="ef-zip" value="'+(m.zip||'')+'" placeholder="27249" style="max-width:140px"></div>'
   +'<div class="fg"><label class="fl">Membership Type</label><select class="fs" id="ef-type" onchange="typeChanged()">'+CONFIG.membershipTypes.map(function(t){return'<option value="'+t.key+'"'+(m.type===t.key?' selected':'')+'>'+t.label+(t.requireSecond?' (2 adults required)':t.maxAdults>1&&t.allowChildren?' (adults + children)':t.adults===1&&!t.allowChildren?' (1 adult)':t.maxAdults===2&&!t.allowChildren?' (2 adults)':'')+' &mdash; '+t.guestPasses+' passes'+'</option>';}).join('')+'</select></div>'
-  +'<div class="fg"><label class="fl">Payment Status</label><div style="display:flex;gap:8px;align-items:center"><div style="flex:1;padding:11px 13px;border:2px solid var(--sand2);border-radius:10px;background:var(--sand);font-size:16px;color:var(--tx)" id="status-display">'+({paid:'Paid',pending:'Pending',unpaid:'Unpaid'}[m.status||'paid']||'Paid')+'</div><input type="hidden" id="ef-status" value="'+(m.status||'paid')+'"><button onclick="changePaymentStatus()" style="padding:11px 13px;background:var(--bl);border:none;color:#fff;border-radius:10px;font-size:13px;font-weight:700;font-family:Inter,sans-serif;cursor:pointer;white-space:nowrap">&#x1F511; Change</button></div></div>'
+  +'<div class="fg"><label class="fl">Payment Status</label><div style="display:flex;gap:8px;align-items:center"><div style="flex:1;padding:11px 13px;border:2px solid var(--sand2);border-radius:10px;background:var(--sand);font-size:16px;color:var(--tx)" id="status-display">'+({paid:'Paid',pending:'Pending',unpaid:'Unpaid'}[m.status||'paid']||'Paid')+'</div><input type="hidden" id="ef-status" value="'+(m.status||'paid')+'"><button onclick="changePaymentStatus()" style="padding:11px 13px;background:var(--bl);border:none;color:#fff;border-radius:10px;font-size:13px;font-weight:700;font-family:-apple-system,sans-serif;cursor:pointer;white-space:nowrap">&#x1F511; Change</button></div></div>'
   +'<div class="sec-lbl">Guest Passes</div>'
   +'<div class="frow"><div class="fg"><label class="fl">Used</label><input class="fi" id="ef-gused" type="number" min="0" value="'+(m.guestsUsed||0)+'"></div><div class="fg"><label class="fl">Total Allotted</label><input class="fi" id="ef-gtotal" type="number" min="0" value="'+(m.guestsTotal!==undefined?m.guestsTotal:GUEST_PASSES[m.type||'Individual'])+'"></div></div>'
   +'<div class="sec-lbl">Household Roster</div>'
@@ -2583,7 +3127,8 @@ document.getElementById('ed-body').innerHTML=
   +(id?'<button class="btn-d" onclick="confirmDelete(\''+id+'\')">&#x1F5D1; Delete Member</button>':'');
 document.getElementById('ed-overlay').classList.add('open');updateSecVisibility();}
 
-function changePaymentStatus(){requireAdminPin(function(){var cur=document.getElementById('ef-status').value;var opts=['paid','pending','unpaid'];var labels={paid:'Paid',pending:'Pending',unpaid:'Unpaid'};var next=opts[(opts.indexOf(cur)+1)%opts.length];document.getElementById('ef-status').value=next;document.getElementById('status-display').textContent=labels[next];showToast('Status changed to '+labels[next],'ok');});}
+function changePaymentStatus(){
+  if(!can('canChangePayment')){showToast('You do not have permission to change payment status','warn');return;}requireAdminPin(function(){var cur=document.getElementById('ef-status').value;var opts=['paid','pending','unpaid'];var labels={paid:'Paid',pending:'Pending',unpaid:'Unpaid'};var next=opts[(opts.indexOf(cur)+1)%opts.length];document.getElementById('ef-status').value=next;document.getElementById('status-display').textContent=labels[next];showToast('Status changed to '+labels[next],'ok');});}
 function getTypeConfig(key){
   return CONFIG.membershipTypes.find(function(t){return t.key===key;})||{adults:1,maxAdults:1,guestPasses:0,requireSecond:false,allowChildren:false};
 }
@@ -2670,7 +3215,7 @@ function renderRep(){
   // ── KPI card builder ─────────────────────────────────────────────────────
   function stat(val, lbl, color, chartId){
     var chartBtn=chartId
-      ?'<button onclick="showRepChart(\''+chartId+'\')" style="margin-top:8px;background:none;border:none;padding:0;cursor:pointer;font-size:11px;font-weight:700;color:'+color+';opacity:.7;font-family:Inter,sans-serif;letter-spacing:.3px">View Chart ›</button>'
+      ?'<button onclick="showRepChart(\''+chartId+'\')" style="margin-top:8px;background:none;border:none;padding:0;cursor:pointer;font-size:11px;font-weight:700;color:'+color+';opacity:.7;font-family:-apple-system,sans-serif;letter-spacing:.3px">View Chart ›</button>'
       :'';
     return '<div class="rstat" style="--rcolor:'+color+'">'
       +'<div class="rstat-val">'+val+'</div>'
@@ -3245,14 +3790,14 @@ function renderIncidents(){
 function openNewIncident(){
   document.getElementById('inc-modal-title').textContent='New Incident';
   document.getElementById('inc-modal-body').innerHTML=buildIncidentForm(null);
-  document.getElementById('inc-overlay').style.display='flex';
+  var _io=document.getElementById('inc-overlay');_io.style.display='flex';_io.classList.add('open');
 }
 
 function viewIncident(id){
   var inc=incidents.find(function(x){return x.id===id;}); if(!inc) return;
   document.getElementById('inc-modal-title').textContent='Incident Report';
   document.getElementById('inc-modal-body').innerHTML=buildIncidentForm(inc);
-  document.getElementById('inc-overlay').style.display='flex';
+  var _io=document.getElementById('inc-overlay');_io.style.display='flex';_io.classList.add('open');
 }
 
 function buildIncidentForm(inc){
@@ -3333,7 +3878,7 @@ function saveFollowupNote(id){
 }
 
 function closeIncident(){
-  document.getElementById('inc-overlay').style.display='none';
+  var _ic=document.getElementById('inc-overlay');_ic.style.display='none';_ic.classList.remove('open');
 }
 
 function saveTimeoutSetting(){
@@ -3382,13 +3927,13 @@ function showUserManagementUI(users){
         +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">'
         +'<div><div style="font-weight:700;font-size:14px">'+u.displayName+'</div>'
         +'<div style="font-size:11px;color:var(--mu)">@'+u.username+' &middot; '+u.roleLabel+'</div></div>'
-        +'<button onclick="deleteStaffUser(&quot;'+u.id+'&quot;)" style="background:var(--rel);border:none;color:var(--re);padding:6px 10px;border-radius:8px;font-size:12px;font-weight:700;font-family:Inter,sans-serif;cursor:pointer">Remove</button>'
+        +'<button onclick="deleteStaffUser(&quot;'+u.id+'&quot;)" style="background:var(--rel);border:none;color:var(--re);padding:6px 10px;border-radius:8px;font-size:12px;font-weight:700;font-family:-apple-system,sans-serif;cursor:pointer">Remove</button>'
         +'</div>'
         +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px">'+PERMS.map(function(p){
           return'<label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--tx);cursor:pointer">'
             +'<input type="checkbox" data-uid="'+u.id+'" data-perm="'+p.key+'" onchange="updateUserPerm(this)"'+(perms[p.key]?' checked':'')+' style="accent-color:var(--or)"> '+p.label+'</label>';
         }).join('')+'</div>'
-        +'<button data-uid="'+u.id+'" data-name="'+u.displayName+'" onclick="resetUserPassword(this.dataset.uid,this.dataset.name)" style="margin-top:8px;background:var(--bll);border:none;color:var(--bl);padding:7px 12px;border-radius:8px;font-size:12px;font-weight:700;font-family:Inter,sans-serif;cursor:pointer;width:100%">Reset Password</button>'
+        +'<button data-uid="'+u.id+'" data-name="'+u.displayName+'" onclick="resetUserPassword(this.dataset.uid,this.dataset.name)" style="margin-top:8px;background:var(--bll);border:none;color:var(--bl);padding:7px 12px;border-radius:8px;font-size:12px;font-weight:700;font-family:-apple-system,sans-serif;cursor:pointer;width:100%">Reset Password</button>'
         +'</div>';
     });
   } else {
@@ -3406,7 +3951,7 @@ function showUserManagementUI(users){
       return'<label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer">'
         +'<input type="checkbox" class="nu-perm" data-perm="'+p.key+'" style="accent-color:var(--or)"'+(DEFAULT_PERMISSIONS.board[p.key]?' checked':'')+'>'+p.label+'</label>';
     }).join('')+'</div>'
-    +'<button onclick="addStaffUser()" style="width:100%;padding:12px;background:var(--or);border:none;color:#fff;border-radius:10px;font-size:14px;font-weight:700;font-family:Inter,sans-serif;cursor:pointer">Add User</button>'
+    +'<button onclick="addStaffUser()" style="width:100%;padding:12px;background:var(--or);border:none;color:#fff;border-radius:10px;font-size:14px;font-weight:700;font-family:-apple-system,sans-serif;cursor:pointer">Add User</button>'
     +'</div>';
   html+='</div>';
   // Show in a modal
@@ -3507,7 +4052,7 @@ function sciShowSetup(){
     +'</div>'
     +'<div class="fg"><label class="fl">Setup Code (from attendant)</label>'
     +'<input class="fi" id="sci-setup-code" type="tel" maxlength="6" placeholder="______" style="font-size:24px;text-align:center;letter-spacing:8px"></div>'
-    +'<button onclick="verifySciSetupCode()" style="width:100%;padding:16px;background:var(--or);border:none;color:#fff;border-radius:11px;font-size:17px;font-weight:700;font-family:Inter,sans-serif;cursor:pointer">Continue</button>'
+    +'<button onclick="verifySciSetupCode()" style="width:100%;padding:16px;background:var(--or);border:none;color:#fff;border-radius:11px;font-size:17px;font-weight:700;font-family:-apple-system,sans-serif;cursor:pointer">Continue</button>'
     +'<div id="sci-setup-err" style="color:var(--re);font-size:13px;font-weight:600;text-align:center;min-height:18px"></div>';
   document.getElementById('sci-body').innerHTML=html;
 }
@@ -3605,7 +4150,7 @@ function renderSciPinEntry(){
     }).join('')
     +'</div>'
     +'<div id="sci-pin-err" style="color:var(--re);font-size:13px;font-weight:600;text-align:center;min-height:18px"></div>'
-    +'<button onclick="sciForgetDevice()" style="margin-top:12px;background:none;border:none;color:var(--mu);font-size:12px;cursor:pointer;font-family:Inter,sans-serif">Not '+m.first+'? Tap here</button>';
+    +'<button onclick="sciForgetDevice()" style="margin-top:12px;background:none;border:none;color:var(--mu);font-size:12px;cursor:pointer;font-family:-apple-system,sans-serif">Not '+m.first+'? Tap here</button>';
   document.getElementById('sci-body').innerHTML=html;
 }
 
@@ -3684,15 +4229,15 @@ function sciShowCheckin(){
       +'<div><div style="font-size:13px;font-weight:700;color:var(--bld)">🎟 Guest Passes</div>'
       +'<div style="font-size:11px;color:var(--mu)">'+rem+' of '+m.guestsTotal+' remaining</div></div>'
       +'<div style="display:flex;align-items:center;gap:12px">'
-      +'<button onclick="sciAdjGuests(-1)" style="width:44px;height:44px;border-radius:50%;background:var(--or);border:none;color:#fff;font-size:22px;font-weight:700;cursor:pointer;font-family:Inter,sans-serif">−</button>'
+      +'<button onclick="sciAdjGuests(-1)" style="width:44px;height:44px;border-radius:50%;background:var(--or);border:none;color:#fff;font-size:22px;font-weight:700;cursor:pointer;font-family:-apple-system,sans-serif">−</button>'
       +'<div style="font-size:22px;font-weight:800;color:var(--bld);min-width:24px;text-align:center" id="sci-guests-count">0</div>'
-      +'<button onclick="sciAdjGuests(1)" style="width:44px;height:44px;border-radius:50%;background:var(--or);border:none;color:#fff;font-size:22px;font-weight:700;cursor:pointer;font-family:Inter,sans-serif">+</button>'
+      +'<button onclick="sciAdjGuests(1)" style="width:44px;height:44px;border-radius:50%;background:var(--or);border:none;color:#fff;font-size:22px;font-weight:700;cursor:pointer;font-family:-apple-system,sans-serif">+</button>'
       +'</div></div>'
       +'<div id="sci-gp-status"></div>'
       +'</div>';
   }
 
-  html+='<button onclick="sciSubmitCheckin(&quot;'+m.id+'&quot;)" style="width:100%;padding:18px;background:var(--or);border:none;color:#fff;border-radius:12px;font-size:18px;font-weight:800;font-family:Inter,sans-serif;cursor:pointer;margin-top:4px">✅ Check In</button>';
+  html+='<button onclick="sciSubmitCheckin(&quot;'+m.id+'&quot;)" style="width:100%;padding:18px;background:var(--or);border:none;color:#fff;border-radius:12px;font-size:18px;font-weight:800;font-family:-apple-system,sans-serif;cursor:pointer;margin-top:4px">✅ Check In</button>';
 
   document.getElementById('sci-body').innerHTML=html;
   window._sciGuests=0;
@@ -3803,84 +4348,31 @@ function resetMigrationFlag(){
 }
 
 function doSeasonReset(){if(!confirm('Reset all guest pass counts for the new season?'))return;members=members.map(function(m){return Object.assign({},m,{guestsUsed:0,guestsTotal:GUEST_PASSES[m.type]!==undefined?GUEST_PASSES[m.type]:m.guestsTotal});});lSet('gsc_members',members);renderAll();closeSettings();showToast('Season reset complete');}
+
+
+// ── BOOT ──────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', function(){
+  // Set topbar date
+  var d = new Date();
+  var dateEl = document.getElementById('topbar-date');
+  if(dateEl) dateEl.textContent = d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'}).toUpperCase();
+
+  // Early hide for special modes
+  if(window.location.search.indexOf('selfcheckin=true') >= 0){
+    var app = document.getElementById('app');
+    var shell = document.getElementById('sci-shell');
+    if(app) app.style.display = 'none';
+    if(shell) shell.classList.add('on');
+  }
+  if(window.location.search.indexOf('apply=true') >= 0){
+    var app2 = document.getElementById('app');
+    if(app2) app2.style.display = 'none';
+  }
+
+  initLayout();
+  tryInitFirebase();
+});
+
 </script>
-
-<!-- MISSING MEMBER INFO MODAL -->
-<div class="overlay" id="miss-overlay" style="display:none">
-  <div class="sheet" id="miss-sheet" style="max-height:90vh;overflow-y:auto">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-      <div>
-        <div style="font-size:18px;font-weight:800;color:var(--bld)" id="miss-member-name"></div>
-        <div style="font-size:12px;color:var(--am);font-weight:600;margin-top:2px">&#x26A0;&#xFE0F; Missing Member Info — required before check-in</div>
-      </div>
-      <div style="font-size:11px;color:var(--mu);font-weight:600" id="miss-step-indicator"></div>
-    </div>
-    <div id="miss-step-body"></div>
-    <div style="display:flex;gap:8px;margin-top:14px">
-      <button class="btn-s" id="miss-back-btn" onclick="missBack()" style="display:none">&#x2190; Back</button>
-      <button class="btn-p" id="miss-next-btn" onclick="missNext()">Next &#x2192;</button>
-    </div>
-  </div>
-</div>
-
-<!-- MISSING MEMBER INFO MODAL -->
-<div class="overlay" id="mi-overlay" style="display:none;z-index:9990">
-  <div class="sheet" id="mi-sheet" style="max-height:85vh;overflow-y:auto">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
-      <div style="font-size:18px;font-weight:800;color:var(--bld)">&#x26A0;&#xFE0F; Missing Member Info</div>
-      <div style="font-size:11px;color:var(--mu);font-weight:600" id="mi-progress"></div>
-    </div>
-    <p style="font-size:13px;color:var(--mu);margin:0 0 14px">Please complete this information before checking in.</p>
-    <div id="mi-step-body"></div>
-    <div style="display:flex;gap:8px;margin-top:12px">
-      <button class="btn-s" id="mi-back-btn" onclick="miBack()" style="display:none">&#x2190; Back</button>
-      <button class="btn-p" id="mi-next-btn" onclick="miNext()">Next &#x2192;</button>
-    </div>
-  </div>
-</div>
-<!-- SELF CHECK-IN SHELL -->
-<div id="self-ci-shell">
-  <div class="sci-header">
-    <div style="font-size:36px">🐊</div>
-    <div class="sci-header-text">
-      <div class="sci-title">Gibsonville Swim Club</div>
-      <div class="sci-sub">Member Check-In</div>
-    </div>
-  </div>
-  <div class="sci-body" id="sci-body">
-    <!-- Content injected by JS -->
-  </div>
-  <!-- Success overlay -->
-  <div class="sci-success" id="sci-success" style="display:none">
-    <div class="sci-success-icon">✅</div>
-    <div class="sci-success-name" id="sci-success-name"></div>
-    <div class="sci-success-sub" id="sci-success-sub"></div>
-  </div>
-</div>
-
-<!-- LOGIN OVERLAY -->
-<div id="login-overlay" style="display:none;z-index:9999;position:fixed;inset:0;z-index:9995;background:var(--bld);flex-direction:column;align-items:center;justify-content:center;padding:24px">
-  <img src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐊</text></svg>" style="width:60px;height:60px;margin-bottom:8px">
-  <div style="font-size:22px;font-weight:800;color:var(--or);margin-bottom:4px">Gibsonville Swim Club</div>
-  <div style="font-size:13px;color:rgba(255,255,255,.5);margin-bottom:28px">Staff Login</div>
-  <div style="width:100%;max-width:340px;display:flex;flex-direction:column;gap:12px">
-    <div class="fg"><label class="fl" style="color:rgba(255,255,255,.6)">Username</label><input class="fi" id="login-user" type="text" autocomplete="username" autocorrect="off" autocapitalize="off" placeholder="Enter username"></div>
-    <div class="fg"><label class="fl" style="color:rgba(255,255,255,.6)">Password</label><input class="fi" id="login-pass" type="password" autocomplete="current-password" placeholder="Enter password" onkeydown="if(event.key==='Enter')doLogin()"></div>
-    <div id="login-err" style="color:#fca5a5;font-size:13px;font-weight:600;text-align:center;min-height:18px"></div>
-    <button onclick="doLogin()" style="width:100%;padding:15px;background:var(--or);border:none;color:#fff;border-radius:11px;font-size:16px;font-weight:700;font-family:Inter,sans-serif;cursor:pointer">Sign In</button>
-    <button onclick="closeLogin()" style="width:100%;padding:12px;background:rgba(255,255,255,.08);border:1.5px solid rgba(255,255,255,.15);color:rgba(255,255,255,.6);border-radius:11px;font-size:14px;font-weight:600;font-family:Inter,sans-serif;cursor:pointer">Continue as Attendant</button>
-  </div>
-</div>
-
-<!-- INCIDENT MODAL -->
-<div class="overlay" id="inc-overlay" style="display:none;z-index:200">
-  <div class="sheet" style="max-height:90vh;overflow-y:auto">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-      <div style="font-size:18px;font-weight:800;color:var(--bld)" id="inc-modal-title">New Incident</div>
-      <button class="mclose" onclick="closeIncident()">&#x2715;</button>
-    </div>
-    <div id="inc-modal-body"></div>
-  </div>
-</div>
 </body>
 </html>
