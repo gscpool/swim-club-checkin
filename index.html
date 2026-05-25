@@ -262,6 +262,18 @@ body.layout-laptop .rstat-grid{grid-template-columns:repeat(6,1fr)}
 .st-board{border-left:4px solid var(--or) !important}
 .st-comp{border-left:4px solid var(--mu) !important}
 
+
+/* Directory filter buttons */
+.filter-group{display:flex;flex-direction:column;gap:4px;width:100%}
+.filter-group-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--mu);padding:0 2px}
+.filter-row{display:flex;gap:5px;flex-wrap:wrap}
+.fbtn{padding:6px 12px;border-radius:20px;border:1.5px solid var(--sand2);background:var(--wh);font-size:12px;font-weight:600;color:var(--mu);cursor:pointer;font-family:-apple-system,sans-serif;transition:all .12s;white-space:nowrap}
+.fbtn:active{transform:scale(.95)}
+.fbtn.on{border-color:var(--bl);background:var(--bl);color:var(--wh)}
+.fbtn.on-paid{border-color:#22c55e;background:#22c55e;color:#fff}
+.fbtn.on-unpaid{border-color:#ef4444;background:#ef4444;color:#fff}
+.fbtn.on-pending{border-color:#f59e0b;background:#f59e0b;color:#fff}
+
 </style>
 </head>
 <body>
@@ -303,7 +315,7 @@ body.layout-laptop .rstat-grid{grid-template-columns:repeat(6,1fr)}
       <div>
         <div class="topbar-title">Gibsonville Swim Club</div>
         <div class="topbar-date" id="topbar-date"></div>
-        <div style="font-size:9px;color:rgba(255,255,255,.35)">v2.1.8</div>
+        <div style="font-size:9px;color:rgba(255,255,255,.35)">v2.1.9</div>
       </div>
     </div>
     <div class="topbar-right">
@@ -339,7 +351,7 @@ body.layout-laptop .rstat-grid{grid-template-columns:repeat(6,1fr)}
   <div id="pane-dir" class="pane">
     <div class="sbar" style="display:none"><input class="sinput" id="dir-search" type="text" placeholder="Search..." oninput="renderDir()" autocomplete="off"></div>
     <div style="padding:8px 13px 0;background:var(--sand)">
-      <div id="dir-filter-strip" style="display:flex;gap:6px;flex-wrap:wrap;padding-bottom:8px"></div>
+      <div id="dir-filter-btns" style="display:flex;gap:6px;flex-wrap:wrap;padding-bottom:8px"></div>
     </div>
     <div id="dir-alpha-strip" style="display:flex;flex-wrap:wrap;gap:6px;padding:8px 13px 10px;justify-content:center;align-content:center;background:var(--sand);border-bottom:1px solid var(--sand2);flex-shrink:0"></div>
     <div class="rlist" id="dir-list"></div>
@@ -491,7 +503,7 @@ body.layout-laptop .rstat-grid{grid-template-columns:repeat(6,1fr)}
 <script>
 
 
-var _APP_VERSION="v2.1.8";
+var _APP_VERSION="v2.1.9";
 
 // ── SELF CHECK-IN MODE ────────────────────────────────────────────────────────
 var SELF_CI_MODE = window.location.search.indexOf('selfcheckin=true') >= 0;
@@ -2793,15 +2805,35 @@ function renderCI(){
 }
 
 function rebuildFilterBtns(){
-  // Add inactive filter if any inactive/terminated members exist
-  var hasInactive=members.some(function(m){return m.status==='inactive'||m.status==='terminated';});
   var el=document.getElementById('dir-filter-btns'); if(!el) return;
-  var current=dirFilter;
-  el.innerHTML='<button class="fbtn'+(current==='all'?' on':'')+'" onclick="setFilter(this,&quot;all&quot;)">All</button>'
-    +CONFIG.membershipTypes.map(function(t){
-      return '<button class="fbtn'+(current===t.key?' on':'')+'" onclick="setFilter(this,&quot;'+t.key+'&quot;)">'+t.label+'</button>';
-    }).join('')
-    +'<button class="fbtn'+(current==='unpaid'?' on':'')+'" onclick="setFilter(this,&quot;unpaid&quot;)">Unpaid</button>';
+  var hasInactive=members.some(function(m){return m.status==='inactive'||m.status==='terminated';});
+  var cur=dirFilter;
+
+  // Status row
+  var statusBtns='<div class="filter-group-label">Status</div><div class="filter-row">';
+  var statusFilters=[
+    {k:'all',   lbl:'All',      cls:''},
+    {k:'paid',  lbl:'✓ Paid',   cls:'on-paid'},
+    {k:'unpaid',lbl:'⚠ Unpaid', cls:'on-unpaid'},
+    {k:'pending',lbl:'Pending', cls:'on-pending'},
+  ];
+  if(hasInactive) statusFilters.push({k:'inactive',lbl:'Inactive',cls:''});
+  statusFilters.forEach(function(f){
+    var isOn=cur===f.k;
+    var onCls=isOn?(f.cls||'on'):'';
+    statusBtns+='<button class="fbtn '+onCls+'" onclick="setFilter(this,&quot;'+f.k+'&quot;)">'+f.lbl+'</button>';
+  });
+  statusBtns+='</div>';
+
+  // Type row
+  var typeBtns='<div class="filter-group-label" style="margin-top:6px">Type</div><div class="filter-row">';
+  CONFIG.membershipTypes.forEach(function(t){
+    var isOn=cur===t.key;
+    typeBtns+='<button class="fbtn '+(isOn?'on':'')+'" onclick="setFilter(this,&quot;'+t.key+'&quot;)">'+t.label+'</button>';
+  });
+  typeBtns+='</div>';
+
+  el.innerHTML='<div class="filter-group">'+statusBtns+typeBtns+'</div>';
 }
 
 function setAlpha(letter){
@@ -2812,9 +2844,19 @@ function setAlpha(letter){
 function renderDir(){
   if(!dirFilter) dirFilter='all';
   // Hide inactive/terminated unless explicitly filtered
-  var list=members.filter(function(m){return dirFilter==='inactive'||(m.status!=='inactive'&&m.status!=='terminated');});
-  if(dirFilter==='unpaid') list=list.filter(function(m){return m.status!=='paid';});
-  else if(dirFilter!=='all') list=list.filter(function(m){return m.type===dirFilter;});
+  // Filter by status or type
+  var statusFilters=['all','paid','unpaid','pending','inactive'];
+  var isStatusFilter=statusFilters.indexOf(dirFilter)>=0;
+  var list;
+  if(dirFilter==='inactive'){
+    list=members.filter(function(m){return m.status==='inactive'||m.status==='terminated';});
+  } else if(isStatusFilter&&dirFilter!=='all'){
+    list=members.filter(function(m){return m.status===dirFilter;});
+  } else {
+    // Hide inactive/terminated from 'all' and type filters unless explicitly chosen
+    list=members.filter(function(m){return m.status!=='inactive'&&m.status!=='terminated';});
+    if(dirFilter!=='all') list=list.filter(function(m){return m.type===dirFilter;});
+  }
   if(dirAlpha) list=list.filter(function(m){return (m.last||'').toUpperCase().startsWith(dirAlpha);});
   list.sort(function(a,b){return a.last.localeCompare(b.last)||a.first.localeCompare(b.first);});
 
