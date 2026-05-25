@@ -316,7 +316,7 @@ body.layout-laptop .rstat-grid{grid-template-columns:repeat(6,1fr)}
       <div>
         <div class="topbar-title">Gibsonville Swim Club</div>
         <div class="topbar-date" id="topbar-date"></div>
-        <div style="font-size:9px;color:rgba(255,255,255,.35)">v2.2.2</div>
+        <div style="font-size:9px;color:rgba(255,255,255,.35)">v2.2.3</div>
       </div>
     </div>
     <div class="topbar-right">
@@ -518,7 +518,7 @@ body.layout-laptop .rstat-grid{grid-template-columns:repeat(6,1fr)}
 <script>
 
 
-var _APP_VERSION="v2.2.2";
+var _APP_VERSION="v2.2.3";
 
 // ── SELF CHECK-IN MODE ────────────────────────────────────────────────────────
 var SELF_CI_MODE = window.location.search.indexOf('selfcheckin=true') >= 0;
@@ -2941,14 +2941,14 @@ function renderCI(){
   }
 
   // Filter by last name initial
-  var list=members.filter(function(m){return m.last&&m.last[0].toUpperCase()===ciLastAlpha;});
+  var list=members.filter(function(m){return m.last&&m.last[0].toUpperCase()===ciLastAlpha&&m.status!=='inactive'&&m.status!=='terminated';});
   // Filter by first name initial if selected
   if(ciFirstAlpha){
     list=list.filter(function(m){
       if(!m.first) return false;
-      if(ciFirstAlpha.length===1) return m.first[0].toUpperCase()===ciFirstAlpha;
-      var key=m.first.length>=2?m.first[0].toUpperCase()+m.first[1].toLowerCase():m.first[0].toUpperCase();
-      return key===ciFirstAlpha;
+      // Compare both as uppercase to match how buttons are built
+      var pfx=m.first.slice(0,ciFirstAlpha.length).toUpperCase();
+      return pfx===ciFirstAlpha.toUpperCase();
     });
   }
   list.sort(function(a,b){
