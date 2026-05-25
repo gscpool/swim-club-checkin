@@ -281,7 +281,7 @@ body.layout-laptop .rstat-grid{grid-template-columns:repeat(6,1fr)}
       <div>
         <div class="topbar-title">Gibsonville Swim Club</div>
         <div class="topbar-date" id="topbar-date"></div>
-        <div style="font-size:9px;color:rgba(255,255,255,.35)">v2.1.5</div>
+        <div style="font-size:9px;color:rgba(255,255,255,.35)">v2.1.6</div>
       </div>
     </div>
     <div class="topbar-right">
@@ -468,7 +468,8 @@ body.layout-laptop .rstat-grid{grid-template-columns:repeat(6,1fr)}
 
 <script>
 
-var _APP_VERSION="v2.1.5";
+
+var _APP_VERSION="v2.1.6";
 
 // ── SELF CHECK-IN MODE ────────────────────────────────────────────────────────
 var SELF_CI_MODE = window.location.search.indexOf('selfcheckin=true') >= 0;
@@ -3496,13 +3497,157 @@ function closeCSV(){document.getElementById('csv-overlay').classList.remove('ope
 function handleCSVFile(e){var file=e.target.files[0];if(!file)return;var reader=new FileReader();reader.onload=function(ev){parseCSV(ev.target.result);};reader.readAsText(file);}
 function splitCSVRow(row){var result=[],cur='',inQ=false;for(var i=0;i<row.length;i++){var c=row[i];if(c==='"'){inQ=!inQ;continue;}if(c===','&&!inQ){result.push(cur.trim());cur='';continue;}cur+=c;}result.push(cur.trim());return result;}
 function parseCSV(text){
-  // Normalize line endings
-  text = text.replace(/\r\n/g,'\n').replace(/\r/g,'\n');
-  var lines=text.trim().split('\n');if(lines.length<2){showToast('CSV appears empty','err');return;}var headers=lines[0].split(',').map(function(h){return h.replace(/"/g,'').trim().toLowerCase();});var idx=function(names){for(var i=0;i<names.length;i++){var j=headers.indexOf(names[i]);if(j>=0)return j;}return -1;};var col={last:idx(['last','last name']),first:idx(['first','first name']),type:idx(['type','membership type']),status:idx(['status']),adults:idx(['adults']),kids:idx(['kids names','kids']),gused:idx(['passes used','used']),gtotal:idx(['passes total','total']),email:idx(['email']),phone:idx(['phone']),street:idx(['street','street address']),city:idx(['city']),state:idx(['state']),zip:idx(['zip','zip code'])};if(col.last<0||col.first<0){showToast('CSV must have Last and First columns','err');return;}var parsed=[];for(var i=1;i<lines.length;i++){var row=splitCSVRow(lines[i]);if(!row.length||!row[col.last])continue;var type=col.type>=0?row[col.type]:'Family';if(!GUEST_PASSES.hasOwnProperty(type))type='Family';var status=col.status>=0?row[col.status].toLowerCase():'paid';if(['paid','pending','unpaid'].indexOf(status)<0)status='paid';var gtotal=col.gtotal>=0?parseInt(row[col.gtotal]):GUEST_PASSES[type];if(isNaN(gtotal))gtotal=GUEST_PASSES[type];var kidsRaw=col.kids>=0?row[col.kids]:'';var kids=kidsRaw?kidsRaw.split(';').map(function(k){return k.trim();}).filter(Boolean):[];parsed.push({id:uid(),last:(col.last>=0?row[col.last]:'').trim(),first:(col.first>=0?row[col.first]:'').trim(),type:type,status:status,adults:col.adults>=0?(parseInt(row[col.adults])||1):1,kids:kids,children:kids.length,guestsUsed:col.gused>=0?(parseInt(row[col.gused])||0):0,guestsTotal:gtotal,email:(col.email>=0?row[col.email]:'').trim(),phone:(col.phone>=0?row[col.phone]:'').trim(),street:(col.street>=0?row[col.street]:'').trim(),city:(col.city>=0?row[col.city]:'').trim(),state:(col.state>=0?row[col.state]:'NC').trim(),zip:(col.zip>=0?row[col.zip]:'').trim()});}csvParsed=parsed;var prev='<div class="csv-preview"><table><tr><th>Last</th><th>First</th><th>Type</th><th>Status</th><th>Adults</th><th>Kids</th></tr>'+parsed.slice(0,10).map(function(m){return'<tr><td>'+m.last+'</td><td>'+m.first+'</td><td>'+m.type+'</td><td>'+m.status+'</td><td>'+m.adults+'</td><td>'+m.kids.join(', ')+'</td></tr>';}).join('')+(parsed.length>10?'<tr><td colspan="6" style="color:var(--mu);text-align:center">...and '+(parsed.length-10)+' more</td></tr>':'')+'</table></div>';document.getElementById('csv-preview').innerHTML=prev;document.getElementById('csv-actions').innerHTML='<p style="font-size:13px;color:var(--mu);margin-top:8px">'+parsed.length+' members found.</p><div style="display:flex;flex-direction:column;gap:8px;margin-top:10px"><button class="btn-p" onclick="importCSVMerge()">&#xFF0B; Merge with Existing</button><button class="btn-o" onclick="importCSVReplace()">&#x1F504; Replace All Members</button></div>';}
-function importCSVMerge(){if(!csvParsed.length){showToast('No data','warn');return;}var added=0,updated=0;csvParsed.forEach(function(nm){var ex=members.find(function(m){return m.last.toLowerCase()===nm.last.toLowerCase()&&m.first.toLowerCase()===nm.first.toLowerCase();});if(ex){var merged=Object.assign({},ex,nm,{id:ex.id});saveMember(merged);updated++;}else{saveMember(nm);added++;}});if(!fbReady){lSet('gsc_members',members);renderAll();}closeCSV();showToast('Imported: '+added+' added, '+updated+' updated','ok');}
-function importCSVReplace(){if(!csvParsed.length){showToast('No data','warn');return;}if(!confirm('Replace all existing members? Visit history is kept.'))return;// Delete existing members from Firebase first
-if(fbReady&&window._delMemberFB){members.forEach(function(m){window._delMemberFB(m.id);});}// Save new ones
-csvParsed.forEach(function(m){saveMember(m);});if(!fbReady){members=csvParsed;lSet('gsc_members',members);renderAll();}closeCSV();showToast('Replaced with '+csvParsed.length+' members','ok');}
+  try{
+    // Normalize line endings
+    text=text.replace(/\r\n/g,'\n').replace(/\r/g,'\n');
+    // Robust CSV row parser handles quoted fields
+    function parseRow(line){
+      var cols=[],cur='',inQ=false;
+      for(var i=0;i<line.length;i++){
+        var ch=line[i];
+        if(ch==='"'&&!inQ){inQ=true;}
+        else if(ch==='"'&&inQ){
+          if(line[i+1]==='"'){cur+='"';i++;}
+          else{inQ=false;}
+        } else if(ch===','&&!inQ){cols.push(cur.trim());cur='';}
+        else{cur+=ch;}
+      }
+      cols.push(cur.trim());
+      return cols;
+    }
+    var lines=text.trim().split('\n');
+    if(lines.length<2){showToast('CSV appears empty','err');return;}
+    var headers=parseRow(lines[0]).map(function(h){return h.replace(/"/g,'').trim().toLowerCase();});
+    var idx2=function(names){
+      for(var i=0;i<names.length;i++){
+        var j=headers.indexOf(names[i].toLowerCase());
+        if(j>=0)return j;
+      }
+      return -1;
+    };
+    var col={
+      last:    idx2(['last','last name','lastname']),
+      first:   idx2(['first','first name','firstname']),
+      email:   idx2(['email','email address']),
+      phone:   idx2(['phone','phone number','primary_phone']),
+      street:  idx2(['street','street address','street address 1','address']),
+      city:    idx2(['city']),
+      state:   idx2(['state']),
+      zip:     idx2(['zip','postal code']),
+      type:    idx2(['type','membership type']),
+      status:  idx2(['status','membership status']),
+      adults:  idx2(['adults']),
+      children:idx2(['children']),
+      kids:    idx2(['kids','kids names','children names']),
+      gused:   idx2(['guestsused','guests used','passes used']),
+      gtotal:  idx2(['gueststotal','guests total','passes total','total']),
+      sfirst:  idx2(['secfirst','secondary first','secondary member name']),
+      slast:   idx2(['seclast','secondary last']),
+      sphone:  idx2(['secphone','secondary phone']),
+      semail:  idx2(['secemail','secondary email']),
+      notes:   idx2(['notes','memo']),
+    };
+    // Check we have at minimum first+last
+    if(col.first<0||col.last<0){
+      document.getElementById('csv-preview').innerHTML='<p style="color:var(--re);font-weight:700">Could not find First Name / Last Name columns.<br>Headers found: '+headers.join(', ')+'</p>';
+      return;
+    }
+    var GP={'Family':10,'Individual':5,'Couples':7,'Board':20,'Comp':0};
+    var parsed=[];
+    for(var r=1;r<lines.length;r++){
+      if(!lines[r].trim())continue;
+      var row=parseRow(lines[r]);
+      var get=function(c){return c>=0&&c<row.length?row[c].replace(/^"|"$/g,'').trim():'';};
+      var mtype=get(col.type)||'Family';
+      var nm={
+        id:uid(),
+        first:get(col.first), last:get(col.last),
+        email:get(col.email), phone:get(col.phone),
+        street:get(col.street), city:get(col.city),
+        state:get(col.state)||'NC', zip:get(col.zip),
+        type:mtype,
+        status:get(col.status)||'paid',
+        adults:parseInt(get(col.adults))||1,
+        children:parseInt(get(col.children))||0,
+        kids:get(col.kids),
+        secFirst:get(col.sfirst), secLast:get(col.slast),
+        secPhone:get(col.sphone), secEmail:get(col.semail),
+        guestsUsed:parseInt(get(col.gused))||0,
+        guestsTotal:parseInt(get(col.gtotal))||(GP[mtype]||10),
+        notes:get(col.notes),
+        rosterConfirmed:false,
+      };
+      if(!nm.first&&!nm.last)continue;
+      parsed.push(nm);
+    }
+    csvParsed=parsed;
+    // Show preview
+    var prev=document.getElementById('csv-preview');
+    if(prev){
+      var sample=parsed.slice(0,5).map(function(m){
+        return '<div style="padding:6px 0;border-bottom:1px solid var(--sand2);font-size:13px">'
+          +'<b>'+m.first+' '+m.last+'</b> — '+m.type+' — <span style="color:'+(m.status==='paid'?'var(--gr)':'var(--re)')+'">'+m.status+'</span>'
+          +(m.kids?' | Kids: '+m.kids:'')+'</div>';
+      }).join('');
+      prev.innerHTML='<div style="background:var(--sand);border-radius:8px;padding:10px;margin:10px 0">'+sample+'</div>';
+    }
+    var act=document.getElementById('csv-actions');
+    if(act){
+      act.innerHTML='<p style="font-size:13px;color:var(--mu);margin-top:4px"><b>'+parsed.length+'</b> members ready to import.</p>'
+        +'<div style="display:flex;flex-direction:column;gap:8px;margin-top:10px">'
+        +'<button class="btn-p" onclick="importCSVMerge()">＋ Merge with Existing</button>'
+        +'<button class="btn-o" onclick="importCSVReplace()">🔄 Replace All Members</button>'
+        +'</div>';
+    }
+  }catch(err){
+    console.error('CSV parse error:',err);
+    showToast('CSV parse error: '+err.message,'err');
+    var prev2=document.getElementById('csv-preview');
+    if(prev2) prev2.innerHTML='<p style="color:var(--re);font-weight:700">Error: '+err.message+'</p>';
+  }
+}
+function importCSVMerge(){
+  if(!csvParsed.length){showToast('No data to import','warn');return;}
+  var added=0,updated=0;
+  csvParsed.forEach(function(nm){
+    var ex=members.find(function(m){
+      return m.last&&nm.last&&m.last.toLowerCase()===nm.last.toLowerCase()
+          && m.first&&nm.first&&m.first.toLowerCase()===nm.first.toLowerCase();
+    });
+    if(ex){
+      var merged=Object.assign({},ex,nm,{id:ex.id});
+      saveMember(merged);
+      var i=members.findIndex(function(m){return m.id===ex.id;});
+      if(i>=0) members[i]=merged;
+      updated++;
+    } else {
+      nm.id=nm.id||uid();
+      saveMember(nm);
+      members.push(nm);
+      added++;
+    }
+  });
+  renderAll();
+  closeCSV();
+  showToast('Imported: '+added+' added, '+updated+' updated','ok');
+}
+function importCSVReplace(){
+  if(!csvParsed.length){showToast('No data to import','warn');return;}
+  if(!confirm('This will REPLACE all '+members.length+' members with '+csvParsed.length+' imported members. Are you sure?'))return;
+  // Delete all existing members from Firebase
+  if(fbReady&&db){
+    members.forEach(function(m){db.collection('members').doc(m.id).delete().catch(function(e){console.error(e);});});
+  }
+  members=[];
+  csvParsed.forEach(function(nm){
+    nm.id=nm.id||uid();
+    saveMember(nm);
+    members.push(nm);
+  });
+  renderAll();
+  closeCSV();
+  showToast('Replaced: '+csvParsed.length+' members imported','ok');
+}
 
 function openSettings(){
   if(!can('canAccessSettings')){showToast('Admin login required','warn');openLogin();return;}
@@ -4393,6 +4538,7 @@ document.addEventListener('DOMContentLoaded', function(){
   initLayout();
   tryInitFirebase();
 });
+
 
 </script>
 </body>
