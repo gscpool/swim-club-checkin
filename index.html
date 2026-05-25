@@ -48,9 +48,9 @@ body{background:var(--sand);color:var(--tx)}
 .rlist{display:flex;flex-direction:column;gap:8px;padding:10px;flex:1;overflow-y:auto}
 .mcard{background:var(--wh);border-radius:var(--r);padding:14px 16px;box-shadow:var(--sh);display:flex;align-items:center;gap:12px;cursor:pointer;transition:transform .12s;border-left:4px solid var(--bll);border:none;border-left:4px solid var(--bll);-webkit-appearance:none;appearance:none}
 .mcard:active{transform:scale(.97);box-shadow:none}
-#pane-ci .mcard{padding:16px 14px;min-height:72px}
-#pane-ci .mname{font-size:18px}
-#pane-ci .mmeta{font-size:12px}
+#pane-ci .mcard{padding:12px 14px;min-height:60px}
+#pane-ci .mname{font-size:16px}
+#pane-ci .mmeta{font-size:11px}
 .mavatar{width:40px;height:40px;border-radius:50%;background:var(--bld);color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;flex-shrink:0}
 .minfo{flex:1;min-width:0}
 .mname{font-size:16px;font-weight:700;color:var(--bld);letter-spacing:-.2px}
@@ -186,9 +186,10 @@ body{background:var(--sand);color:var(--tx)}
 #announce-bar{background:var(--or);padding:10px 14px;display:flex;align-items:center;gap:10px;flex:0 0 auto;width:100%;z-index:10;max-height:44px;overflow:hidden}
 .announce-text{font-size:14px;font-weight:600;color:#fff;font-family:-apple-system,'SF Pro Display','Inter',sans-serif;line-height:1.3;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 /* CHECK-IN TAB */
-.ci-section-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--mu);padding:10px 13px 5px;background:var(--sand);flex-shrink:0}
-.ci-alpha-row{display:flex;flex-wrap:wrap;gap:7px;padding:10px 13px 12px;background:var(--sand);border-bottom:1px solid var(--sand2);justify-content:center;align-content:center;flex-shrink:0}
-.ci-alpha-btn{min-width:44px;height:44px;min-height:44px;padding:0 8px;border-radius:10px;border:2px solid var(--sand2);background:#fff;font-size:16px;font-weight:700;color:var(--bl);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .12s;box-shadow:0 1px 4px rgba(0,0,0,.07)}
+.ci-section-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--mu);padding:6px 13px 4px;background:var(--sand);flex-shrink:0}
+.ci-alpha-row::-webkit-scrollbar{display:none}
+.ci-alpha-row{display:flex;flex-wrap:nowrap;overflow-x:auto;gap:6px;padding:8px 13px;background:var(--sand);border-bottom:1px solid var(--sand2);flex-shrink:0;-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none}
+.ci-alpha-btn{min-width:38px;width:38px;height:38px;min-height:38px;padding:0;border-radius:9px;border:1.5px solid var(--sand2);background:#fff;font-size:14px;font-weight:700;color:var(--bl);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .12s;box-shadow:0 1px 3px rgba(0,0,0,.06);flex-shrink:0}
 .ci-alpha-btn.on{background:var(--or);border-color:var(--or);color:#fff;box-shadow:0 2px 8px rgba(250,70,22,.3)}
 .ci-alpha-btn:active{transform:scale(.93)}
 .predict-card{background:#fff;border-radius:var(--r);padding:14px 13px;box-shadow:var(--sh);display:flex;align-items:center;gap:10px;cursor:pointer;border-left:4px solid var(--or);transition:transform .1s;min-height:60px}
@@ -315,7 +316,7 @@ body.layout-laptop .rstat-grid{grid-template-columns:repeat(6,1fr)}
       <div>
         <div class="topbar-title">Gibsonville Swim Club</div>
         <div class="topbar-date" id="topbar-date"></div>
-        <div style="font-size:9px;color:rgba(255,255,255,.35)">v2.2.1</div>
+        <div style="font-size:9px;color:rgba(255,255,255,.35)">v2.2.2</div>
       </div>
     </div>
     <div class="topbar-right">
@@ -338,7 +339,8 @@ body.layout-laptop .rstat-grid{grid-template-columns:repeat(6,1fr)}
 
   <!-- CHECK-IN PANE -->
   <div id="pane-ci" class="pane on">
-    <div class="ci-section-title" id="ci-ln-label">Step 1 — Tap member's last name initial</div>
+    <div id="ci-breadcrumb" style="display:none;padding:6px 13px;background:var(--bld);display:flex;align-items:center;gap:8px;flex-shrink:0"></div>
+    <div class="ci-section-title" id="ci-ln-label">Tap last name initial</div>
     <div class="ci-alpha-row" id="ci-ln-strip"></div>
     <div id="ci-fn-section" style="display:none">
       <div class="ci-section-title" id="ci-fn-label">Step 2 — First name (last name: ?)</div>
@@ -516,7 +518,7 @@ body.layout-laptop .rstat-grid{grid-template-columns:repeat(6,1fr)}
 <script>
 
 
-var _APP_VERSION="v2.2.1";
+var _APP_VERSION="v2.2.2";
 
 // ── SELF CHECK-IN MODE ────────────────────────────────────────────────────────
 var SELF_CI_MODE = window.location.search.indexOf('selfcheckin=true') >= 0;
@@ -2813,39 +2815,55 @@ function getPredictive(){
 }
 
 function buildCiAlphaStrips(){
-  // Last name strip - only letters with members not checked in today
+  // Last name strip
   var todayStr=new Date().toDateString();
-  var checkedToday={};
-  visits.forEach(function(v){if(new Date(v.ts).toDateString()===todayStr) checkedToday[v.memberId]=true;});
   var lnLetters={};
-  members.forEach(function(m){if(m.last&&m.status!=='inactive'&&m.status!=='terminated') lnLetters[m.last[0].toUpperCase()]=true;});
+  members.forEach(function(m){
+    if(m.last&&m.status!=='inactive'&&m.status!=='terminated')
+      lnLetters[m.last[0].toUpperCase()]=true;
+  });
   var lnStrip=document.getElementById('ci-ln-strip'); if(!lnStrip) return;
   lnStrip.innerHTML=Object.keys(lnLetters).sort().map(function(l){
-    return '<button class="ci-alpha-btn'+(ciLastAlpha===l?' on':'')+'" onclick="setCiLastAlpha(&quot;'+l+'&quot;)">'+l+'</button>';
+    return '<button class="ci-alpha-btn'+(ciLastAlpha===l?' on':'')+'" onclick="setCiLastAlpha(\''+l+'\')">'+l+'</button>';
   }).join('');
-  // First name strip - only if last name selected
+
+  // Update label to show selection
+  var lnLabel=document.getElementById('ci-ln-label');
+  if(lnLabel) lnLabel.textContent=ciLastAlpha?'Last: '+ciLastAlpha+' — now tap first name':'Tap last name initial';
+
+  // First name strip
   var fnSection=document.getElementById('ci-fn-section');
   var fnStrip=document.getElementById('ci-fn-strip');
-  if(ciLastAlpha&&fnSection&&fnStrip){
-    fnSection.style.display='block';
-    var fnLetters={};
-    members.filter(function(m){return m.last&&m.last[0].toUpperCase()===ciLastAlpha;})
-      .forEach(function(m){
-        if(m.first&&m.first.length>=2){
-          var key=m.first[0].toUpperCase()+m.first[1].toLowerCase();
-          fnLetters[key]=true;
-        } else if(m.first&&m.first.length===1){
-          fnLetters[m.first[0].toUpperCase()]=true;
-        }
-      });
-    fnStrip.innerHTML=Object.keys(fnLetters).sort().map(function(l){
-      return '<button class="ci-alpha-btn'+(ciFirstAlpha===l?' on':'')+'" onclick="setCiFirstAlpha(&quot;'+l+'&quot;)">'+l+'</button>';
-    }).join('');
-    // Update label
-    var fnLabel=document.getElementById('ci-fn-label');
-    if(fnLabel) fnLabel.textContent='Step 2 — First name (last name: '+ciLastAlpha+')';
-  } else if(fnSection){
-    fnSection.style.display='none';
+  var fnLabel=document.getElementById('ci-fn-label');
+  if(!ciLastAlpha){
+    if(fnSection) fnSection.style.display='none';
+    return;
+  }
+  if(fnSection) fnSection.style.display='block';
+
+  // Get first-name prefixes for members matching last-name initial
+  var filtered=members.filter(function(m){
+    return m.last&&m.last[0].toUpperCase()===ciLastAlpha
+      &&m.status!=='inactive'&&m.status!=='terminated';
+  });
+  // Use first 2 letters of first name
+  var prefixes={};
+  filtered.forEach(function(m){
+    if(m.first&&m.first.length>=1){
+      var pfx=m.first.slice(0,2).toUpperCase();
+      prefixes[pfx]=true;
+    }
+  });
+  if(fnStrip) fnStrip.innerHTML=Object.keys(prefixes).sort().map(function(pfx){
+    return '<button class="ci-alpha-btn'+(ciFirstAlpha===pfx?' on':'')+'" onclick="setCiFirstAlpha(\''+pfx+'\')">'+pfx+'</button>';
+  }).join('');
+
+  if(fnLabel) fnLabel.textContent=ciFirstAlpha?'First: '+ciFirstAlpha:'Tap first name prefix';
+
+  // If only one prefix, auto-select
+  var pfxKeys=Object.keys(prefixes);
+  if(pfxKeys.length===1&&!ciFirstAlpha){
+    setCiFirstAlpha(pfxKeys[0]);
   }
 }
 
