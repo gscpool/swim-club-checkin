@@ -281,7 +281,7 @@ body.layout-laptop .rstat-grid{grid-template-columns:repeat(6,1fr)}
       <div>
         <div class="topbar-title">Gibsonville Swim Club</div>
         <div class="topbar-date" id="topbar-date"></div>
-        <div style="font-size:9px;color:rgba(255,255,255,.35)">v2.1.4</div>
+        <div style="font-size:9px;color:rgba(255,255,255,.35)">v2.1.5</div>
       </div>
     </div>
     <div class="topbar-right">
@@ -445,6 +445,19 @@ body.layout-laptop .rstat-grid{grid-template-columns:repeat(6,1fr)}
     </div>
   </div>
 
+
+  <!-- CSV IMPORT OVERLAY -->
+  <div class="overlay" id="csv-overlay" onclick="if(event.target===this)closeCSV()">
+    <div class="sheet" style="max-height:85vh;overflow-y:auto">
+      <div class="sheet-handle"></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <div style="font-size:18px;font-weight:800;color:var(--bld)">Import Members</div>
+        <button class="mclose" onclick="closeCSV()">✕</button>
+      </div>
+      <div id="csv-body"></div>
+    </div>
+  </div>
+
 </div><!-- end #app -->
 
 <!-- Firebase SDK -->
@@ -455,7 +468,7 @@ body.layout-laptop .rstat-grid{grid-template-columns:repeat(6,1fr)}
 
 <script>
 
-var _APP_VERSION="v2.1.4";
+var _APP_VERSION="v2.1.5";
 
 // ── SELF CHECK-IN MODE ────────────────────────────────────────────────────────
 var SELF_CI_MODE = window.location.search.indexOf('selfcheckin=true') >= 0;
@@ -3477,11 +3490,15 @@ function exportVisitsRange(range){
   });
 }
 function downloadTemplate(){var csv='Last,First,Type,Status,Adults,Children,Kids Names,Passes Used,Passes Total,Email,Phone,Street,City,State,Zip\nSmith,John,Family,paid,2,3,"Emma;Liam;Olivia",0,10,jsmith@email.com,(336) 555-0100,123 Main St,Gibsonville,NC,27249';var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='gsc-member-template.csv';a.click();showToast('Template downloaded');}
-function openCSVImport(){csvParsed=[];document.getElementById('csv-body').innerHTML='<p class="fnote" style="line-height:1.6">Upload a CSV with member data. Use <strong>Download CSV Template</strong> for the correct format.</p><div class="csv-drop" onclick="document.getElementById(\'csv-file\').click()">&#x1F4C2; Tap to choose a CSV file</div><input type="file" id="csv-file" accept=".csv" style="display:none" onchange="handleCSVFile(event)"><div id="csv-preview"></div><div id="csv-actions"></div>';document.getElementById('csv-overlay').classList.add('open');}
+function openCSVImport(){csvParsed=[];var _cov=document.getElementById('csv-overlay');if(_cov){_cov.style.display='flex';_cov.classList.add('open');}
+  document.getElementById('csv-body').innerHTML='<p class="fnote" style="line-height:1.6">Upload a CSV with member data. Use <strong>Download CSV Template</strong> for the correct format.</p><div class="csv-drop" onclick="document.getElementById(\'csv-file\').click()">&#x1F4C2; Tap to choose a CSV file</div><input type="file" id="csv-file" accept=".csv" style="display:none" onchange="handleCSVFile(event)"><div id="csv-preview"></div><div id="csv-actions"></div>';var _co=document.getElementById('csv-overlay');_co.style.display='flex';_co.classList.add('open');}
 function closeCSV(){document.getElementById('csv-overlay').classList.remove('open');}
 function handleCSVFile(e){var file=e.target.files[0];if(!file)return;var reader=new FileReader();reader.onload=function(ev){parseCSV(ev.target.result);};reader.readAsText(file);}
 function splitCSVRow(row){var result=[],cur='',inQ=false;for(var i=0;i<row.length;i++){var c=row[i];if(c==='"'){inQ=!inQ;continue;}if(c===','&&!inQ){result.push(cur.trim());cur='';continue;}cur+=c;}result.push(cur.trim());return result;}
-function parseCSV(text){var lines=text.trim().split('\n');if(lines.length<2){showToast('CSV appears empty','err');return;}var headers=lines[0].split(',').map(function(h){return h.replace(/"/g,'').trim().toLowerCase();});var idx=function(names){for(var i=0;i<names.length;i++){var j=headers.indexOf(names[i]);if(j>=0)return j;}return -1;};var col={last:idx(['last','last name']),first:idx(['first','first name']),type:idx(['type','membership type']),status:idx(['status']),adults:idx(['adults']),kids:idx(['kids names','kids']),gused:idx(['passes used','used']),gtotal:idx(['passes total','total']),email:idx(['email']),phone:idx(['phone']),street:idx(['street','street address']),city:idx(['city']),state:idx(['state']),zip:idx(['zip','zip code'])};if(col.last<0||col.first<0){showToast('CSV must have Last and First columns','err');return;}var parsed=[];for(var i=1;i<lines.length;i++){var row=splitCSVRow(lines[i]);if(!row.length||!row[col.last])continue;var type=col.type>=0?row[col.type]:'Family';if(!GUEST_PASSES.hasOwnProperty(type))type='Family';var status=col.status>=0?row[col.status].toLowerCase():'paid';if(['paid','pending','unpaid'].indexOf(status)<0)status='paid';var gtotal=col.gtotal>=0?parseInt(row[col.gtotal]):GUEST_PASSES[type];if(isNaN(gtotal))gtotal=GUEST_PASSES[type];var kidsRaw=col.kids>=0?row[col.kids]:'';var kids=kidsRaw?kidsRaw.split(';').map(function(k){return k.trim();}).filter(Boolean):[];parsed.push({id:uid(),last:(col.last>=0?row[col.last]:'').trim(),first:(col.first>=0?row[col.first]:'').trim(),type:type,status:status,adults:col.adults>=0?(parseInt(row[col.adults])||1):1,kids:kids,children:kids.length,guestsUsed:col.gused>=0?(parseInt(row[col.gused])||0):0,guestsTotal:gtotal,email:(col.email>=0?row[col.email]:'').trim(),phone:(col.phone>=0?row[col.phone]:'').trim(),street:(col.street>=0?row[col.street]:'').trim(),city:(col.city>=0?row[col.city]:'').trim(),state:(col.state>=0?row[col.state]:'NC').trim(),zip:(col.zip>=0?row[col.zip]:'').trim()});}csvParsed=parsed;var prev='<div class="csv-preview"><table><tr><th>Last</th><th>First</th><th>Type</th><th>Status</th><th>Adults</th><th>Kids</th></tr>'+parsed.slice(0,10).map(function(m){return'<tr><td>'+m.last+'</td><td>'+m.first+'</td><td>'+m.type+'</td><td>'+m.status+'</td><td>'+m.adults+'</td><td>'+m.kids.join(', ')+'</td></tr>';}).join('')+(parsed.length>10?'<tr><td colspan="6" style="color:var(--mu);text-align:center">...and '+(parsed.length-10)+' more</td></tr>':'')+'</table></div>';document.getElementById('csv-preview').innerHTML=prev;document.getElementById('csv-actions').innerHTML='<p style="font-size:13px;color:var(--mu);margin-top:8px">'+parsed.length+' members found.</p><div style="display:flex;flex-direction:column;gap:8px;margin-top:10px"><button class="btn-p" onclick="importCSVMerge()">&#xFF0B; Merge with Existing</button><button class="btn-o" onclick="importCSVReplace()">&#x1F504; Replace All Members</button></div>';}
+function parseCSV(text){
+  // Normalize line endings
+  text = text.replace(/\r\n/g,'\n').replace(/\r/g,'\n');
+  var lines=text.trim().split('\n');if(lines.length<2){showToast('CSV appears empty','err');return;}var headers=lines[0].split(',').map(function(h){return h.replace(/"/g,'').trim().toLowerCase();});var idx=function(names){for(var i=0;i<names.length;i++){var j=headers.indexOf(names[i]);if(j>=0)return j;}return -1;};var col={last:idx(['last','last name']),first:idx(['first','first name']),type:idx(['type','membership type']),status:idx(['status']),adults:idx(['adults']),kids:idx(['kids names','kids']),gused:idx(['passes used','used']),gtotal:idx(['passes total','total']),email:idx(['email']),phone:idx(['phone']),street:idx(['street','street address']),city:idx(['city']),state:idx(['state']),zip:idx(['zip','zip code'])};if(col.last<0||col.first<0){showToast('CSV must have Last and First columns','err');return;}var parsed=[];for(var i=1;i<lines.length;i++){var row=splitCSVRow(lines[i]);if(!row.length||!row[col.last])continue;var type=col.type>=0?row[col.type]:'Family';if(!GUEST_PASSES.hasOwnProperty(type))type='Family';var status=col.status>=0?row[col.status].toLowerCase():'paid';if(['paid','pending','unpaid'].indexOf(status)<0)status='paid';var gtotal=col.gtotal>=0?parseInt(row[col.gtotal]):GUEST_PASSES[type];if(isNaN(gtotal))gtotal=GUEST_PASSES[type];var kidsRaw=col.kids>=0?row[col.kids]:'';var kids=kidsRaw?kidsRaw.split(';').map(function(k){return k.trim();}).filter(Boolean):[];parsed.push({id:uid(),last:(col.last>=0?row[col.last]:'').trim(),first:(col.first>=0?row[col.first]:'').trim(),type:type,status:status,adults:col.adults>=0?(parseInt(row[col.adults])||1):1,kids:kids,children:kids.length,guestsUsed:col.gused>=0?(parseInt(row[col.gused])||0):0,guestsTotal:gtotal,email:(col.email>=0?row[col.email]:'').trim(),phone:(col.phone>=0?row[col.phone]:'').trim(),street:(col.street>=0?row[col.street]:'').trim(),city:(col.city>=0?row[col.city]:'').trim(),state:(col.state>=0?row[col.state]:'NC').trim(),zip:(col.zip>=0?row[col.zip]:'').trim()});}csvParsed=parsed;var prev='<div class="csv-preview"><table><tr><th>Last</th><th>First</th><th>Type</th><th>Status</th><th>Adults</th><th>Kids</th></tr>'+parsed.slice(0,10).map(function(m){return'<tr><td>'+m.last+'</td><td>'+m.first+'</td><td>'+m.type+'</td><td>'+m.status+'</td><td>'+m.adults+'</td><td>'+m.kids.join(', ')+'</td></tr>';}).join('')+(parsed.length>10?'<tr><td colspan="6" style="color:var(--mu);text-align:center">...and '+(parsed.length-10)+' more</td></tr>':'')+'</table></div>';document.getElementById('csv-preview').innerHTML=prev;document.getElementById('csv-actions').innerHTML='<p style="font-size:13px;color:var(--mu);margin-top:8px">'+parsed.length+' members found.</p><div style="display:flex;flex-direction:column;gap:8px;margin-top:10px"><button class="btn-p" onclick="importCSVMerge()">&#xFF0B; Merge with Existing</button><button class="btn-o" onclick="importCSVReplace()">&#x1F504; Replace All Members</button></div>';}
 function importCSVMerge(){if(!csvParsed.length){showToast('No data','warn');return;}var added=0,updated=0;csvParsed.forEach(function(nm){var ex=members.find(function(m){return m.last.toLowerCase()===nm.last.toLowerCase()&&m.first.toLowerCase()===nm.first.toLowerCase();});if(ex){var merged=Object.assign({},ex,nm,{id:ex.id});saveMember(merged);updated++;}else{saveMember(nm);added++;}});if(!fbReady){lSet('gsc_members',members);renderAll();}closeCSV();showToast('Imported: '+added+' added, '+updated+' updated','ok');}
 function importCSVReplace(){if(!csvParsed.length){showToast('No data','warn');return;}if(!confirm('Replace all existing members? Visit history is kept.'))return;// Delete existing members from Firebase first
 if(fbReady&&window._delMemberFB){members.forEach(function(m){window._delMemberFB(m.id);});}// Save new ones
