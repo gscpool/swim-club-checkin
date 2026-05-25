@@ -315,7 +315,7 @@ body.layout-laptop .rstat-grid{grid-template-columns:repeat(6,1fr)}
       <div>
         <div class="topbar-title">Gibsonville Swim Club</div>
         <div class="topbar-date" id="topbar-date"></div>
-        <div style="font-size:9px;color:rgba(255,255,255,.35)">v2.1.9</div>
+        <div style="font-size:9px;color:rgba(255,255,255,.35)">v2.2.0</div>
       </div>
     </div>
     <div class="topbar-right">
@@ -492,6 +492,19 @@ body.layout-laptop .rstat-grid{grid-template-columns:repeat(6,1fr)}
     </div>
   </div>
 
+
+  <!-- DEDUP OVERLAY -->
+  <div class="overlay" id="dedup-overlay" onclick="if(event.target===this)closeDedupModal()">
+    <div class="sheet" style="max-height:90vh;overflow-y:auto">
+      <div class="sheet-handle"></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <div style="font-size:18px;font-weight:800;color:var(--bld)">🔍 Find Duplicates</div>
+        <button class="mclose" onclick="closeDedupModal()">✕</button>
+      </div>
+      <div id="dedup-body"></div>
+    </div>
+  </div>
+
 </div><!-- end #app -->
 
 <!-- Firebase SDK -->
@@ -503,7 +516,7 @@ body.layout-laptop .rstat-grid{grid-template-columns:repeat(6,1fr)}
 <script>
 
 
-var _APP_VERSION="v2.1.9";
+var _APP_VERSION="v2.2.0";
 
 // ── SELF CHECK-IN MODE ────────────────────────────────────────────────────────
 var SELF_CI_MODE = window.location.search.indexOf('selfcheckin=true') >= 0;
@@ -2473,6 +2486,139 @@ function initLayout(){
   }catch(e){}
 }
 
+
+// ── FIND DUPLICATES ───────────────────────────────────────────────────────────
+function openDedupModal(){
+  var o=document.getElementById('dedup-overlay');
+  if(o){o.style.display='flex';o.classList.add('open');}
+  renderDedupResults();
+}
+
+function closeDedupModal(){
+  var o=document.getElementById('dedup-overlay');
+  if(o){o.style.display='none';o.classList.remove('open');}
+}
+
+function findDuplicates(){
+  var dupes=[];
+  var seen={};
+  // Match by: same last+first name, or same email
+  members.forEach(function(m){
+    var nameKey=(m.last||'').toLowerCase().trim()+'|'+(m.first||'').toLowerCase().trim();
+    var emailKey=(m.email||'').toLowerCase().trim();
+    if(nameKey!=='|'){
+      if(!seen[nameKey]) seen[nameKey]=[];
+      seen[nameKey].push(m);
+    }
+    if(emailKey){
+      if(!seen[emailKey]) seen[emailKey]=[];
+      seen[emailKey].push(m);
+    }
+  });
+  // Collect groups with more than 1 member
+  var groups=[];
+  var addedIds={};
+  Object.keys(seen).forEach(function(k){
+    if(seen[k].length>1){
+      var ids=seen[k].map(function(m){return m.id;}).sort().join('|');
+      if(!addedIds[ids]){
+        addedIds[ids]=true;
+        groups.push(seen[k]);
+      }
+    }
+  });
+  return groups;
+}
+
+function renderDedupResults(){
+  var body=document.getElementById('dedup-body'); if(!body) return;
+  var groups=findDuplicates();
+  if(!groups.length){
+    body.innerHTML='<div style="text-align:center;padding:30px">'
+      +'<div style="font-size:40px;margin-bottom:10px">✅</div>'
+      +'<div style="font-size:16px;font-weight:700;color:var(--gr)">No duplicates found!</div>'
+      +'<div style="font-size:13px;color:var(--mu);margin-top:6px">All '+members.length+' member records look unique.</div>'
+      +'</div>';
+    return;
+  }
+  var html='<div style="font-size:13px;color:var(--mu);margin-bottom:12px">Found <b>'+groups.length+' potential duplicate groups</b>. Review and merge or delete each pair.</div>';
+  groups.forEach(function(grp,gi){
+    html+='<div style="background:var(--sand);border-radius:var(--r);padding:14px;margin-bottom:12px;border:1.5px solid var(--sand2)">';
+    html+='<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--mu);margin-bottom:8px">Group '+(gi+1)+' of '+groups.length+'</div>';
+    grp.forEach(function(m,mi){
+      var kids=Array.isArray(m.kids)&&m.kids.length?m.kids.join(', '):(m.kids&&m.kids!='nan'?m.kids:'');
+      html+='<div style="background:#fff;border-radius:var(--r-sm);padding:12px;margin-bottom:6px;border-left:4px solid '+(m.status==='paid'?'#22c55e':'#ef4444')+'">'
+        +'<div style="display:flex;align-items:center;justify-content:space-between;gap:8px">'
+        +'<div><div style="font-size:14px;font-weight:700;color:var(--bld)">'+m.last+', '+m.first+'</div>'
+        +'<div style="font-size:11px;color:var(--mu);margin-top:2px">'+m.type+' · '+m.status+(m.email?' · '+m.email:'')+'</div>'
+        +(kids?'<div style="font-size:11px;color:var(--mu)">Kids: '+kids+'</div>':'')
+        +(m.secFirst?'<div style="font-size:11px;color:var(--mu)">2nd: '+m.secFirst+' '+m.secLast+'</div>':'')
+        +'</div>'
+        +'<div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">'
+        +'<button data-mid="'+m.id+'" onclick="dedupDelete(this.dataset.mid)" style="padding:6px 10px;background:var(--rel);border:1.5px solid var(--re);border-radius:8px;font-size:11px;font-weight:700;color:var(--re);cursor:pointer;font-family:-apple-system,sans-serif">🗑 Delete</button>'
+        +'</div></div></div>';
+    });
+    // Merge button - merges all records in group into the first one
+    html+='<button onclick="dedupMergeGroup('+JSON.stringify(grp.map(function(m){return m.id;}))+','+gi+')" '
+      +'style="width:100%;padding:10px;background:var(--bl);border:none;border-radius:var(--r-sm);font-size:13px;font-weight:700;color:#fff;cursor:pointer;font-family:-apple-system,sans-serif;margin-top:4px">'
+      +'⊕ Merge into one record</button>';
+    html+='</div>';
+  });
+  body.innerHTML=html;
+}
+
+function dedupDelete(id){
+  if(!confirm('Delete this member record permanently?')) return;
+  var m=members.find(function(x){return x.id===id;});
+  if(!m) return;
+  if(fbReady&&db) db.collection('members').doc(id).delete().catch(function(e){console.error(e);});
+  members=members.filter(function(x){return x.id!==id;});
+  showToast('Record deleted','ok');
+  renderDedupResults();
+  renderDir();
+}
+
+function dedupMergeGroup(ids, gi){
+  // Take the record with the most data as the base, overlay remaining data
+  var grp=ids.map(function(id){return members.find(function(m){return m.id===id;});}).filter(Boolean);
+  if(grp.length<2) return;
+  // Score each record by data completeness
+  function score(m){
+    var s=0;
+    if(m.email) s+=3;
+    if(m.phone) s+=2;
+    if(m.street) s+=2;
+    if(Array.isArray(m.kids)&&m.kids.length) s+=m.kids.length;
+    if(m.secFirst) s+=2;
+    if(m.status==='paid') s+=3;
+    if(m.notes&&m.notes.length) s+=1;
+    return s;
+  }
+  grp.sort(function(a,b){return score(b)-score(a);});
+  var base=Object.assign({},grp[0]);
+  // Merge in data from other records
+  grp.slice(1).forEach(function(m){
+    if(!base.email&&m.email) base.email=m.email;
+    if(!base.phone&&m.phone) base.phone=m.phone;
+    if(!base.street&&m.street){base.street=m.street;base.city=m.city;base.state=m.state;base.zip=m.zip;}
+    if(!base.secFirst&&m.secFirst){base.secFirst=m.secFirst;base.secLast=m.secLast;}
+    if((!Array.isArray(base.kids)||!base.kids.length)&&Array.isArray(m.kids)&&m.kids.length) base.kids=m.kids;
+    if(base.status!=='paid'&&m.status==='paid'){base.status='paid';base.guestsTotal=m.guestsTotal||base.guestsTotal;}
+    if(m.notes&&!base.notes) base.notes=m.notes;
+  });
+  // Save merged record, delete the rest
+  saveMember(base);
+  var i=members.findIndex(function(x){return x.id===base.id;});
+  if(i>=0) members[i]=base; else members.push(base);
+  grp.slice(1).forEach(function(m){
+    if(fbReady&&db) db.collection('members').doc(m.id).delete().catch(function(e){console.error(e);});
+    members=members.filter(function(x){return x.id!==m.id;});
+  });
+  showToast('Merged '+grp.length+' records into one','ok');
+  renderDedupResults();
+  renderDir();
+}
+
 function renderAll(){renderCI();renderDir();renderRep();renderAnnouncement();}
 
 function renderAnnouncement(){
@@ -3807,6 +3953,16 @@ function openSettings(){
     try{var msg=localStorage.getItem('gsc_announcement')||'';var inp=document.getElementById('st-announce');if(inp)inp.value=msg;}catch(e){}
   }
   })();
+
+  // Show find duplicates button in settings
+  var stBody = document.getElementById('st-body');
+  if(stBody && isMasterAdmin()){
+    var dedupBtn = document.createElement('div');
+    dedupBtn.className = 'st-section';
+    dedupBtn.innerHTML = '<div class="st-sec-hdr">&#x1F50D; Data Tools</div>'
+      + '<button onclick="closeSettings();openDedupModal()" style="width:100%;padding:13px;background:var(--bll);border:1.5px solid var(--bl);border-radius:var(--r);font-size:14px;font-weight:700;color:var(--bld);font-family:-apple-system,sans-serif;cursor:pointer">&#x1F50D; Find Duplicate Members</button>';
+    stBody.appendChild(dedupBtn);
+  }
 }
 
 function saveAllConfig(){
