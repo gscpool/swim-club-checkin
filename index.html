@@ -315,7 +315,7 @@ body.layout-laptop .rstat-grid{grid-template-columns:repeat(6,1fr)}
       <div>
         <div class="topbar-title">Gibsonville Swim Club</div>
         <div class="topbar-date" id="topbar-date"></div>
-        <div style="font-size:9px;color:rgba(255,255,255,.35)">v2.2.0</div>
+        <div style="font-size:9px;color:rgba(255,255,255,.35)">v2.2.1</div>
       </div>
     </div>
     <div class="topbar-right">
@@ -516,7 +516,7 @@ body.layout-laptop .rstat-grid{grid-template-columns:repeat(6,1fr)}
 <script>
 
 
-var _APP_VERSION="v2.2.0";
+var _APP_VERSION="v2.2.1";
 
 // ── SELF CHECK-IN MODE ────────────────────────────────────────────────────────
 var SELF_CI_MODE = window.location.search.indexOf('selfcheckin=true') >= 0;
@@ -3473,6 +3473,37 @@ function renderRep(){
     +stat(todayV.reduce(function(s,v){return s+(v.guestPasses||0);},0),'Guest Passes',AM),
     4
   );
+
+  // Today's check-in list
+  if(todayV.length){
+    var todayList='<div style="display:flex;flex-direction:column;gap:6px;margin-top:4px">';
+    // Sort by check-in time descending
+    var sortedToday=todayV.slice().sort(function(a,b){return new Date(b.ts)-new Date(a.ts);});
+    sortedToday.forEach(function(v){
+      var m=members.find(function(x){return x.id===v.memberId;});
+      var mName=m?m.last+', '+m.first:'Unknown Member';
+      var mStatus=m?m.status:'';
+      var statusColor=mStatus==='paid'?'#22c55e':mStatus==='unpaid'?'#ef4444':'#f59e0b';
+      var time=new Date(v.ts).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+      var who=[];
+      if(v.checkedAdults&&v.checkedAdults.length) who=who.concat(v.checkedAdults);
+      if(v.checkedKids&&v.checkedKids.length) who=who.concat(v.checkedKids);
+      var rosterStr=who.length?who.join(', '):(v.adults||0)+' adult'+(v.adults!==1?'s':'')+(v.children?' + '+(v.children)+' child'+(v.children!==1?'ren':''):'');
+      var tags='';
+      if(v.selfCheckin) tags+='<span style="font-size:9px;font-weight:700;background:var(--pul);color:var(--pu);border-radius:6px;padding:1px 5px;margin-left:4px">SELF</span>';
+      if(v.guestPasses) tags+='<span style="font-size:9px;font-weight:700;background:var(--aml);color:var(--am);border-radius:6px;padding:1px 5px;margin-left:4px">'+v.guestPasses+' guest'+(v.guestPasses>1?'s':'')+'</span>';
+      todayList+='<div style="background:#fff;border-radius:var(--r-sm);padding:10px 12px;display:flex;align-items:center;gap:10px;box-shadow:var(--sh)">'
+        +'<div style="width:4px;height:36px;border-radius:2px;background:'+statusColor+';flex-shrink:0"></div>'
+        +'<div style="flex:1;min-width:0">'
+        +'<div style="font-size:13px;font-weight:700;color:var(--bld)">'+mName+tags+'</div>'
+        +'<div style="font-size:11px;color:var(--mu);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+rosterStr+'</div>'
+        +'</div>'
+        +'<div style="font-size:11px;color:var(--mu);flex-shrink:0">'+time+'</div>'
+        +'</div>';
+    });
+    todayList+='</div>';
+    html+='<div class="rsec"><div class="rsec-title" style="margin-bottom:8px">Today\u2019s Check-Ins ('+todayV.length+')</div>'+todayList+'</div>';
+  }
 
   // Last 7 days
   html+=section(
