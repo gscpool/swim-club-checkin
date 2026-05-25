@@ -240,6 +240,28 @@ body.layout-laptop .rstat-grid{grid-template-columns:repeat(6,1fr)}
 /* Already checked in */
 .ci-already{background:var(--grl);color:var(--gr);font-size:13px;font-weight:700;padding:10px 14px;border-radius:var(--r-sm);text-align:center;border:1.5px solid var(--gr)}
 
+
+/* Status badges */
+.b-paid{background:#dcfce7;color:#166534;border:1.5px solid #86efac}
+.b-unpaid{background:#fee2e2;color:#991b1b;border:1.5px solid #fca5a5}
+.b-pending{background:#fef3c7;color:#92400e;border:1.5px solid #fcd34d}
+.b-inactive{background:#f3f4f6;color:#6b7280;border:1.5px solid #d1d5db}
+.b-terminated{background:#fee2e2;color:#7f1d1d;border:1.5px solid #f87171}
+/* Type badges */
+.b-family{background:var(--bll);color:var(--bl)}
+.b-ind{background:var(--aml);color:var(--am)}
+.b-couples{background:var(--pul);color:var(--pu)}
+.b-boardtype{background:var(--orl);color:var(--ord)}
+.b-comptype{background:var(--sand2);color:var(--mu)}
+/* Card left border by status */
+.st-paid{border-left:4px solid #22c55e !important}
+.st-unpaid{border-left:4px solid #ef4444 !important}
+.st-pending{border-left:4px solid #f59e0b !important}
+.st-inactive{border-left:4px solid #9ca3af !important}
+.st-terminated{border-left:4px solid #dc2626 !important}
+.st-board{border-left:4px solid var(--or) !important}
+.st-comp{border-left:4px solid var(--mu) !important}
+
 </style>
 </head>
 <body>
@@ -281,7 +303,7 @@ body.layout-laptop .rstat-grid{grid-template-columns:repeat(6,1fr)}
       <div>
         <div class="topbar-title">Gibsonville Swim Club</div>
         <div class="topbar-date" id="topbar-date"></div>
-        <div style="font-size:9px;color:rgba(255,255,255,.35)">v2.1.6</div>
+        <div style="font-size:9px;color:rgba(255,255,255,.35)">v2.1.8</div>
       </div>
     </div>
     <div class="topbar-right">
@@ -469,7 +491,7 @@ body.layout-laptop .rstat-grid{grid-template-columns:repeat(6,1fr)}
 <script>
 
 
-var _APP_VERSION="v2.1.6";
+var _APP_VERSION="v2.1.8";
 
 // ── SELF CHECK-IN MODE ────────────────────────────────────────────────────────
 var SELF_CI_MODE = window.location.search.indexOf('selfcheckin=true') >= 0;
@@ -2490,10 +2512,10 @@ setInterval(function(){
 },150);
 function formatPhone(r){var d=(r||'').replace(/\D/g,'');if(d.length===10)return '('+d.slice(0,3)+') '+d.slice(3,6)+'-'+d.slice(6);if(d.length===11&&d[0]==='1')return '('+d.slice(1,4)+') '+d.slice(4,7)+'-'+d.slice(7);return r||'';}
 function calcAge(dob){var t=new Date(),b=new Date(dob),a=t.getFullYear()-b.getFullYear();var m=t.getMonth()-b.getMonth();if(m<0||(m===0&&t.getDate()<b.getDate()))a--;return a;}
-function statusBadge(s){var map={paid:['b-paid','Paid'],pending:['b-pending','Pending'],unpaid:['b-unpaid','Unpaid']};var r=map[s]||['b-ind',s];return '<span class="badge '+r[0]+'">'+r[1]+'</span>';}
+function statusBadge(s){var map={paid:['b-paid','✓ Paid'],pending:['b-pending','Pending'],unpaid:['b-unpaid','⚠ Unpaid'],inactive:['b-inactive','Inactive'],terminated:['b-terminated','Terminated']};var r=map[s]||['b-ind',s];return '<span class="badge '+r[0]+'">'+r[1]+'</span>';}
 function typeBadge(t){var cls={Individual:'b-ind',Couples:'b-couples',Family:'b-family',Board:'b-boardtype',Comp:'b-comptype'}[t]||'b-ind';return '<span class="badge '+cls+'">'+t+'</span>';}
 function chipInfo(m){if(m.guestsTotal===0)return{cls:'none',lbl:'No passes'};var r=m.guestsTotal-(m.guestsUsed||0);return{cls:r<=0?'gone':r<=3?'low':'',lbl:'&#x1F3AB; '+r+' left'};}
-function cardCls(m){if(m.status==='unpaid')return'st-unpaid';if(m.status==='pending')return'st-pending';if(m.type==='Comp')return'st-comp';if(m.type==='Board')return'st-board';return'st-paid';}
+function cardCls(m){if(m.status==='unpaid')return'st-unpaid';if(m.status==='pending')return'st-pending';if(m.status==='inactive')return'st-inactive';if(m.status==='terminated')return'st-terminated';if(m.type==='Comp')return'st-comp';if(m.type==='Board')return'st-board';return'st-paid';}
 function rosterStr(m){var a=m.adults||0,c=m.kids?m.kids.length:(m.children||0),p=[];if(a>0)p.push(a+' adult'+(a>1?'s':''));if(c>0)p.push(c+' child'+(c>1?'ren':''));return p.length?p.join(' &middot; '):'Roster not set';}
 function playChime(){
   try{
@@ -3568,8 +3590,8 @@ function parseCSV(text){
         type:mtype,
         status:get(col.status)||'paid',
         adults:parseInt(get(col.adults))||1,
-        children:parseInt(get(col.children))||0,
-        kids:get(col.kids),
+        children:(function(){var raw=get(col.kids);var kArr=raw?raw.split('|').filter(function(k){return k.trim().length>0;}):[];return kArr.length||parseInt(get(col.children))||0;})(),
+        kids:(function(){var raw=get(col.kids);return raw?raw.split('|').map(function(k){return k.trim();}).filter(function(k){return k.length>0;}):[]; })(),
         secFirst:get(col.sfirst), secLast:get(col.slast),
         secPhone:get(col.sphone), secEmail:get(col.semail),
         guestsUsed:parseInt(get(col.gused))||0,
