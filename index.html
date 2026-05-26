@@ -316,7 +316,7 @@ body.layout-laptop .rstat-grid{grid-template-columns:repeat(6,1fr)}
       <div>
         <div class="topbar-title">Gibsonville Swim Club</div>
         <div class="topbar-date" id="topbar-date"></div>
-        <div style="font-size:9px;color:rgba(255,255,255,.35)">v2.2.3</div>
+        <div style="font-size:9px;color:rgba(255,255,255,.35)">v2.2.5</div>
       </div>
     </div>
     <div class="topbar-right">
@@ -517,8 +517,7 @@ body.layout-laptop .rstat-grid{grid-template-columns:repeat(6,1fr)}
 
 <script>
 
-
-var _APP_VERSION="v2.2.3";
+var _APP_VERSION="v1.9.1";
 
 // ── SELF CHECK-IN MODE ────────────────────────────────────────────────────────
 var SELF_CI_MODE = window.location.search.indexOf('selfcheckin=true') >= 0;
@@ -597,7 +596,7 @@ var db=null,fbReady=false;
     window._delMemberFB=function(id){_db.collection('members').doc(id).delete().catch(function(e){console.error(e);});};
     window._saveVisitFB=function(v){var c=Object.assign({},v);var id=c.id;delete c.id;_db.collection('visits').doc(id).set(c).catch(function(e){console.error(e);});};
     fbReady=true;
-    var _sb=document.getElementById('setup-banner');if(_sb)_sb.classList.remove('show');
+    document.getElementById('setup-banner').classList.remove('show');
     setSyncPill('online');
     // Load config first, then boot
     _db.collection('config').doc('settings').get().then(function(doc){
@@ -609,10 +608,10 @@ var db=null,fbReady=false;
         }
       }
       rebuildFromConfig();
-      var _tl=document.getElementById('topbar-date');if(_tl)_tl.textContent=new Date().toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}).toUpperCase();
+      document.getElementById('today-lbl').textContent=new Date().toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+      initPin();
       if(!SCI_MODE&&!APPLY_MODE){updateUIForRole();renderAll();}
       if(APPLY_MODE){initApplyMode();}
-  initLayout();
       if(!APPLY_MODE&&!SCI_MODE){loadApplications();}
       renderAnnouncement();
       checkRenewalExpiry();
@@ -629,10 +628,10 @@ var db=null,fbReady=false;
       });
     }).catch(function(){
       rebuildFromConfig();
-      var _tl=document.getElementById('topbar-date');if(_tl)_tl.textContent=new Date().toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}).toUpperCase();
+      document.getElementById('today-lbl').textContent=new Date().toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+      initPin();
       if(!SCI_MODE&&!APPLY_MODE){updateUIForRole();renderAll();}
       if(APPLY_MODE){initApplyMode();}
-  initLayout();
       if(!APPLY_MODE&&!SCI_MODE){loadApplications();}
       renderAnnouncement();
       checkRenewalExpiry();
@@ -788,7 +787,7 @@ function openMissModal(memberId){
   _missSteps=buildMissSteps(m);
   if(!_missSteps.length){openMember(memberId,true);return;}
   document.getElementById('miss-member-name').textContent=m.first+' '+m.last;
-  var _mso=document.getElementById('miss-overlay');if(_mso){_mso.style.display='flex';_mso.classList.add('open');}
+  document.getElementById('miss-overlay').style.display='flex';
   renderMissStep();
 }
 
@@ -958,12 +957,9 @@ function getVisitCount(memberId){
 }
 
 function canQuickCheckIn(m){
-  // Quick check-in only if: paid, roster confirmed, all names on file, no missing fields
   if(m.status!=='paid') return false;
-  if(m.rosterConfirmed!==true) return false;
-  if(!m.first||!m.last||!m.email||!m.phone||!m.street) return false;
-  var tc=getTypeConfig(m.type);
-  if(tc.requireSecond&&!(m.secFirst||m.secLast)) return false;
+  if(hasCriticalMissing(m)) return false;
+  if(!m.rosterConfirmed) return false;
   return true;
 }
 
@@ -1021,23 +1017,22 @@ function playChime(){
 var miMemberId=null, miStep=0, miSteps=[], miData={};
 
 function getMissingSteps(m){
-  var steps=[];
-  var tc=getTypeConfig(m.type);
-  // 1. Contact info - any missing field
-  var needsContact=!m.email||!m.phone||!m.street||!m.city||!m.state||!m.zip;
-  // 2. Roster not yet confirmed this season (covers adults + children for eligible types)
-  var rosterDone=m.rosterConfirmed===true;
-  var needsAdults=!rosterDone&&tc.maxAdults>1;
-  var needsKids=!rosterDone&&tc.allowChildren;
-  // 3. Second adult - required by type with no name on file
-  var needsSec=tc.requireSecond&&!(m.secFirst&&m.secLast);
-  // 4. Second adult optional - chose 2 adults but no name
-  var needsSecOptional=!tc.requireSecond&&tc.maxAdults>1&&m.adults===2&&!(m.secFirst&&m.secLast);
-  if(needsContact) steps.push('contact');
-  if(needsAdults) steps.push('adults');
-  if(needsSec||needsSecOptional) steps.push('second-adult');
-  if(needsKids) steps.push('children');
-  return steps;
+  var tc=getTypeConfig(m.type||'Family');
+  var missing=[];
+  if(!m.email||!m.email.trim()) missing.push({key:'email',label:'Email address'});
+  if(!m.phone||!m.phone.trim()) missing.push({key:'phone',label:'Phone number'});
+  if(!m.street||!m.street.trim()) missing.push({key:'address',label:'Street address'});
+  if(!m.city||!m.city.trim()) missing.push({key:'city',label:'City'});
+  if(!m.zip||!m.zip.trim()) missing.push({key:'zip',label:'ZIP code'});
+  var needsSec=tc.maxAdults>1&&(m.type==='Couples'||m.adults>=2)&&(!(m.secFirst&&m.secFirst.trim())||!(m.secLast&&m.secLast.trim()));
+  if(needsSec) missing.push({key:'second-adult',label:'Second adult name'});
+  var kidsNamed=(Array.isArray(m.kids)&&m.kids.filter(function(k){return k&&k.trim();}).length>0)||(typeof m.kids==='string'&&m.kids.replace(/[|]/g,'').trim().length>0);
+  if(tc.allowChildren&&(m.children>0||m.type==='Family'||m.type==='Board')&&!kidsNamed) missing.push({key:'kids',label:'Children names'});
+  return missing;
+}
+
+function hasCriticalMissing(m){
+  return getMissingSteps(m).length>0;
 }
 
 function openMissingInfo(memberId){
@@ -1051,56 +1046,56 @@ function openMissingInfo(memberId){
 function buildInlineMissingForm(m){
   var tc=getTypeConfig(m.type);
   var html='<div style="display:flex;flex-direction:column;gap:12px">';
-  html+='<div style="font-size:16px;font-weight:800;color:var(--bld)">&#x26A0;&#xFE0F; Complete Member Info</div>';
-  html+='<div style="font-size:13px;color:var(--mu);line-height:1.5">This information is required before checking in. It will be saved permanently.</div>';
+  html+='<div style="font-size:16px;font-weight:800;color:#fff">&#x26A0;&#xFE0F; Complete Member Info</div>';
+  html+='<div style="font-size:12px;color:rgba(255,255,255,.7)">This information is required before checking in. It will be saved permanently.</div>';
 
   // Contact fields
   var needsContact=!m.email||!m.phone||!m.street||!m.city||!m.state||!m.zip;
   if(needsContact){
-    html+='<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--mu)">Contact Information</div>';
-    if(!m.email) html+='<div class="fg"><label class="fl" style="color:var(--mu)">Email</label><input class="fi" id="ilf-email" type="email" value="'+(m.email||'')+'" placeholder="email@example.com"></div>';
-    if(!m.phone) html+='<div class="fg"><label class="fl" style="color:var(--mu)">Phone</label><input class="fi" id="ilf-phone" type="tel" value="'+(m.phone||'')+'" placeholder="(336) 555-0100"></div>';
+    html+='<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:rgba(255,255,255,.5)">Contact Information</div>';
+    if(!m.email) html+='<div class="fg"><label class="fl" style="color:rgba(255,255,255,.7)">Email</label><input class="fi" id="ilf-email" type="email" value="'+(m.email||'')+'" placeholder="email@example.com"></div>';
+    if(!m.phone) html+='<div class="fg"><label class="fl" style="color:rgba(255,255,255,.7)">Phone</label><input class="fi" id="ilf-phone" type="tel" value="'+(m.phone||'')+'" placeholder="(336) 555-0100"></div>';
     if(!m.street||!m.city||!m.zip){
-      html+='<div class="fg"><label class="fl" style="color:var(--mu)">Street Address</label><input class="fi" id="ilf-street" value="'+(m.street||'')+'" placeholder="123 Main St"></div>';
+      html+='<div class="fg"><label class="fl" style="color:rgba(255,255,255,.7)">Street Address</label><input class="fi" id="ilf-street" value="'+(m.street||'')+'" placeholder="123 Main St"></div>';
       html+='<div class="frow">';
-      html+='<div class="fg"><label class="fl" style="color:var(--mu)">City</label><input class="fi" id="ilf-city" value="'+(m.city||'')+'" placeholder="Burlington"></div>';
-      html+='<div class="fg" style="max-width:70px"><label class="fl" style="color:var(--mu)">State</label><input class="fi" id="ilf-state" value="'+(m.state||'NC')+'" maxlength="2"></div>';
-      html+='<div class="fg" style="max-width:90px"><label class="fl" style="color:var(--mu)">Zip</label><input class="fi" id="ilf-zip" type="tel" value="'+(m.zip||'')+'" maxlength="5" placeholder="27249"></div>';
+      html+='<div class="fg"><label class="fl" style="color:rgba(255,255,255,.7)">City</label><input class="fi" id="ilf-city" value="'+(m.city||'')+'" placeholder="Burlington"></div>';
+      html+='<div class="fg" style="max-width:70px"><label class="fl" style="color:rgba(255,255,255,.7)">State</label><input class="fi" id="ilf-state" value="'+(m.state||'NC')+'" maxlength="2"></div>';
+      html+='<div class="fg" style="max-width:90px"><label class="fl" style="color:rgba(255,255,255,.7)">Zip</label><input class="fi" id="ilf-zip" type="tel" value="'+(m.zip||'')+'" maxlength="5" placeholder="27249"></div>';
       html+='</div>';
     }
   }
 
   // Adults (for types that allow variable adults)
   if(tc.maxAdults>1){
-    html+='<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--mu)">Household — Adults</div>';
+    html+='<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:rgba(255,255,255,.5)">Household — Adults</div>';
     html+='<div style="display:flex;gap:8px">';
-    html+='<button id="ilf-a1" onclick="ilfSelectAdults(1)" style="flex:1;padding:14px;border-radius:10px;font-size:16px;font-weight:800;font-family:-apple-system,sans-serif;cursor:pointer;border:2px solid var(--sand2);background:var(--sand);color:var(--bld)">1 Adult</button>';
-    html+='<button id="ilf-a2" onclick="ilfSelectAdults(2)" style="flex:1;padding:14px;border-radius:10px;font-size:16px;font-weight:800;font-family:-apple-system,sans-serif;cursor:pointer;border:2px solid var(--sand2);background:var(--sand);color:var(--bld)">2 Adults</button>';
+    html+='<button id="ilf-a1" onclick="ilfSelectAdults(1)" style="flex:1;padding:14px;border-radius:10px;font-size:16px;font-weight:800;font-family:Inter,sans-serif;cursor:pointer;border:2px solid rgba(255,255,255,.3);background:rgba(255,255,255,.1);color:#fff">1 Adult</button>';
+    html+='<button id="ilf-a2" onclick="ilfSelectAdults(2)" style="flex:1;padding:14px;border-radius:10px;font-size:16px;font-weight:800;font-family:Inter,sans-serif;cursor:pointer;border:2px solid rgba(255,255,255,.3);background:rgba(255,255,255,.1);color:#fff">2 Adults</button>';
     html+='</div>';
     html+='<div id="ilf-sec-fields" style="display:none;flex-direction:column;gap:8px">';
-    html+='<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--mu)">Second Adult Name</div>';
-    html+='<div class="frow"><div class="fg"><label class="fl" style="color:var(--mu)">First Name</label><input class="fi" id="ilf-sec-first" value="'+(m.secFirst||'')+'" placeholder="First"></div>';
-    html+='<div class="fg"><label class="fl" style="color:var(--mu)">Last Name</label><input class="fi" id="ilf-sec-last" value="'+(m.secLast||'')+'" placeholder="Last"></div></div>';
+    html+='<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:rgba(255,255,255,.5)">Second Adult Name</div>';
+    html+='<div class="frow"><div class="fg"><label class="fl" style="color:rgba(255,255,255,.7)">First Name</label><input class="fi" id="ilf-sec-first" value="'+(m.secFirst||'')+'" placeholder="First"></div>';
+    html+='<div class="fg"><label class="fl" style="color:rgba(255,255,255,.7)">Last Name</label><input class="fi" id="ilf-sec-last" value="'+(m.secLast||'')+'" placeholder="Last"></div></div>';
     html+='</div>';
   } else if(tc.requireSecond&&!(m.secFirst&&m.secLast)){
-    html+='<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--mu)">Second Adult (Required)</div>';
-    html+='<div class="frow"><div class="fg"><label class="fl" style="color:var(--mu)">First Name</label><input class="fi" id="ilf-sec-first" value="'+(m.secFirst||'')+'" placeholder="First"></div>';
-    html+='<div class="fg"><label class="fl" style="color:var(--mu)">Last Name</label><input class="fi" id="ilf-sec-last" value="'+(m.secLast||'')+'" placeholder="Last"></div></div>';
+    html+='<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:rgba(255,255,255,.5)">Second Adult (Required)</div>';
+    html+='<div class="frow"><div class="fg"><label class="fl" style="color:rgba(255,255,255,.7)">First Name</label><input class="fi" id="ilf-sec-first" value="'+(m.secFirst||'')+'" placeholder="First"></div>';
+    html+='<div class="fg"><label class="fl" style="color:rgba(255,255,255,.7)">Last Name</label><input class="fi" id="ilf-sec-last" value="'+(m.secLast||'')+'" placeholder="Last"></div></div>';
   }
 
   // Children
   if(tc.allowChildren){
-    html+='<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--mu)">Children</div>';
+    html+='<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:rgba(255,255,255,.5)">Children</div>';
     html+='<div id="ilf-kids-list">';
     (m.kids||[]).forEach(function(k,i){
       html+='<div style="display:flex;gap:8px;align-items:center;margin-bottom:6px"><input class="fi ilf-kid" value="'+k+'" placeholder="Child name" style="flex:1"><button onclick="this.parentElement.remove()" style="background:var(--rel);border:none;color:var(--re);width:36px;height:36px;border-radius:8px;cursor:pointer;font-size:16px;flex-shrink:0">&#x2715;</button></div>';
     });
     html+='</div>';
-    html+='<button onclick="ilfAddKid()" style="width:100%;padding:10px;background:rgba(255,255,255,.1);border:1.5px dashed rgba(255,255,255,.3);border-radius:9px;color:rgba(255,255,255,.7);font-size:13px;font-weight:600;font-family:-apple-system,sans-serif;cursor:pointer">&#xFF0B; Add Child</button>';
+    html+='<button onclick="ilfAddKid()" style="width:100%;padding:10px;background:rgba(255,255,255,.1);border:1.5px dashed rgba(255,255,255,.3);border-radius:9px;color:rgba(255,255,255,.7);font-size:13px;font-weight:600;font-family:Inter,sans-serif;cursor:pointer">&#xFF0B; Add Child</button>';
   }
 
   // Save button
-  html+='<button onclick="ilfSave(\''+m.id+'\')" style="width:100%;padding:15px;background:var(--or);border:none;color:#fff;border-radius:11px;font-size:17px;font-weight:800;font-family:-apple-system,sans-serif;cursor:pointer;margin-top:4px">&#x2713; Save &amp; Continue to Check-In</button>';
+  html+='<button onclick="ilfSave(\''+m.id+'\')" style="width:100%;padding:15px;background:var(--or);border:none;color:#fff;border-radius:11px;font-size:17px;font-weight:800;font-family:Inter,sans-serif;cursor:pointer;margin-top:4px">&#x2713; Save &amp; Continue to Check-In</button>';
   html+='</div>';
   return html;
 }
@@ -1111,8 +1106,8 @@ function ilfSelectAdults(n){
   var b1=document.getElementById('ilf-a1');
   var b2=document.getElementById('ilf-a2');
   var sec=document.getElementById('ilf-sec-fields');
-  if(b1) b1.style.cssText='flex:1;padding:14px;border-radius:10px;font-size:16px;font-weight:800;font-family:-apple-system,sans-serif;cursor:pointer;border:2px solid '+(n===1?'var(--or)':'rgba(255,255,255,.3)')+';background:'+(n===1?'var(--or)':'rgba(255,255,255,.1)')+';color:#fff';
-  if(b2) b2.style.cssText='flex:1;padding:14px;border-radius:10px;font-size:16px;font-weight:800;font-family:-apple-system,sans-serif;cursor:pointer;border:2px solid '+(n===2?'var(--or)':'rgba(255,255,255,.3)')+';background:'+(n===2?'var(--or)':'rgba(255,255,255,.1)')+';color:#fff';
+  if(b1) b1.style.cssText='flex:1;padding:14px;border-radius:10px;font-size:16px;font-weight:800;font-family:Inter,sans-serif;cursor:pointer;border:2px solid '+(n===1?'var(--or)':'rgba(255,255,255,.3)')+';background:'+(n===1?'var(--or)':'rgba(255,255,255,.1)')+';color:#fff';
+  if(b2) b2.style.cssText='flex:1;padding:14px;border-radius:10px;font-size:16px;font-weight:800;font-family:Inter,sans-serif;cursor:pointer;border:2px solid '+(n===2?'var(--or)':'rgba(255,255,255,.3)')+';background:'+(n===2?'var(--or)':'rgba(255,255,255,.1)')+';color:#fff';
   if(sec) sec.style.display=n===2?'flex':'none';
 }
 
@@ -1242,8 +1237,8 @@ function miSelectAdults(n){
   // Update button styles
   var b1=document.getElementById('mi-a1');
   var b2=document.getElementById('mi-a2');
-  if(b1) b1.style.cssText='flex:1;font-size:18px;font-weight:800;padding:18px;width:100%;border-radius:11px;cursor:pointer;font-family:-apple-system,sans-serif;'+(n===1?'background:var(--or);color:#fff;border:2px solid var(--or)':'background:var(--sand);color:var(--tx);border:2px solid var(--sand2)');
-  if(b2) b2.style.cssText='flex:1;font-size:18px;font-weight:800;padding:18px;width:100%;border-radius:11px;cursor:pointer;font-family:-apple-system,sans-serif;'+(n===2?'background:var(--or);color:#fff;border:2px solid var(--or)':'background:var(--sand);color:var(--tx);border:2px solid var(--sand2)');
+  if(b1) b1.style.cssText='flex:1;font-size:18px;font-weight:800;padding:18px;width:100%;border-radius:11px;cursor:pointer;font-family:Inter,sans-serif;'+(n===1?'background:var(--or);color:#fff;border:2px solid var(--or)':'background:var(--sand);color:var(--tx);border:2px solid var(--sand2)');
+  if(b2) b2.style.cssText='flex:1;font-size:18px;font-weight:800;padding:18px;width:100%;border-radius:11px;cursor:pointer;font-family:Inter,sans-serif;'+(n===2?'background:var(--or);color:#fff;border:2px solid var(--or)':'background:var(--sand);color:var(--tx);border:2px solid var(--sand2)');
   // If 2 adults selected, ensure second-adult step is in the list
   if(n===2&&miSteps.indexOf('second-adult')===-1){
     var ci=miSteps.indexOf('adults');
@@ -1333,7 +1328,7 @@ function miNext(){
     // Update local members array immediately so getMissingSteps won't loop
     var localIdx=members.findIndex(function(x){return x.id===miMemberId;});
     if(localIdx>=0) members[localIdx]=Object.assign({},members[localIdx],miData);
-    var _mc=document.getElementById('mi-overlay');_mc.style.display='none';_mc.classList.remove('open');
+    document.getElementById('mi-overlay').style.display='none';
     showToast('Member info saved ✓','ok');
     // Short delay to let Firebase sync, then proceed
     setTimeout(function(){
@@ -1404,7 +1399,7 @@ var DEFAULT_PERMISSIONS={
   },
   attendant:{
     canCheckin:true,canEditMembers:false,canChangePayment:false,
-    canAddDeleteMembers:false,canImportExport:false,canViewReports:true,
+    canAddDeleteMembers:false,canImportExport:false,canViewReports:false,
     canViewIncidents:false,canFileIncidents:true,canVoteApplications:false,
     canViewApplications:false,canManageAnnouncements:false,canAccessSettings:false,
     canManageUsers:false
@@ -1416,8 +1411,6 @@ var inactivityTimer=null;
 var INACTIVITY_MINUTES=5; // configurable
 
 function can(permission){
-  // Master admin can do everything
-  if(isMasterAdmin()) return true;
   if(!currentUser) return DEFAULT_PERMISSIONS.attendant[permission]||false;
   var perms=currentUser.permissions||DEFAULT_PERMISSIONS[currentUser.roleType]||DEFAULT_PERMISSIONS.attendant;
   return perms[permission]||false;
@@ -1518,10 +1511,10 @@ function updateUIForRole(){
   if(loginIcon) loginIcon.textContent=isLoggedIn()?'🔓':'🔒';
   if(loginDisp) loginDisp.textContent=isLoggedIn()?currentUser.displayName:'';
   // FAB for adding members - only if permitted
-  // FAB visibility managed by switchTab - just update class state
   var fab=document.getElementById('fab');
-  if(fab) fab.classList.toggle('show',
-    can('canAddDeleteMembers') && document.getElementById('pane-dir').classList.contains('on'));
+  if(fab){
+    if(!can('canAddDeleteMembers')) fab.style.display='none';
+  }
   // Incident FAB
   var incFab=document.getElementById('inc-fab');
   // Incidents tab - always visible (attendants can file, logged-in users can view)
@@ -1532,7 +1525,7 @@ function updateUIForRole(){
   if(tbApp) tbApp.style.display=(isLoggedIn()&&can('canViewApplications'))?'':'none';
   // Reports tab
   var tbRep=document.getElementById('tb-rep');
-  if(tbRep) tbRep.style.display=can('canViewReports')?'':'none'; // attendants see reports by default
+  if(tbRep) tbRep.style.display=can('canViewReports')?'':'none';
 }
 
 function resetInactivityTimer(){
@@ -1614,7 +1607,7 @@ function sciShowSetup() {
   body.innerHTML = '<div class="sci-title">First Time Setup</div>'
     + '<div class="sci-sub2">Enter the 6-digit setup code provided by the attendant at the gate.</div>'
     + '<div class="fg"><label class="fl">Setup Code</label><input class="fi" id="sci-setup-inp" type="tel" maxlength="6" placeholder="••••••" style="font-size:24px;text-align:center;letter-spacing:8px" oninput="this.value=this.value.replace(/\D/g,\'\')"></div>'
-    + '<button onclick="sciVerifySetupCode()" style="width:100%;padding:14px;background:var(--or);border:none;color:#fff;border-radius:11px;font-size:16px;font-weight:700;font-family:-apple-system,sans-serif;cursor:pointer">Continue</button>';
+    + '<button onclick="sciVerifySetupCode()" style="width:100%;padding:14px;background:var(--or);border:none;color:#fff;border-radius:11px;font-size:16px;font-weight:700;font-family:Inter,sans-serif;cursor:pointer">Continue</button>';
 }
 
 function sciVerifySetupCode() {
@@ -1645,7 +1638,7 @@ function sciShowCreatePin(isReset) {
     + '<div class="sci-sub2">Choose a 6-digit PIN you will use every visit.</div>'
     + '<div class="sci-pin-display" id="sci-dots">' + sciRenderDots(0) + '</div>'
     + sciNumpad('sciEnterCreatePin')
-    + '<button onclick="sciClearPin()" style="background:none;border:none;color:var(--mu);font-size:13px;font-family:-apple-system,sans-serif;cursor:pointer;padding:4px">Clear</button>';
+    + '<button onclick="sciClearPin()" style="background:none;border:none;color:var(--mu);font-size:13px;font-family:Inter,sans-serif;cursor:pointer;padding:4px">Clear</button>';
 }
 
 function sciEnterCreatePin(n) {
@@ -1665,7 +1658,7 @@ function sciShowConfirmPin(firstPin) {
     + '<div class="sci-sub2">Enter your PIN again to confirm.</div>'
     + '<div class="sci-pin-display" id="sci-dots">' + sciRenderDots(0) + '</div>'
     + sciNumpad('sciEnterConfirmPin')
-    + '<button onclick="sciShowCreatePin()" style="background:none;border:none;color:var(--mu);font-size:13px;font-family:-apple-system,sans-serif;cursor:pointer;padding:4px">Back</button>';
+    + '<button onclick="sciShowCreatePin()" style="background:none;border:none;color:var(--mu);font-size:13px;font-family:Inter,sans-serif;cursor:pointer;padding:4px">Back</button>';
   window._sciFirstPin = firstPin;
 }
 
@@ -1712,8 +1705,8 @@ function sciShowPinEntry() {
     + '<div class="sci-pin-display" id="sci-dots">' + sciRenderDots(0) + '</div>'
     + sciNumpad('sciEnterPin')
     + '<div style="display:flex;justify-content:center;gap:16px;margin-top:4px">'
-    + '<button onclick="sciClearPin()" style="background:none;border:none;color:var(--mu);font-size:13px;font-family:-apple-system,sans-serif;cursor:pointer;padding:4px">Clear</button>'
-    + '<button onclick="sciForgetDevice()" style="background:none;border:none;color:var(--mu);font-size:13px;font-family:-apple-system,sans-serif;cursor:pointer;padding:4px">Not you?</button>'
+    + '<button onclick="sciClearPin()" style="background:none;border:none;color:var(--mu);font-size:13px;font-family:Inter,sans-serif;cursor:pointer;padding:4px">Clear</button>'
+    + '<button onclick="sciForgetDevice()" style="background:none;border:none;color:var(--mu);font-size:13px;font-family:Inter,sans-serif;cursor:pointer;padding:4px">Not you?</button>'
     + '</div>';
 }
 
@@ -1784,11 +1777,11 @@ function sciShowCheckin() {
     + '<div><div style="font-size:13px;font-weight:700;color:var(--bld)">Guest Passes</div>'
     + '<div style="font-size:11px;color:var(--mu)">' + rem + ' remaining</div></div>'
     + '<div style="display:flex;align-items:center;gap:12px">'
-    + '<button onclick="sciAdjGuests(-1)" style="width:36px;height:36px;border-radius:50%;background:var(--or);border:none;color:#fff;font-size:20px;font-weight:700;cursor:pointer;font-family:-apple-system,sans-serif">-</button>'
+    + '<button onclick="sciAdjGuests(-1)" style="width:36px;height:36px;border-radius:50%;background:var(--or);border:none;color:#fff;font-size:20px;font-weight:700;cursor:pointer;font-family:Inter,sans-serif">-</button>'
     + '<span id="sci-guests" style="font-size:20px;font-weight:800;min-width:24px;text-align:center">0</span>'
-    + '<button onclick="sciAdjGuests(1)" style="width:36px;height:36px;border-radius:50%;background:var(--or);border:none;color:#fff;font-size:20px;font-weight:700;cursor:pointer;font-family:-apple-system,sans-serif">+</button>'
+    + '<button onclick="sciAdjGuests(1)" style="width:36px;height:36px;border-radius:50%;background:var(--or);border:none;color:#fff;font-size:20px;font-weight:700;cursor:pointer;font-family:Inter,sans-serif">+</button>'
     + '</div></div></div>';
-  html += '<button onclick="sciSubmitCheckin()" style="width:100%;padding:16px;background:var(--or);border:none;color:#fff;border-radius:11px;font-size:18px;font-weight:800;font-family:-apple-system,sans-serif;cursor:pointer">Check In</button>';
+  html += '<button onclick="sciSubmitCheckin()" style="width:100%;padding:16px;background:var(--or);border:none;color:#fff;border-radius:11px;font-size:18px;font-weight:800;font-family:Inter,sans-serif;cursor:pointer">Check In</button>';
   body.innerHTML = html;
   window._sciGuestRem = rem;
 }
@@ -1800,7 +1793,7 @@ function sciAdjGuests(d) {
   if (_sciGuests > rem) {
     document.getElementById('sci-body').innerHTML = '<div class="sci-title" style="color:var(--am)">No Passes Remaining</div>'
       + '<div class="sci-sub2">You have no guest passes left. Please see the attendant for assistance.</div>'
-      + '<button onclick="sciShowCheckin()" style="width:100%;padding:14px;background:var(--sand);border:1.5px solid var(--sand2);border-radius:11px;font-size:15px;font-weight:700;font-family:-apple-system,sans-serif;cursor:pointer;color:var(--tx)">Back</button>';
+      + '<button onclick="sciShowCheckin()" style="width:100%;padding:14px;background:var(--sand);border:1.5px solid var(--sand2);border-radius:11px;font-size:15px;font-weight:700;font-family:Inter,sans-serif;cursor:pointer;color:var(--tx)">Back</button>';
     return;
   }
   var el = document.getElementById('sci-guests');
@@ -1978,7 +1971,7 @@ function renderApplyForm(){
     +'<div style="font-size:15px;font-weight:800;color:var(--bld);margin-bottom:8px">Access Code Required</div>'
     +'<div style="font-size:13px;color:var(--mu);margin-bottom:12px">Please enter the access code provided by a current member or the club.</div>'
     +'<div class="fg"><label class="fl">Access Code</label><input class="fi" id="apply-code" placeholder="Enter code" autocapitalize="none" autocorrect="off"></div>'
-    +'<button onclick="verifyApplyCode()" style="width:100%;padding:14px;background:var(--or);border:none;color:#fff;border-radius:11px;font-size:16px;font-weight:700;font-family:-apple-system,sans-serif;cursor:pointer;margin-top:8px">Continue</button>'
+    +'<button onclick="verifyApplyCode()" style="width:100%;padding:14px;background:var(--or);border:none;color:#fff;border-radius:11px;font-size:16px;font-weight:700;font-family:Inter,sans-serif;cursor:pointer;margin-top:8px">Continue</button>'
     +'</div></div>';
 }
 
@@ -1988,41 +1981,6 @@ function verifyApplyCode(){
     showApplyError('Invalid access code. Please check with your referring member.');
     return;
   }
-  renderApplyTypeSelect();
-}
-
-function renderApplyTypeSelect(){
-  var body=document.getElementById('apply-body'); if(!body) return;
-  var types=[
-    {key:'Individual',label:'Individual',icon:'🧑',desc:'Just you. One adult member.',adults:1,children:false},
-    {key:'Couples',label:'Couples',icon:'👫',desc:'Two adults. No children.',adults:2,children:false},
-    {key:'Family',label:'Family',icon:'👨‍👩‍👧‍👦',desc:'One or two adults plus children living in your household.',adults:2,children:true},
-  ];
-  body.innerHTML='<div style="display:flex;flex-direction:column;gap:12px">'
-    +'<div style="background:#fff;border-radius:12px;padding:16px">'
-    +'<div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--or);margin-bottom:12px">Select Membership Type</div>'
-    +'<div style="font-size:13px;color:var(--mu);margin-bottom:14px">Choose the membership type that best fits your household.</div>'
-    +'<div style="display:flex;flex-direction:column;gap:10px">'
-    +types.map(function(t){
-      return'<button data-type="'+t.key+'" onclick="selectApplyType(this.dataset.type)" style="width:100%;padding:16px;background:'+(applyData.mtype===t.key?'var(--bld)':'var(--sand)')+';border:2px solid '+(applyData.mtype===t.key?'var(--bld)':'var(--sand2)')+';border-radius:12px;cursor:pointer;text-align:left;font-family:-apple-system,sans-serif;transition:all .15s">'
-        +'<div style="display:flex;align-items:center;gap:12px">'
-        +'<div style="font-size:28px">'+t.icon+'</div>'
-        +'<div><div style="font-size:16px;font-weight:800;color:'+(applyData.mtype===t.key?'#fff':'var(--bld)')+'">'+t.label+'</div>'
-        +'<div style="font-size:12px;color:'+(applyData.mtype===t.key?'rgba(255,255,255,.7)':'var(--mu)')+'">'+t.desc+'</div></div>'
-        +'</div></button>';
-    }).join('')
-    +'</div></div>'
-    +'<button id="apply-type-next" onclick="applyTypeNext()" style="width:100%;padding:14px;background:var(--or);border:none;color:#fff;border-radius:11px;font-size:16px;font-weight:700;font-family:-apple-system,sans-serif;cursor:pointer;'+(applyData.mtype?'':'opacity:.5')+'">Next →</button>'
-    +'</div>';
-}
-
-function selectApplyType(type){
-  applyData.mtype=type;
-  renderApplyTypeSelect();
-}
-
-function applyTypeNext(){
-  if(!applyData.mtype){showApplyError('Please select a membership type.');return;}
   renderApplyStep1();
 }
 
@@ -2040,18 +1998,11 @@ function showApplyError(msg){
 
 var applyData={};
 
-function typeStepLabel(step,total){
-  var typeBadge='<span style="background:var(--bll);color:var(--bl);border-radius:8px;padding:2px 8px;font-size:10px;font-weight:700;margin-left:8px">'+applyData.mtype+'</span>';
-  return'<div style="display:flex;align-items:center;margin-bottom:12px"><div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--or)">Step '+step+' of '+total+' — Primary Member</div>'+typeBadge+'</div>';
-}
-
 function renderApplyStep1(){
   var body=document.getElementById('apply-body'); if(!body) return;
-  var tc=getTypeConfig(applyData.mtype);
-  var totalSteps=applyData.mtype==='Individual'?3:(tc.allowChildren?4:4);
   body.innerHTML='<div style="display:flex;flex-direction:column;gap:12px">'
     +'<div style="background:#fff;border-radius:12px;padding:16px">'
-    +typeStepLabel(1,totalSteps)
+    +'<div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--or);margin-bottom:12px">Step 1 of 4 — Primary Member</div>'
     +'<div class="frow"><div class="fg"><label class="fl">First Name *</label><input class="fi" id="af-first" value="'+(applyData.first||'')+'"></div>'
     +'<div class="fg"><label class="fl">Last Name *</label><input class="fi" id="af-last" value="'+(applyData.last||'')+'"></div></div>'
     +'<div class="fg"><label class="fl">Date of Birth *</label><input class="fi" id="af-dob" type="date" value="'+(applyData.dob||'')+'"></div>'
@@ -2065,10 +2016,7 @@ function renderApplyStep1(){
     +CONFIG.membershipTypes.map(function(t){return'<option'+(applyData.mtype===t.key?' selected':'')+' value="'+t.key+'">'+t.label+'</option>';}).join('')
     +'</select></div>'
     +'</div>'
-    +'<div style="display:flex;gap:8px">'
-    +'<button onclick="renderApplyTypeSelect()" style="flex:1;padding:13px;background:var(--sand);border:1.5px solid var(--sand2);border-radius:11px;font-size:15px;font-weight:700;font-family:-apple-system,sans-serif;cursor:pointer;color:var(--tx)">&larr; Back</button>'
-    +'<button onclick="applyStep1Next()" style="flex:2;padding:14px;background:var(--or);border:none;color:#fff;border-radius:11px;font-size:15px;font-weight:700;font-family:-apple-system,sans-serif;cursor:pointer">Next &rarr;</button>'
-    +'</div>'
+    +'<button onclick="applyStep1Next()" style="width:100%;padding:14px;background:var(--or);border:none;color:#fff;border-radius:11px;font-size:16px;font-weight:700;font-family:Inter,sans-serif;cursor:pointer">Next &rarr;</button>'
     +'</div>';
 }
 
@@ -2084,23 +2032,17 @@ function applyStep1Next(){
   applyData.email=em.value.trim();applyData.phone=ph.value.trim();applyData.street=st.value.trim();
   applyData.city=ci.value.trim();applyData.state=document.getElementById('af-state').value.trim()||'NC';
   applyData.zip=zp.value.trim();applyData.mtype=document.getElementById('af-type').value;
-  // Individual has no household step - skip to step 3 (renumbered step 2)
-  if(applyData.mtype==='Individual'){
-    renderApplyStep3();
-  } else {
-    renderApplyStep2();
-  }
+  renderApplyStep2();
 }
 
 function renderApplyStep2(){
   var body=document.getElementById('apply-body'); if(!body) return;
   var tc=getTypeConfig(applyData.mtype);
   var needsSec=tc.maxAdults>1;
-  var requiresSec=applyData.mtype==='Couples';
   body.innerHTML='<div style="display:flex;flex-direction:column;gap:12px">'
     +'<div style="background:#fff;border-radius:12px;padding:16px">'
-    +(function(){var tc=getTypeConfig(applyData.mtype);var total=applyData.mtype==='Individual'?3:4;return'<div style="display:flex;align-items:center;margin-bottom:12px"><div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--or)">Step 2 of '+total+' — Household Members</div><span style="background:var(--bll);color:var(--bl);border-radius:8px;padding:2px 8px;font-size:10px;font-weight:700;margin-left:8px">'+applyData.mtype+'</span></div>';}())
-    +(needsSec?'<div style="font-size:13px;font-weight:700;color:var(--bld);margin-bottom:8px">Secondary Adult'+(applyData.mtype==="Couples"?' <span style="color:var(--re);font-size:11px">(required)</span>':' (if applicable)')+'</div>'
+    +'<div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--or);margin-bottom:12px">Step 2 of 4 — Household Members</div>'
+    +(needsSec?'<div style="font-size:13px;font-weight:700;color:var(--bld);margin-bottom:8px">Secondary Adult (if applicable)</div>'
     +'<div class="frow"><div class="fg"><label class="fl">First Name</label><input class="fi" id="af-sec-first" value="'+(applyData.secFirst||'')+'"></div>'
     +'<div class="fg"><label class="fl">Last Name</label><input class="fi" id="af-sec-last" value="'+(applyData.secLast||'')+'"></div></div>'
     +'<div class="fg"><label class="fl">Date of Birth</label><input class="fi" id="af-sec-dob" type="date" value="'+(applyData.secDob||'')+'"></div>'
@@ -2114,11 +2056,11 @@ function renderApplyStep2(){
         +'<button onclick="this.parentElement.remove()" style="background:var(--rel);border:none;color:var(--re);width:36px;height:36px;border-radius:8px;cursor:pointer;flex-shrink:0;font-size:16px">&#x2715;</button>'
         +'</div>';
     })).join('')+'</div>'
-    +'<button onclick="afAddKid()" style="width:100%;padding:10px;background:var(--sand);border:1.5px dashed var(--sand2);border-radius:9px;font-size:13px;font-weight:600;font-family:-apple-system,sans-serif;cursor:pointer;color:var(--mu)">&#xFF0B; Add Child</button>':'')
+    +'<button onclick="afAddKid()" style="width:100%;padding:10px;background:var(--sand);border:1.5px dashed var(--sand2);border-radius:9px;font-size:13px;font-weight:600;font-family:Inter,sans-serif;cursor:pointer;color:var(--mu)">&#xFF0B; Add Child</button>':'')
     +'</div>'
     +'<div style="display:flex;gap:8px">'
-    +'<button onclick="renderApplyStep1()" style="flex:1;padding:13px;background:var(--sand);border:1.5px solid var(--sand2);border-radius:11px;font-size:15px;font-weight:700;font-family:-apple-system,sans-serif;cursor:pointer;color:var(--tx)">&larr; Back</button>'
-    +'<button onclick="applyStep2Next()" style="flex:2;padding:13px;background:var(--or);border:none;color:#fff;border-radius:11px;font-size:15px;font-weight:700;font-family:-apple-system,sans-serif;cursor:pointer">Next &rarr;</button>'
+    +'<button onclick="renderApplyStep1()" style="flex:1;padding:13px;background:var(--sand);border:1.5px solid var(--sand2);border-radius:11px;font-size:15px;font-weight:700;font-family:Inter,sans-serif;cursor:pointer;color:var(--tx)">&larr; Back</button>'
+    +'<button onclick="applyStep2Next()" style="flex:2;padding:13px;background:var(--or);border:none;color:#fff;border-radius:11px;font-size:15px;font-weight:700;font-family:Inter,sans-serif;cursor:pointer">Next &rarr;</button>'
     +'</div></div>';
 }
 
@@ -2135,12 +2077,6 @@ function afAddKid(){
 
 function applyStep2Next(){
   var tc=getTypeConfig(applyData.mtype);
-  // Couples requires second adult name
-  if(applyData.mtype==='Couples'){
-    var sf=document.getElementById('af-sec-first');
-    var sl=document.getElementById('af-sec-last');
-    if(!sf||!sf.value.trim()||!sl||!sl.value.trim()){showApplyError('Couples membership requires both adults\' names.');return;}
-  }
   if(tc.maxAdults>1){
     var sf=document.getElementById('af-sec-first');
     var sl=document.getElementById('af-sec-last');
@@ -2166,7 +2102,7 @@ function renderApplyStep3(){
   var body=document.getElementById('apply-body'); if(!body) return;
   body.innerHTML='<div style="display:flex;flex-direction:column;gap:12px">'
     +'<div style="background:#fff;border-radius:12px;padding:16px">'
-    +'<div style="display:flex;align-items:center;margin-bottom:12px"><div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--or)">Step 3 of 4 — About Your Application</div><span style="background:var(--bll);color:var(--bl);border-radius:8px;padding:2px 8px;font-size:10px;font-weight:700;margin-left:8px">' +applyData.mtype+ '</span></div>'
+    +'<div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--or);margin-bottom:12px">Step 3 of 4 — About Your Application</div>'
     +'<div class="fg"><label class="fl">Current GSC Member Reference * <span style="font-size:11px;color:var(--mu)">(type "None" if you have none)</span></label>'
     +'<input class="fi" id="af-ref" value="'+(applyData.reference||'')+'" placeholder="Member first and last name or None"></div>'
     +'<div class="fg"><label class="fl">How did you hear about the club? *</label>'
@@ -2178,8 +2114,8 @@ function renderApplyStep3(){
     +'<textarea class="fi" id="af-why" rows="3" style="resize:vertical" placeholder="Tell us a bit about your family and why you want to join...">'+(applyData.why||'')+'</textarea></div>'
     +'</div>'
     +'<div style="display:flex;gap:8px">'
-    +'<button onclick="renderApplyStep2()" style="flex:1;padding:13px;background:var(--sand);border:1.5px solid var(--sand2);border-radius:11px;font-size:15px;font-weight:700;font-family:-apple-system,sans-serif;cursor:pointer;color:var(--tx)">&larr; Back</button>'
-    +'<button onclick="applyStep3Next()" style="flex:2;padding:13px;background:var(--or);border:none;color:#fff;border-radius:11px;font-size:15px;font-weight:700;font-family:-apple-system,sans-serif;cursor:pointer">Next &rarr;</button>'
+    +'<button onclick="renderApplyStep2()" style="flex:1;padding:13px;background:var(--sand);border:1.5px solid var(--sand2);border-radius:11px;font-size:15px;font-weight:700;font-family:Inter,sans-serif;cursor:pointer;color:var(--tx)">&larr; Back</button>'
+    +'<button onclick="applyStep3Next()" style="flex:2;padding:13px;background:var(--or);border:none;color:#fff;border-radius:11px;font-size:15px;font-weight:700;font-family:Inter,sans-serif;cursor:pointer">Next &rarr;</button>'
     +'</div></div>';
 }
 
@@ -2213,8 +2149,8 @@ function renderApplyStep4(){
     +'<div class="fg"><label class="fl">Date</label><input class="fi" id="af-sigdate" type="date" value="'+(applyData.sigDate||new Date().toISOString().slice(0,10))+'"></div>'
     +'</div>'
     +'<div style="display:flex;gap:8px">'
-    +'<button onclick="renderApplyStep3()" style="flex:1;padding:13px;background:var(--sand);border:1.5px solid var(--sand2);border-radius:11px;font-size:15px;font-weight:700;font-family:-apple-system,sans-serif;cursor:pointer;color:var(--tx)">&larr; Back</button>'
-    +'<button onclick="submitApplication()" style="flex:2;padding:13px;background:var(--or);border:none;color:#fff;border-radius:11px;font-size:15px;font-weight:700;font-family:-apple-system,sans-serif;cursor:pointer">Submit Application</button>'
+    +'<button onclick="renderApplyStep3()" style="flex:1;padding:13px;background:var(--sand);border:1.5px solid var(--sand2);border-radius:11px;font-size:15px;font-weight:700;font-family:Inter,sans-serif;cursor:pointer;color:var(--tx)">&larr; Back</button>'
+    +'<button onclick="submitApplication()" style="flex:2;padding:13px;background:var(--or);border:none;color:#fff;border-radius:11px;font-size:15px;font-weight:700;font-family:Inter,sans-serif;cursor:pointer">Submit Application</button>'
     +'</div></div>';
 }
 
@@ -2292,7 +2228,7 @@ function appCard(a,majority){
     +'<div style="font-size:16px;font-weight:800;color:var(--bld)">'+a.first+' '+a.last+'</div>'
     +'<span style="font-size:10px;font-weight:700;text-transform:uppercase;color:'+statusColor+';background:var(--sand);padding:3px 8px;border-radius:10px">'+a.status+'</span>'
     +'</div>'
-    +(function(){var bg=a.mtype==='Family'?'var(--bll)':a.mtype==='Couples'?'var(--pul)':'var(--aml)';var fg=a.mtype==='Family'?'var(--bl)':a.mtype==='Couples'?'var(--pu)':'var(--am)';return'<div style="font-size:12px;margin-bottom:4px"><span style="background:'+bg+';color:'+fg+';border-radius:8px;padding:2px 8px;font-size:10px;font-weight:700">'+a.mtype+'</span> <span style="color:var(--mu)">Submitted '+new Date(a.submittedAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})+'</span></div>';}())
+    +'<div style="font-size:12px;color:var(--mu);margin-bottom:4px">'+a.mtype+' &middot; Submitted '+new Date(a.submittedAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})+'</div>'
     +'<div style="font-size:12px;color:var(--mu);margin-bottom:8px">Ref: '+(a.reference||'None')+'</div>'
     +(a.status==='pending'?'<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">'
     +'<div style="flex:1;background:var(--grl);border-radius:8px;padding:6px;text-align:center;font-size:12px;font-weight:700;color:var(--gr)">'+approveCount+' Approve</div>'
@@ -2300,10 +2236,10 @@ function appCard(a,majority){
     +'<div style="font-size:11px;color:var(--mu)">Need '+majority+'</div>'
     +'</div>':'')
     +'<div style="display:flex;gap:8px">'
-    +'<button data-appid="'+a.id+'" onclick="openAppReview(this.dataset.appid)" style="flex:2;padding:9px;background:var(--sand);border:1.5px solid var(--sand2);border-radius:9px;font-size:13px;font-weight:700;font-family:-apple-system,sans-serif;cursor:pointer;color:var(--tx)">View Details</button>'
+    +'<button data-appid="'+a.id+'" onclick="openAppReview(this.dataset.appid)" style="flex:2;padding:9px;background:var(--sand);border:1.5px solid var(--sand2);border-radius:9px;font-size:13px;font-weight:700;font-family:Inter,sans-serif;cursor:pointer;color:var(--tx)">View Details</button>'
     +(a.status==='pending'&&can('canVoteApplications')&&!myVote?
-      '<button data-appid="'+a.id+'" onclick="voteApplication(this.dataset.appid,&quot;approve&quot;)" style="flex:1;padding:9px;background:var(--grl);border:1.5px solid var(--gr);border-radius:9px;font-size:12px;font-weight:700;font-family:-apple-system,sans-serif;cursor:pointer;color:var(--gr)">✔ Approve</button>'
-      +'<button data-appid="'+a.id+'" onclick="voteApplication(this.dataset.appid,&quot;reject&quot;)" style="flex:1;padding:9px;background:var(--rel);border:1.5px solid var(--re);border-radius:9px;font-size:12px;font-weight:700;font-family:-apple-system,sans-serif;cursor:pointer;color:var(--re)">✖ Reject</button>'
+      '<button data-appid="'+a.id+'" onclick="voteApplication(this.dataset.appid,&quot;approve&quot;)" style="flex:1;padding:9px;background:var(--grl);border:1.5px solid var(--gr);border-radius:9px;font-size:12px;font-weight:700;font-family:Inter,sans-serif;cursor:pointer;color:var(--gr)">✔ Approve</button>'
+      +'<button data-appid="'+a.id+'" onclick="voteApplication(this.dataset.appid,&quot;reject&quot;)" style="flex:1;padding:9px;background:var(--rel);border:1.5px solid var(--re);border-radius:9px;font-size:12px;font-weight:700;font-family:Inter,sans-serif;cursor:pointer;color:var(--re)">✖ Reject</button>'
     :myVote?'<div style="flex:2;padding:9px;text-align:center;font-size:12px;font-weight:700;color:var(--mu)">Voted: '+myVote+'</div>':'')
     +'</div></div>';
 }
@@ -2353,8 +2289,8 @@ function openAppReview(appId){
     }
     if(!myVote){
       html+='<div style="display:flex;gap:8px">'
-        +'<button data-appid="'+a.id+'" onclick="voteApplication(this.dataset.appid,&quot;approve&quot;);closeAppReview();" style="flex:1;padding:13px;background:var(--grl);border:2px solid var(--gr);border-radius:11px;font-size:15px;font-weight:700;font-family:-apple-system,sans-serif;cursor:pointer;color:var(--gr)">✔ Approve</button>'
-        +'<button data-appid="'+a.id+'" onclick="voteApplication(this.dataset.appid,&quot;reject&quot;);closeAppReview();" style="flex:1;padding:13px;background:var(--rel);border:2px solid var(--re);border-radius:11px;font-size:15px;font-weight:700;font-family:-apple-system,sans-serif;cursor:pointer;color:var(--re)">✖ Reject</button>'
+        +'<button data-appid="'+a.id+'" onclick="voteApplication(this.dataset.appid,&quot;approve&quot;);closeAppReview();" style="flex:1;padding:13px;background:var(--grl);border:2px solid var(--gr);border-radius:11px;font-size:15px;font-weight:700;font-family:Inter,sans-serif;cursor:pointer;color:var(--gr)">✔ Approve</button>'
+        +'<button data-appid="'+a.id+'" onclick="voteApplication(this.dataset.appid,&quot;reject&quot;);closeAppReview();" style="flex:1;padding:13px;background:var(--rel);border:2px solid var(--re);border-radius:11px;font-size:15px;font-weight:700;font-family:Inter,sans-serif;cursor:pointer;color:var(--re)">✖ Reject</button>'
         +'</div>';
     } else {
       html+='<div style="text-align:center;font-size:13px;font-weight:700;color:var(--mu);padding:8px">You voted: '+myVote+'</div>';
@@ -2365,21 +2301,21 @@ function openAppReview(appId){
     html+='<div style="border-top:1px solid var(--sand2);padding-top:10px;display:flex;flex-direction:column;gap:8px">'
       +'<div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--mu)">Admin Override</div>'
       +'<div style="display:flex;gap:8px">'
-      +'<button data-appid="'+a.id+'" onclick="adminApproveApp(this.dataset.appid)" style="flex:1;padding:11px;background:var(--gr);border:none;border-radius:10px;font-size:13px;font-weight:700;font-family:-apple-system,sans-serif;cursor:pointer;color:#fff">Force Approve</button>'
-      +'<button data-appid="'+a.id+'" onclick="adminRejectApp(this.dataset.appid)" style="flex:1;padding:11px;background:var(--re);border:none;border-radius:10px;font-size:13px;font-weight:700;font-family:-apple-system,sans-serif;cursor:pointer;color:#fff">Force Reject</button>'
+      +'<button data-appid="'+a.id+'" onclick="adminApproveApp(this.dataset.appid)" style="flex:1;padding:11px;background:var(--gr);border:none;border-radius:10px;font-size:13px;font-weight:700;font-family:Inter,sans-serif;cursor:pointer;color:#fff">Force Approve</button>'
+      +'<button data-appid="'+a.id+'" onclick="adminRejectApp(this.dataset.appid)" style="flex:1;padding:11px;background:var(--re);border:none;border-radius:10px;font-size:13px;font-weight:700;font-family:Inter,sans-serif;cursor:pointer;color:#fff">Force Reject</button>'
       +'</div></div>';
   }
   // Admin notes
   html+='<div class="fg"><label class="fl">Admin Notes</label>'
     +'<textarea class="fi" id="app-admin-note" rows="2" style="resize:vertical" placeholder="Internal notes about this application...">'+(a.adminNotes||'')+'</textarea></div>'
-    +'<button data-appid="'+a.id+'" onclick="saveAppNote(this.dataset.appid)" style="width:100%;padding:11px;background:var(--bl);border:none;color:#fff;border-radius:10px;font-size:13px;font-weight:700;font-family:-apple-system,sans-serif;cursor:pointer">Save Notes</button>';
+    +'<button data-appid="'+a.id+'" onclick="saveAppNote(this.dataset.appid)" style="width:100%;padding:11px;background:var(--bl);border:none;color:#fff;border-radius:10px;font-size:13px;font-weight:700;font-family:Inter,sans-serif;cursor:pointer">Save Notes</button>';
   html+='</div>';
   body.innerHTML=html;
-  var _ao=document.getElementById('appreview-overlay');_ao.style.display='flex';_ao.classList.add('open');
+  document.getElementById('appreview-overlay').style.display='flex';
 }
 
 function closeAppReview(){
-  var _ac=document.getElementById('appreview-overlay');_ac.style.display='none';_ac.classList.remove('open');
+  document.getElementById('appreview-overlay').style.display='none';
 }
 
 function voteApplication(appId, vote){
@@ -2463,164 +2399,6 @@ function saveAppNote(appId){
 // ── APPLY MODE DETECTION ──────────────────────────────────────────────────────
 var APPLY_MODE = window.location.search.indexOf('apply=true') >= 0;
 
-function cycleLayout(){
-  var modes=['','layout-ipad','layout-iphone','layout-laptop'];
-  var labels=['Default','iPad Mini','iPhone','Laptop'];
-  var body=document.body;
-  var current=modes.findIndex(function(m){return m&&body.classList.contains(m);});
-  if(current<0) current=0; else modes.forEach(function(m){if(m)body.classList.remove(m);});
-  var next=(current+1)%modes.length;
-  if(modes[next]) body.classList.add(modes[next]);
-  var btn=document.getElementById('layout-btn');
-  if(btn){btn.title='Layout: '+labels[next];btn.textContent=labels[next].toUpperCase();}
-  try{localStorage.setItem('gsc_layout',modes[next]);}catch(e){}
-  showToast('Layout: '+labels[next]);
-}
-function initLayout(){
-  try{
-    var saved=localStorage.getItem('gsc_layout');
-    if(saved){
-      document.body.classList.add(saved);
-      var labels={'':'VIEW','layout-ipad':'IPAD','layout-iphone':'IPHONE','layout-laptop':'LAPTOP'};
-      var btn=document.getElementById('layout-btn');
-      if(btn) btn.textContent=labels[saved]||'VIEW';
-    }
-  }catch(e){}
-}
-
-
-// ── FIND DUPLICATES ───────────────────────────────────────────────────────────
-function openDedupModal(){
-  var o=document.getElementById('dedup-overlay');
-  if(o){o.style.display='flex';o.classList.add('open');}
-  renderDedupResults();
-}
-
-function closeDedupModal(){
-  var o=document.getElementById('dedup-overlay');
-  if(o){o.style.display='none';o.classList.remove('open');}
-}
-
-function findDuplicates(){
-  var dupes=[];
-  var seen={};
-  // Match by: same last+first name, or same email
-  members.forEach(function(m){
-    var nameKey=(m.last||'').toLowerCase().trim()+'|'+(m.first||'').toLowerCase().trim();
-    var emailKey=(m.email||'').toLowerCase().trim();
-    if(nameKey!=='|'){
-      if(!seen[nameKey]) seen[nameKey]=[];
-      seen[nameKey].push(m);
-    }
-    if(emailKey){
-      if(!seen[emailKey]) seen[emailKey]=[];
-      seen[emailKey].push(m);
-    }
-  });
-  // Collect groups with more than 1 member
-  var groups=[];
-  var addedIds={};
-  Object.keys(seen).forEach(function(k){
-    if(seen[k].length>1){
-      var ids=seen[k].map(function(m){return m.id;}).sort().join('|');
-      if(!addedIds[ids]){
-        addedIds[ids]=true;
-        groups.push(seen[k]);
-      }
-    }
-  });
-  return groups;
-}
-
-function renderDedupResults(){
-  var body=document.getElementById('dedup-body'); if(!body) return;
-  var groups=findDuplicates();
-  if(!groups.length){
-    body.innerHTML='<div style="text-align:center;padding:30px">'
-      +'<div style="font-size:40px;margin-bottom:10px">✅</div>'
-      +'<div style="font-size:16px;font-weight:700;color:var(--gr)">No duplicates found!</div>'
-      +'<div style="font-size:13px;color:var(--mu);margin-top:6px">All '+members.length+' member records look unique.</div>'
-      +'</div>';
-    return;
-  }
-  var html='<div style="font-size:13px;color:var(--mu);margin-bottom:12px">Found <b>'+groups.length+' potential duplicate groups</b>. Review and merge or delete each pair.</div>';
-  groups.forEach(function(grp,gi){
-    html+='<div style="background:var(--sand);border-radius:var(--r);padding:14px;margin-bottom:12px;border:1.5px solid var(--sand2)">';
-    html+='<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--mu);margin-bottom:8px">Group '+(gi+1)+' of '+groups.length+'</div>';
-    grp.forEach(function(m,mi){
-      var kids=Array.isArray(m.kids)&&m.kids.length?m.kids.join(', '):(m.kids&&m.kids!='nan'?m.kids:'');
-      html+='<div style="background:#fff;border-radius:var(--r-sm);padding:12px;margin-bottom:6px;border-left:4px solid '+(m.status==='paid'?'#22c55e':'#ef4444')+'">'
-        +'<div style="display:flex;align-items:center;justify-content:space-between;gap:8px">'
-        +'<div><div style="font-size:14px;font-weight:700;color:var(--bld)">'+m.last+', '+m.first+'</div>'
-        +'<div style="font-size:11px;color:var(--mu);margin-top:2px">'+m.type+' · '+m.status+(m.email?' · '+m.email:'')+'</div>'
-        +(kids?'<div style="font-size:11px;color:var(--mu)">Kids: '+kids+'</div>':'')
-        +(m.secFirst?'<div style="font-size:11px;color:var(--mu)">2nd: '+m.secFirst+' '+m.secLast+'</div>':'')
-        +'</div>'
-        +'<div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">'
-        +'<button data-mid="'+m.id+'" onclick="dedupDelete(this.dataset.mid)" style="padding:6px 10px;background:var(--rel);border:1.5px solid var(--re);border-radius:8px;font-size:11px;font-weight:700;color:var(--re);cursor:pointer;font-family:-apple-system,sans-serif">🗑 Delete</button>'
-        +'</div></div></div>';
-    });
-    // Merge button - merges all records in group into the first one
-    html+='<button onclick="dedupMergeGroup('+JSON.stringify(grp.map(function(m){return m.id;}))+','+gi+')" '
-      +'style="width:100%;padding:10px;background:var(--bl);border:none;border-radius:var(--r-sm);font-size:13px;font-weight:700;color:#fff;cursor:pointer;font-family:-apple-system,sans-serif;margin-top:4px">'
-      +'⊕ Merge into one record</button>';
-    html+='</div>';
-  });
-  body.innerHTML=html;
-}
-
-function dedupDelete(id){
-  if(!confirm('Delete this member record permanently?')) return;
-  var m=members.find(function(x){return x.id===id;});
-  if(!m) return;
-  if(fbReady&&db) db.collection('members').doc(id).delete().catch(function(e){console.error(e);});
-  members=members.filter(function(x){return x.id!==id;});
-  showToast('Record deleted','ok');
-  renderDedupResults();
-  renderDir();
-}
-
-function dedupMergeGroup(ids, gi){
-  // Take the record with the most data as the base, overlay remaining data
-  var grp=ids.map(function(id){return members.find(function(m){return m.id===id;});}).filter(Boolean);
-  if(grp.length<2) return;
-  // Score each record by data completeness
-  function score(m){
-    var s=0;
-    if(m.email) s+=3;
-    if(m.phone) s+=2;
-    if(m.street) s+=2;
-    if(Array.isArray(m.kids)&&m.kids.length) s+=m.kids.length;
-    if(m.secFirst) s+=2;
-    if(m.status==='paid') s+=3;
-    if(m.notes&&m.notes.length) s+=1;
-    return s;
-  }
-  grp.sort(function(a,b){return score(b)-score(a);});
-  var base=Object.assign({},grp[0]);
-  // Merge in data from other records
-  grp.slice(1).forEach(function(m){
-    if(!base.email&&m.email) base.email=m.email;
-    if(!base.phone&&m.phone) base.phone=m.phone;
-    if(!base.street&&m.street){base.street=m.street;base.city=m.city;base.state=m.state;base.zip=m.zip;}
-    if(!base.secFirst&&m.secFirst){base.secFirst=m.secFirst;base.secLast=m.secLast;}
-    if((!Array.isArray(base.kids)||!base.kids.length)&&Array.isArray(m.kids)&&m.kids.length) base.kids=m.kids;
-    if(base.status!=='paid'&&m.status==='paid'){base.status='paid';base.guestsTotal=m.guestsTotal||base.guestsTotal;}
-    if(m.notes&&!base.notes) base.notes=m.notes;
-  });
-  // Save merged record, delete the rest
-  saveMember(base);
-  var i=members.findIndex(function(x){return x.id===base.id;});
-  if(i>=0) members[i]=base; else members.push(base);
-  grp.slice(1).forEach(function(m){
-    if(fbReady&&db) db.collection('members').doc(m.id).delete().catch(function(e){console.error(e);});
-    members=members.filter(function(x){return x.id!==m.id;});
-  });
-  showToast('Merged '+grp.length+' records into one','ok');
-  renderDedupResults();
-  renderDir();
-}
-
 function renderAll(){renderCI();renderDir();renderRep();renderAnnouncement();}
 
 function renderAnnouncement(){
@@ -2672,10 +2450,10 @@ setInterval(function(){
 },150);
 function formatPhone(r){var d=(r||'').replace(/\D/g,'');if(d.length===10)return '('+d.slice(0,3)+') '+d.slice(3,6)+'-'+d.slice(6);if(d.length===11&&d[0]==='1')return '('+d.slice(1,4)+') '+d.slice(4,7)+'-'+d.slice(7);return r||'';}
 function calcAge(dob){var t=new Date(),b=new Date(dob),a=t.getFullYear()-b.getFullYear();var m=t.getMonth()-b.getMonth();if(m<0||(m===0&&t.getDate()<b.getDate()))a--;return a;}
-function statusBadge(s){var map={paid:['b-paid','✓ Paid'],pending:['b-pending','Pending'],unpaid:['b-unpaid','⚠ Unpaid'],inactive:['b-inactive','Inactive'],terminated:['b-terminated','Terminated']};var r=map[s]||['b-ind',s];return '<span class="badge '+r[0]+'">'+r[1]+'</span>';}
+function statusBadge(s){var map={paid:['b-paid','Paid'],pending:['b-pending','Pending'],unpaid:['b-unpaid','Unpaid']};var r=map[s]||['b-ind',s];return '<span class="badge '+r[0]+'">'+r[1]+'</span>';}
 function typeBadge(t){var cls={Individual:'b-ind',Couples:'b-couples',Family:'b-family',Board:'b-boardtype',Comp:'b-comptype'}[t]||'b-ind';return '<span class="badge '+cls+'">'+t+'</span>';}
 function chipInfo(m){if(m.guestsTotal===0)return{cls:'none',lbl:'No passes'};var r=m.guestsTotal-(m.guestsUsed||0);return{cls:r<=0?'gone':r<=3?'low':'',lbl:'&#x1F3AB; '+r+' left'};}
-function cardCls(m){if(m.status==='unpaid')return'st-unpaid';if(m.status==='pending')return'st-pending';if(m.status==='inactive')return'st-inactive';if(m.status==='terminated')return'st-terminated';if(m.type==='Comp')return'st-comp';if(m.type==='Board')return'st-board';return'st-paid';}
+function cardCls(m){if(m.status==='unpaid')return'st-unpaid';if(m.status==='pending')return'st-pending';if(m.type==='Comp')return'st-comp';if(m.type==='Board')return'st-board';return'st-paid';}
 function rosterStr(m){var a=m.adults||0,c=m.kids?m.kids.length:(m.children||0),p=[];if(a>0)p.push(a+' adult'+(a>1?'s':''));if(c>0)p.push(c+' child'+(c>1?'ren':''));return p.length?p.join(' &middot; '):'Roster not set';}
 function playChime(){
   try{
@@ -2722,19 +2500,23 @@ function seedDemo(){
 
 var pinEntry='';
 function initPin(){}
-function updDots(){}
-function pinKeyPress(){}function checkPin(){}
+function updDots(){for(var i=0;i<4;i++)document.getElementById('d'+i).classList.toggle('on',i<pinEntry.length);}
+function pinKeyPress(k){
+  if(k==='clear'){pinEntry='';updDots();document.getElementById('pin-err').textContent='';return;}
+  if(k==='back'){pinEntry=pinEntry.slice(0,-1);updDots();return;}
+  if(pinEntry.length>=4)return;
+  pinEntry+=k;updDots();
+  if(pinEntry.length===4)setTimeout(checkPin,150);
+}function checkPin(){
+  if(pinEntry===getPin()){
+    var ps=document.getElementById('pin-screen');ps.classList.add('hidden');ps.style.display='none';
+    pinEntry='';updDots();renderAll();
+  }else{document.getElementById('pin-err').textContent='Incorrect PIN';pinEntry='';updDots();}
+}
 function lockApp(){var ps=document.getElementById('pin-screen');ps.style.display='flex';ps.classList.remove('hidden');}
 
-function requireAdminPin(cb){
-  // PIN removed - use permission system
-  if(can('canAccessSettings')||can('canImportExport')||can('canAddDeleteMembers')||can('canChangePayment')){
-    cb(); return;
-  }
-  showToast('Admin login required for this action','warn');
-  openLogin();
-}
-function adminKeyPress(){}
+function requireAdminPin(cb){adminPinCallback=cb;adminPinEntry='';for(var i=0;i<4;i++)document.getElementById('ad'+i).classList.remove('on');document.getElementById('admin-err').textContent='';document.getElementById('admin-overlay').classList.add('open');}
+function adminKeyPress(k){if(k==='back')adminPinEntry=adminPinEntry.slice(0,-1);else if(k==='clear')adminPinEntry='';else if(adminPinEntry.length<4)adminPinEntry+=k;for(var i=0;i<4;i++)document.getElementById('ad'+i).classList.toggle('on',i<adminPinEntry.length);if(adminPinEntry.length===4)setTimeout(checkAdminPin,150);}
 function checkAdminPin(){if(adminPinEntry===getPin()){document.getElementById('admin-overlay').classList.remove('open');adminPinEntry='';if(adminPinCallback){adminPinCallback();adminPinCallback=null;}}else{document.getElementById('admin-err').textContent='Incorrect PIN.';adminPinEntry='';for(var i=0;i<4;i++)document.getElementById('ad'+i).classList.remove('on');}}
 function closeAdmin(){document.getElementById('admin-overlay').classList.remove('open');adminPinCallback=null;}
 
@@ -2779,12 +2561,12 @@ function doQuickCI(mid,evt){
 function cardHTML(m,ciMode){
   var chip=chipInfo(m);
   var chipHtml='<div class="gchip '+chip.cls+'">'+chip.lbl+'</div>';
-  return'<button class="mcard '+cardCls(m)+'" onclick="openMember(&quot;'+m.id+'&quot;,'+ciMode+')" style="width:100%;text-align:left;font-family:-apple-system,sans-serif">'
+  return'<button class="mcard '+cardCls(m)+'" onclick="openMember(&quot;'+m.id+'&quot;,'+ciMode+')" style="width:100%;text-align:left;font-family:Inter,sans-serif">'
     +'<div class="mavatar">'+(m.last||'?')[0]+'</div>'
     +'<div class="minfo">'
     +'<div class="mname">'+m.last+', '+m.first+'</div>'
     +'<div class="mmeta">'+typeBadge(m.type)+' '+statusBadge(m.status)+'</div>'
-    +'<div class="mroster">'+rosterStr(m)+'</div>'
+    +(hasCriticalMissing(m)?'<div class="mroster"><span style="color:var(--re);font-weight:700">&#x26A0; Info required</span></div>':'<div class="mroster">'+rosterStr(m)+'</div>')
     +'</div>'+chipHtml+'</button>';
 }
 
@@ -2815,55 +2597,39 @@ function getPredictive(){
 }
 
 function buildCiAlphaStrips(){
-  // Last name strip
+  // Last name strip - only letters with members not checked in today
   var todayStr=new Date().toDateString();
+  var checkedToday={};
+  visits.forEach(function(v){if(new Date(v.ts).toDateString()===todayStr) checkedToday[v.memberId]=true;});
   var lnLetters={};
-  members.forEach(function(m){
-    if(m.last&&m.status!=='inactive'&&m.status!=='terminated')
-      lnLetters[m.last[0].toUpperCase()]=true;
-  });
+  members.forEach(function(m){if(m.last) lnLetters[m.last[0].toUpperCase()]=true;});
   var lnStrip=document.getElementById('ci-ln-strip'); if(!lnStrip) return;
   lnStrip.innerHTML=Object.keys(lnLetters).sort().map(function(l){
-    return '<button class="ci-alpha-btn'+(ciLastAlpha===l?' on':'')+'" onclick="setCiLastAlpha(\''+l+'\')">'+l+'</button>';
+    return '<button class="ci-alpha-btn'+(ciLastAlpha===l?' on':'')+'" onclick="setCiLastAlpha(&quot;'+l+'&quot;)">'+l+'</button>';
   }).join('');
-
-  // Update label to show selection
-  var lnLabel=document.getElementById('ci-ln-label');
-  if(lnLabel) lnLabel.textContent=ciLastAlpha?'Last: '+ciLastAlpha+' — now tap first name':'Tap last name initial';
-
-  // First name strip
+  // First name strip - only if last name selected
   var fnSection=document.getElementById('ci-fn-section');
   var fnStrip=document.getElementById('ci-fn-strip');
-  var fnLabel=document.getElementById('ci-fn-label');
-  if(!ciLastAlpha){
-    if(fnSection) fnSection.style.display='none';
-    return;
-  }
-  if(fnSection) fnSection.style.display='block';
-
-  // Get first-name prefixes for members matching last-name initial
-  var filtered=members.filter(function(m){
-    return m.last&&m.last[0].toUpperCase()===ciLastAlpha
-      &&m.status!=='inactive'&&m.status!=='terminated';
-  });
-  // Use first 2 letters of first name
-  var prefixes={};
-  filtered.forEach(function(m){
-    if(m.first&&m.first.length>=1){
-      var pfx=m.first.slice(0,2).toUpperCase();
-      prefixes[pfx]=true;
-    }
-  });
-  if(fnStrip) fnStrip.innerHTML=Object.keys(prefixes).sort().map(function(pfx){
-    return '<button class="ci-alpha-btn'+(ciFirstAlpha===pfx?' on':'')+'" onclick="setCiFirstAlpha(\''+pfx+'\')">'+pfx+'</button>';
-  }).join('');
-
-  if(fnLabel) fnLabel.textContent=ciFirstAlpha?'First: '+ciFirstAlpha:'Tap first name prefix';
-
-  // If only one prefix, auto-select
-  var pfxKeys=Object.keys(prefixes);
-  if(pfxKeys.length===1&&!ciFirstAlpha){
-    setCiFirstAlpha(pfxKeys[0]);
+  if(ciLastAlpha&&fnSection&&fnStrip){
+    fnSection.style.display='block';
+    var fnLetters={};
+    members.filter(function(m){return m.last&&m.last[0].toUpperCase()===ciLastAlpha;})
+      .forEach(function(m){
+        if(m.first&&m.first.length>=2){
+          var key=m.first[0].toUpperCase()+m.first[1].toLowerCase();
+          fnLetters[key]=true;
+        } else if(m.first&&m.first.length===1){
+          fnLetters[m.first[0].toUpperCase()]=true;
+        }
+      });
+    fnStrip.innerHTML=Object.keys(fnLetters).sort().map(function(l){
+      return '<button class="ci-alpha-btn'+(ciFirstAlpha===l?' on':'')+'" onclick="setCiFirstAlpha(&quot;'+l+'&quot;)">'+l+'</button>';
+    }).join('');
+    // Update label
+    var fnLabel=document.getElementById('ci-fn-label');
+    if(fnLabel) fnLabel.textContent='Step 2 — First name (last name: '+ciLastAlpha+')';
+  } else if(fnSection){
+    fnSection.style.display='none';
   }
 }
 
@@ -2927,7 +2693,7 @@ function renderCI(){
       var timeLabel=nowH<12?'this morning':nowH<17?'this afternoon':'this evening';
       el.innerHTML='<div class="ci-section-title" style="background:var(--sand)">&#x1F52E; Likely here '+timeLabel+' (based on history)</div>'
         +predicted.map(function(m){
-          return '<button class="predict-card" onclick="openMember(&quot;'+m.id+'&quot;,true)" style="width:100%;text-align:left;font-family:-apple-system,sans-serif;border:none;cursor:pointer">'
+          return '<button class="predict-card" onclick="openMember(&quot;'+m.id+'&quot;,true)" style="width:100%;text-align:left;font-family:Inter,sans-serif;border:none;cursor:pointer">'
             +'<div class="mavatar">'+(m.last||'?')[0]+'</div>'
             +'<div class="minfo"><div class="mname">'+m.last+', '+m.first+'</div>'
             +'<div class="predict-meta">'+m.type+' &middot; '+(m.status==='paid'?'<span style="color:var(--gr);font-weight:700">Paid</span>':'<span style="color:var(--re);font-weight:700">'+m.status+'</span>')+'</div>'
@@ -2941,14 +2707,14 @@ function renderCI(){
   }
 
   // Filter by last name initial
-  var list=members.filter(function(m){return m.last&&m.last[0].toUpperCase()===ciLastAlpha&&m.status!=='inactive'&&m.status!=='terminated';});
+  var list=members.filter(function(m){return m.last&&m.last[0].toUpperCase()===ciLastAlpha;});
   // Filter by first name initial if selected
   if(ciFirstAlpha){
     list=list.filter(function(m){
       if(!m.first) return false;
-      // Compare both as uppercase to match how buttons are built
-      var pfx=m.first.slice(0,ciFirstAlpha.length).toUpperCase();
-      return pfx===ciFirstAlpha.toUpperCase();
+      if(ciFirstAlpha.length===1) return m.first[0].toUpperCase()===ciFirstAlpha;
+      var key=m.first.length>=2?m.first[0].toUpperCase()+m.first[1].toLowerCase():m.first[0].toUpperCase();
+      return key===ciFirstAlpha;
     });
   }
   list.sort(function(a,b){
@@ -2970,34 +2736,12 @@ function renderCI(){
 
 function rebuildFilterBtns(){
   var el=document.getElementById('dir-filter-btns'); if(!el) return;
-  var hasInactive=members.some(function(m){return m.status==='inactive'||m.status==='terminated';});
-  var cur=dirFilter;
-
-  // Status row
-  var statusBtns='<div class="filter-group-label">Status</div><div class="filter-row">';
-  var statusFilters=[
-    {k:'all',   lbl:'All',      cls:''},
-    {k:'paid',  lbl:'✓ Paid',   cls:'on-paid'},
-    {k:'unpaid',lbl:'⚠ Unpaid', cls:'on-unpaid'},
-    {k:'pending',lbl:'Pending', cls:'on-pending'},
-  ];
-  if(hasInactive) statusFilters.push({k:'inactive',lbl:'Inactive',cls:''});
-  statusFilters.forEach(function(f){
-    var isOn=cur===f.k;
-    var onCls=isOn?(f.cls||'on'):'';
-    statusBtns+='<button class="fbtn '+onCls+'" onclick="setFilter(this,&quot;'+f.k+'&quot;)">'+f.lbl+'</button>';
-  });
-  statusBtns+='</div>';
-
-  // Type row
-  var typeBtns='<div class="filter-group-label" style="margin-top:6px">Type</div><div class="filter-row">';
-  CONFIG.membershipTypes.forEach(function(t){
-    var isOn=cur===t.key;
-    typeBtns+='<button class="fbtn '+(isOn?'on':'')+'" onclick="setFilter(this,&quot;'+t.key+'&quot;)">'+t.label+'</button>';
-  });
-  typeBtns+='</div>';
-
-  el.innerHTML='<div class="filter-group">'+statusBtns+typeBtns+'</div>';
+  var current=dirFilter;
+  el.innerHTML='<button class="fbtn'+(current==='all'?' on':'')+'" onclick="setFilter(this,&quot;all&quot;)">All</button>'
+    +CONFIG.membershipTypes.map(function(t){
+      return '<button class="fbtn'+(current===t.key?' on':'')+'" onclick="setFilter(this,&quot;'+t.key+'&quot;)">'+t.label+'</button>';
+    }).join('')
+    +'<button class="fbtn'+(current==='unpaid'?' on':'')+'" onclick="setFilter(this,&quot;unpaid&quot;)">Unpaid</button>';
 }
 
 function setAlpha(letter){
@@ -3007,20 +2751,9 @@ function setAlpha(letter){
 
 function renderDir(){
   if(!dirFilter) dirFilter='all';
-  // Hide inactive/terminated unless explicitly filtered
-  // Filter by status or type
-  var statusFilters=['all','paid','unpaid','pending','inactive'];
-  var isStatusFilter=statusFilters.indexOf(dirFilter)>=0;
-  var list;
-  if(dirFilter==='inactive'){
-    list=members.filter(function(m){return m.status==='inactive'||m.status==='terminated';});
-  } else if(isStatusFilter&&dirFilter!=='all'){
-    list=members.filter(function(m){return m.status===dirFilter;});
-  } else {
-    // Hide inactive/terminated from 'all' and type filters unless explicitly chosen
-    list=members.filter(function(m){return m.status!=='inactive'&&m.status!=='terminated';});
-    if(dirFilter!=='all') list=list.filter(function(m){return m.type===dirFilter;});
-  }
+  var list=members.slice();
+  if(dirFilter==='unpaid') list=list.filter(function(m){return m.status!=='paid';});
+  else if(dirFilter!=='all') list=list.filter(function(m){return m.type===dirFilter;});
   if(dirAlpha) list=list.filter(function(m){return (m.last||'').toUpperCase().startsWith(dirAlpha);});
   list.sort(function(a,b){return a.last.localeCompare(b.last)||a.first.localeCompare(b.first);});
 
@@ -3090,7 +2823,7 @@ function openMember(id,ciMode){
       var unpaidWarn='';
       if(m.status==='unpaid'){
         var mid=m.id;
-        unpaidWarn='<div class="unpaid-warning"><div class="unpaid-warning-title">&#x26A0;&#xFE0F; Payment Outstanding</div><p>This membership has not paid for the current season.</p><div class="unpaid-days">'+unpaidDays+' / '+GRACE_DAYS+' grace days used</div><p style="font-size:12px;color:var(--re);font-weight:600">Check-in blocked after day 3 without payment.</p><div id="pay-alert-container"><button id="pay-alert-btn" data-mid="'+mid+'" onclick="sendPaymentAlert(this.dataset.mid)" style="width:100%;margin-top:4px;padding:10px;background:var(--or);border:none;color:#fff;border-radius:9px;font-size:13px;font-weight:700;font-family:-apple-system,sans-serif;cursor:pointer">&#x1F4E7; Member has paid — Submit for Review</button></div></div>';
+        unpaidWarn='<div class="unpaid-warning"><div class="unpaid-warning-title">&#x26A0;&#xFE0F; Payment Outstanding</div><p>This membership has not paid for the current season.</p><div class="unpaid-days">'+unpaidDays+' / '+GRACE_DAYS+' grace days used</div><p style="font-size:12px;color:var(--re);font-weight:600">Check-in blocked after day 3 without payment.</p></div>';
       }
       else if(m.status==='pending'){unpaidWarn='<div style="background:var(--aml);border:2px solid var(--am);border-radius:10px;padding:10px 13px;font-size:13px;color:var(--am);font-weight:600;text-align:center">&#x23F3; Payment pending &mdash; please follow up</div>';}
       var adultNames=[];
@@ -3109,12 +2842,12 @@ function openMember(id,ciMode){
       var canAddSec=getTypeConfig(m.type).maxAdults>1&&!getTypeConfig(m.type).requireSecond&&!(m.secFirst||m.secLast);
       var adultsSection='<div class="ci-section-lbl">Adults</div><div class="ci-checklist" id="ci-adult-list">';
       // Primary adult
-      adultsSection+='<button class="ci-check-item" id="ci-a0" onclick="ciToggle(\'ci-a0\')"><input type="checkbox" id="chk-a0" checked><label for="chk-a0">'+m.first+' '+m.last+'<span style="opacity:.5;font-size:11px;font-weight:400;margin-left:6px">(primary)</span></label></button>';
+      adultsSection+='<div class="ci-check-item" id="ci-a0" onclick="ciToggle(\'ci-a0\')"><input type="checkbox" id="chk-a0" onchange="ciToggle(\'ci-a0\')"><label for="chk-a0">'+m.first+' '+m.last+' <span style="opacity:.5;font-size:11px">(primary)</span></label></div>';
       // Secondary adult
       if(m.secFirst||m.secLast){
         adultsSection+='<div class="ci-check-item" id="ci-a1" onclick="ciToggle(\'ci-a1\')"><input type="checkbox" id="chk-a1" onchange="ciToggle(\'ci-a1\')"><label for="chk-a1">'+(m.secFirst||'')+' '+(m.secLast||'')+'</label></div>';
       } else if(needsSecondName){
-        adultsSection+='<div class="ci-check-item missing-name"><span style="font-size:13px;color:#ffd4c8">&#x26A0; Second adult name required for Couples membership</span><button onclick="ciPromptSecondAdult(\''+m.id+'\')" style="margin-left:auto;padding:5px 10px;background:var(--or);border:none;color:#fff;border-radius:7px;font-size:12px;font-weight:700;font-family:-apple-system,sans-serif;cursor:pointer;white-space:nowrap">Add Name</button></div>';
+        adultsSection+='<div class="ci-check-item missing-name"><span style="font-size:13px;color:#ffd4c8">&#x26A0; Second adult name required for Couples membership</span><button onclick="ciPromptSecondAdult(\''+m.id+'\')" style="margin-left:auto;padding:5px 10px;background:var(--or);border:none;color:#fff;border-radius:7px;font-size:12px;font-weight:700;font-family:Inter,sans-serif;cursor:pointer;white-space:nowrap">Add Name</button></div>';
       } else if(canAddSec){
         adultsSection+='<button class="ci-add-btn" onclick="ciPromptSecondAdult(\''+m.id+'\')" id="ci-add-sec-btn">&#xFF0B; Add second adult</button>';
       }
@@ -3133,24 +2866,31 @@ function openMember(id,ciMode){
       }
       // Guest passes counter
       var gpSection=m.guestsTotal>0
-        ?'<div class="gp-section"><div class="gp-counter-row"><div><div class="ci-lbl">🎟 Guest Passes</div><div class="ci-sub">'+m.guestsTotal+' allotted · '+(m.guestsUsed||0)+' used · '+rem+' remaining</div></div><div class="ctr"><button class="cbtn" onclick="adjGuests(-1)">−</button><div class="cval" id="ci-guests">0</div><button class="cbtn" onclick="adjGuests(1)">+</button></div></div><div id="gp-live-status" style="margin-top:6px"></div></div>'
+        ?'<div style="border-top:1px solid rgba(255,255,255,.15);padding-top:10px"><div class="gp-counter-row"><div><div class="ci-lbl">&#x1F3AB; Guest Passes</div><div class="ci-sub">'+m.guestsTotal+' allotted &middot; '+(m.guestsUsed||0)+' used &middot; '+rem+' remaining</div></div><div class="ctr"><button class="cbtn" onclick="adjGuests(-1)">&minus;</button><div class="cval" id="ci-guests">0</div><button class="cbtn" onclick="adjGuests(1)">+</button></div></div><div id="gp-live-status" style="margin-top:6px"></div></div>'
         :'';
       // Build missing info prompt if needed
       var missing=getMissingSteps(m);
       var missingBanner='';
       if(missing.length){
-        missingBanner='<div style="background:#fef3c7;border:2px solid #f59e0b;border-radius:10px;padding:12px;margin-bottom:4px">'
-        +'<div style="font-weight:800;font-size:13px;color:#92400e;margin-bottom:6px">&#x26A0;&#xFE0F; Missing Member Info Required</div>'
-        +'<div style="font-size:12px;color:#92400e;margin-bottom:8px">Please complete all required info before checking in.</div>'
-        +'<button onclick="openMissingInfo(\''+m.id+'\')" style="width:100%;padding:13px;background:#f59e0b;border:none;color:#fff;border-radius:9px;font-size:15px;font-weight:700;font-family:-apple-system,sans-serif;cursor:pointer;margin-top:2px">&#x270F;&#xFE0F; Complete Member Info</button>'
-        +'</div>';
+        (function(){
+    var ms=getMissingSteps(m);
+    if(!ms.length){missingBanner='';return;}
+    var items=ms.map(function(s){return '<li style=\"margin:3px 0;\">'+s.label+'</li>';}).join('');
+    missingBanner='<div style=\"background:var(--rel);border:2px solid var(--re);border-radius:var(--r-sm);padding:12px 14px\">';
+    missingBanner+='<div style=\"font-size:14px;font-weight:800;color:var(--re);margin-bottom:6px\">&#x1F6AB; Required Info Missing &mdash; Cannot Check In</div>';
+    missingBanner+='<ul style=\"margin:0 0 10px 16px;padding:0;font-size:12px;color:var(--re);font-weight:600\">'+items+'</ul>';
+    missingBanner+='<button onclick=\"openMissingInfo(&quot;'+m.id+'&quot;)\" style=\"width:100%;padding:11px;background:var(--re);border:none;color:#fff;border-radius:9px;font-size:14px;font-weight:800;font-family:-apple-system,sans-serif;cursor:pointer\">&#x270F;&#xFE0F; Complete Required Info Now</button>';
+    missingBanner+='</div>';
+  })()
       }
-      var panelBg=m.status==='paid'?'var(--wh)':'var(--wh)';
+      var panelBg=m.status==='paid'
+        ?'linear-gradient(135deg,#064e3b,#065f46)'
+        :(m.status==='unpaid'?'linear-gradient(135deg,#7f1d1d,#991b1b)':'linear-gradient(135deg,#78350f,#92400e)');
       var statusBar=m.status==='paid'
-        ?'<div style="background:var(--grl);border:2px solid var(--gr);color:var(--gr);font-weight:800;font-size:14px;padding:10px 12px;border-radius:9px;text-align:center">✅ PAID — Good to go!</div>'
+        ?'<div style="background:rgba(134,239,172,.2);border:1.5px solid rgba(134,239,172,.4);color:#bbf7d0;font-weight:800;font-size:14px;padding:8px 12px;border-radius:9px;text-align:center">&#x2705; PAID &mdash; Good to go!</div>'
         :(m.status==='unpaid'
-          ?'<div style="background:var(--rel);border:2px solid var(--re);color:var(--re);font-weight:800;font-size:14px;padding:10px 12px;border-radius:9px;text-align:center">&#x1F6AB; UNPAID — Payment required</div>'
-          :'<div style="background:var(--aml);border:2px solid var(--am);color:var(--am);font-weight:800;font-size:14px;padding:10px 12px;border-radius:9px;text-align:center">⏳ PENDING — Follow up on payment</div>');
+          ?'<div style="background:rgba(254,202,202,.2);border:1.5px solid rgba(254,202,202,.4);color:#fecaca;font-weight:800;font-size:14px;padding:8px 12px;border-radius:9px;text-align:center">&#x1F6AB; UNPAID &mdash; Payment required</div>'
+          :'<div style="background:rgba(253,230,138,.2);border:1.5px solid rgba(253,230,138,.4);color:#fde68a;font-weight:800;font-size:14px;padding:8px 12px;border-radius:9px;text-align:center">&#x23F3; PENDING &mdash; Follow up on payment</div>');
       html+='<div class="ci-panel" style="background:'+panelBg+'">'
         +'<div class="ci-title">&#x1F40A; Today\'s Visit</div>'
         +missingBanner
@@ -3161,7 +2901,7 @@ function openMember(id,ciMode){
         +kidsSection
         +gpSection
         +'<div id="ci-over-note"></div>'
-        +(canQuickCheckIn(m)?'<button class="quick-ci-btn" onclick="quickCheckIn(\''+m.id+'\',event)">⚡ Quick Check In All — one tap</button>':'')
+        +(canQuickCheckIn(m)?'<button class="quick-ci-btn" style="border-radius:9px;margin-bottom:4px;font-size:15px;padding:13px" onclick="quickCheckIn(\''+m.id+'\',event)">&#x26A1; Quick Check In All &nbsp;&mdash;&nbsp; one tap</button>':'')
         +'<button class="ci-checkin-btn" onclick="doCheckin(\''+m.id+'\')">&#x2705; Check In'+(checkedToday?' Again':'')+'</button></div>';
     }
   }
@@ -3204,7 +2944,7 @@ function ciPromptSecondAdult(memberId){
   row.className='ci-check-item';
   row.style.gap='6px';
   row.innerHTML='<input class="ci-inline-input" id="ci-sec-name-input" placeholder="Second adult first &amp; last name" autofocus>'
-    +'<button onclick="ciSaveSecondAdult(\''+memberId+'\')" style="padding:6px 10px;background:var(--or);border:none;color:#fff;border-radius:7px;font-size:12px;font-weight:700;font-family:-apple-system,sans-serif;cursor:pointer">Save</button>';
+    +'<button onclick="ciSaveSecondAdult(\''+memberId+'\')" style="padding:6px 10px;background:var(--or);border:none;color:#fff;border-radius:7px;font-size:12px;font-weight:700;font-family:Inter,sans-serif;cursor:pointer">Save</button>';
   btn.parentNode.replaceChild(row,btn);
   setTimeout(function(){var inp=document.getElementById('ci-sec-name-input');if(inp)inp.focus();},50);
 }
@@ -3230,7 +2970,7 @@ function ciAddKidInline(){
   row.style.cssText='display:flex;gap:6px;align-items:center';
   var newId='ci-k-new-'+Date.now();
   row.innerHTML='<input class="ci-inline-input" id="'+newId+'" placeholder="Child first name">'
-    +'<button onclick="ciConfirmNewKid(\''+newId+'\')" style="padding:6px 10px;background:var(--or);border:none;color:#fff;border-radius:7px;font-size:12px;font-weight:700;font-family:-apple-system,sans-serif;cursor:pointer;white-space:nowrap">Add</button>';
+    +'<button onclick="ciConfirmNewKid(\''+newId+'\')" style="padding:6px 10px;background:var(--or);border:none;color:#fff;border-radius:7px;font-size:12px;font-weight:700;font-family:Inter,sans-serif;cursor:pointer;white-space:nowrap">Add</button>';
   list.insertBefore(row,addBtn);
   setTimeout(function(){var inp=document.getElementById(newId);if(inp)inp.focus();},50);
 }
@@ -3271,42 +3011,10 @@ function updateOverNote(){}
 
 function doCheckin(id){
   var m=members.find(function(x){return x.id===id;}); if(!m) return;
-  if(m.status==='unpaid'&&getUnpaidDays(m.id)>=3){showToast('Check-in blocked &mdash; payment required','err');return;}
-  // Require second adult name for Couples if missing
-  if(getTypeConfig(m.type).requireSecond&&!(m.secFirst||m.secLast)){
-    showToast('Please add the second adult\'s name first','warn'); return;
-  }
-  // Collect checked adults
-  var checkedAdults=[];
-  var a0=document.getElementById('chk-a0');
-  if(a0&&a0.checked) checkedAdults.push(m.first+' '+m.last);
-  var a1=document.getElementById('chk-a1');
-  if(a1&&a1.checked) checkedAdults.push((m.secFirst||'')+' '+(m.secLast||''));
-  // Collect checked children (existing)
-  var checkedKids=[];
-  (m.kids||[]).forEach(function(k,i){
-    var chk=document.getElementById('chk-k'+i);
-    if(chk&&chk.checked) checkedKids.push(k);
-  });
-  // Collect newly added kids
-  var newKids=[];
-  var addedItems=document.querySelectorAll('[data-new-kid]');
-  addedItems.forEach(function(item){
-    var chk=item.querySelector('input[type=checkbox]');
-    if(chk&&chk.checked) newKids.push(item.dataset.newKid);
-    else if(item.dataset.newKid) newKids.push(item.dataset.newKid); // always save new kids to membership
-  });
-  if(checkedAdults.length===0&&checkedKids.length===0&&newKids.length===0&&ciGuests===0){
-    showToast('Select at least one person checking in','warn'); return;
-  }
-  if(ciGuests>0){
-    var rem=m.guestsTotal-(m.guestsUsed||0);
-    if(ciGuests<=rem) commitCheckin(m,checkedAdults,checkedKids,newKids,ciGuests,false);
-    else if(rem>0) showGPModal(m,ciGuests,rem,'partial');
-    else showGPModal(m,ciGuests,0,'purchase');
-  } else {
-    commitCheckin(m,checkedAdults,checkedKids,newKids,0,false);
-  }
+  if(m.status==='unpaid'&&getUnpaidDays(m.id)>=GRACE_DAYS){showToast('Check-in blocked - payment required','err');return;}
+  if(m.status==='inactive'||m.status==='terminated'){showToast('This membership is '+m.status,'warn');return;}
+  if(hasCriticalMissing(m)){showToast('Complete required info first','warn');openMissingInfo(m.id);return;}
+  openMember(m.id,true);
 }
 
 function commitCheckin(m,checkedAdults,checkedKids,newKids,passesUsed,purchased){
@@ -3350,7 +3058,7 @@ document.getElementById('ed-body').innerHTML=
   +'<div class="frow"><div class="fg"><label class="fl">City</label><input class="fi" id="ef-city" value="'+(m.city||'')+'" placeholder="Gibsonville"></div><div class="fg"><label class="fl">State</label><input class="fi" id="ef-state" value="'+(m.state||'NC')+'" placeholder="NC"></div></div>'
   +'<div class="fg"><label class="fl">Zip Code</label><input class="fi" id="ef-zip" value="'+(m.zip||'')+'" placeholder="27249" style="max-width:140px"></div>'
   +'<div class="fg"><label class="fl">Membership Type</label><select class="fs" id="ef-type" onchange="typeChanged()">'+CONFIG.membershipTypes.map(function(t){return'<option value="'+t.key+'"'+(m.type===t.key?' selected':'')+'>'+t.label+(t.requireSecond?' (2 adults required)':t.maxAdults>1&&t.allowChildren?' (adults + children)':t.adults===1&&!t.allowChildren?' (1 adult)':t.maxAdults===2&&!t.allowChildren?' (2 adults)':'')+' &mdash; '+t.guestPasses+' passes'+'</option>';}).join('')+'</select></div>'
-  +'<div class="fg"><label class="fl">Payment Status</label><div style="display:flex;gap:8px;align-items:center"><div style="flex:1;padding:11px 13px;border:2px solid var(--sand2);border-radius:10px;background:var(--sand);font-size:16px;color:var(--tx)" id="status-display">'+({paid:'Paid',pending:'Pending',unpaid:'Unpaid'}[m.status||'paid']||'Paid')+'</div><input type="hidden" id="ef-status" value="'+(m.status||'paid')+'"><button onclick="changePaymentStatus()" style="padding:11px 13px;background:var(--bl);border:none;color:#fff;border-radius:10px;font-size:13px;font-weight:700;font-family:-apple-system,sans-serif;cursor:pointer;white-space:nowrap">&#x1F511; Change</button></div></div>'
+  +'<div class="fg"><label class="fl">Payment Status</label><div style="display:flex;gap:8px;align-items:center"><div style="flex:1;padding:11px 13px;border:2px solid var(--sand2);border-radius:10px;background:var(--sand);font-size:16px;color:var(--tx)" id="status-display">'+({paid:'Paid',pending:'Pending',unpaid:'Unpaid'}[m.status||'paid']||'Paid')+'</div><input type="hidden" id="ef-status" value="'+(m.status||'paid')+'"><button onclick="changePaymentStatus()" style="padding:11px 13px;background:var(--bl);border:none;color:#fff;border-radius:10px;font-size:13px;font-weight:700;font-family:Inter,sans-serif;cursor:pointer;white-space:nowrap">&#x1F511; Change</button></div></div>'
   +'<div class="sec-lbl">Guest Passes</div>'
   +'<div class="frow"><div class="fg"><label class="fl">Used</label><input class="fi" id="ef-gused" type="number" min="0" value="'+(m.guestsUsed||0)+'"></div><div class="fg"><label class="fl">Total Allotted</label><input class="fi" id="ef-gtotal" type="number" min="0" value="'+(m.guestsTotal!==undefined?m.guestsTotal:GUEST_PASSES[m.type||'Individual'])+'"></div></div>'
   +'<div class="sec-lbl">Household Roster</div>'
@@ -3373,8 +3081,7 @@ document.getElementById('ed-body').innerHTML=
   +(id?'<button class="btn-d" onclick="confirmDelete(\''+id+'\')">&#x1F5D1; Delete Member</button>':'');
 document.getElementById('ed-overlay').classList.add('open');updateSecVisibility();}
 
-function changePaymentStatus(){
-  if(!can('canChangePayment')){showToast('You do not have permission to change payment status','warn');return;}requireAdminPin(function(){var cur=document.getElementById('ef-status').value;var opts=['paid','pending','unpaid','inactive','terminated'];var labels={paid:'Paid',pending:'Pending',unpaid:'Unpaid',inactive:'Inactive',terminated:'Terminated'};var next=opts[(opts.indexOf(cur)+1)%opts.length];document.getElementById('ef-status').value=next;document.getElementById('status-display').textContent=labels[next];showToast('Status changed to '+labels[next],'ok');});}
+function changePaymentStatus(){requireAdminPin(function(){var cur=document.getElementById('ef-status').value;var opts=['paid','pending','unpaid'];var labels={paid:'Paid',pending:'Pending',unpaid:'Unpaid'};var next=opts[(opts.indexOf(cur)+1)%opts.length];document.getElementById('ef-status').value=next;document.getElementById('status-display').textContent=labels[next];showToast('Status changed to '+labels[next],'ok');});}
 function getTypeConfig(key){
   return CONFIG.membershipTypes.find(function(t){return t.key===key;})||{adults:1,maxAdults:1,guestPasses:0,requireSecond:false,allowChildren:false};
 }
@@ -3389,36 +3096,7 @@ function closeEdit(){document.getElementById('ed-overlay').classList.remove('ope
 function commitEdit(){var first=document.getElementById('ef-first').value.trim();var last=document.getElementById('ef-last').value.trim();if(!first||!last){showToast('Name required','warn');return;}var type=document.getElementById('ef-type').value;var gtotal=parseInt(document.getElementById('ef-gtotal').value);if(isNaN(gtotal))gtotal=GUEST_PASSES[type];var secRow=document.getElementById('sec-name-row');var secOk=secRow&&secRow.style.display!=='none';var kids=(function(){var inputs=document.querySelectorAll('.kid-input'),arr=[];inputs.forEach(function(i){var v=i.value.trim();if(v)arr.push(v);});return arr;})();var m={id:editingId||uid(),first:first,last:last,type:type,status:document.getElementById('ef-status').value,email:document.getElementById('ef-email').value.trim(),phone:formatPhone(document.getElementById('ef-phone').value),street:document.getElementById('ef-street').value.trim(),city:document.getElementById('ef-city').value.trim(),state:document.getElementById('ef-state').value.trim(),zip:document.getElementById('ef-zip').value.trim(),adults:parseInt(document.getElementById('ef-adults').value)||1,kids:kids,children:kids.length,guestsUsed:parseInt(document.getElementById('ef-gused').value)||0,guestsTotal:gtotal,secFirst:secOk&&document.getElementById('ef-sec-first')?document.getElementById('ef-sec-first').value.trim():'',secLast:secOk&&document.getElementById('ef-sec-last')?document.getElementById('ef-sec-last').value.trim():'',secPhone:secOk&&document.getElementById('ef-sec-phone')?formatPhone(document.getElementById('ef-sec-phone').value):'',secEmail:secOk&&document.getElementById('ef-sec-email')?document.getElementById('ef-sec-email').value.trim():'',notes:document.getElementById('ef-notes').value.trim(),nannyEnabled:document.getElementById('ef-nanny-enabled').checked,nannyName:document.getElementById('ef-nanny-name')?document.getElementById('ef-nanny-name').value.trim():'',nannyPhone:document.getElementById('ef-nanny-phone')?formatPhone(document.getElementById('ef-nanny-phone').value):'',nannyStreet:document.getElementById('ef-nanny-street')?document.getElementById('ef-nanny-street').value.trim():'',nannyCity:document.getElementById('ef-nanny-city')?document.getElementById('ef-nanny-city').value.trim():'',nannyState:document.getElementById('ef-nanny-state')?document.getElementById('ef-nanny-state').value.trim():'',nannyZip:document.getElementById('ef-nanny-zip')?document.getElementById('ef-nanny-zip').value.trim():'',nannyDob:document.getElementById('ef-nanny-dob')?document.getElementById('ef-nanny-dob').value:''};saveMember(m);closeEdit();showToast(m.first+' '+m.last+' '+(editingId?'updated':'added'),'ok');}
 function confirmDelete(id){requireAdminPin(function(){delMember(id);closeEdit();showToast('Member deleted','warn');});}
 
-function sendPaymentAlert(memberId){
-  var m=members.find(function(x){return x.id===memberId;}); if(!m)return;
-  var btn=document.getElementById('pay-alert-btn');
-  if(btn){btn.disabled=true;btn.textContent='Sending...';}
-  var params={
-    to_email:NOTIFY_EMAIL_ADDR,
-    name:'Gibsonville Swim Club Check-In',
-    member_name:m.first+' '+m.last,
-    member_type:m.type,
-    member_email:m.email||'(not on file)',
-    member_phone:m.phone||'(not on file)',
-    member_address:(m.street||'')+(m.city?', '+m.city:'')+(m.state?' '+m.state:'')+(m.zip?' '+m.zip:''),
-    unpaid_days:getUnpaidDays(m.id),
-    checkin_date:new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'}),
-    checkin_time:new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})
-  };
-  if(EMAILJS_PUBLIC_KEY==='PASTE_PUBLIC_KEY'){showToast('EmailJS not configured yet','warn');return;}
-  emailjs.init({publicKey:EMAILJS_PUBLIC_KEY});
-  emailjs.send(EMAILJS_SERVICE_ID,EMAILJS_TEMPLATE_ID,params,{publicKey:EMAILJS_PUBLIC_KEY})
-    .then(function(){
-      var c=document.getElementById('pay-alert-container');
-      if(c){c.innerHTML='<div style="background:rgba(134,239,172,.2);border:1.5px solid rgba(134,239,172,.5);border-radius:9px;padding:10px 12px;text-align:center;display:flex;flex-direction:column;gap:3px"><div style="font-size:14px;font-weight:800;color:#bbf7d0">&#x2705; Sent for review</div><div style="font-size:11px;color:rgba(255,255,255,.6)">jeff@gsrconline.com has been notified</div></div>';}
-      showToast('Payment review request sent','ok');
-    })
-    .catch(function(e){
-      console.error('EmailJS:',e);
-      if(btn){btn.disabled=false;btn.innerHTML='&#x1F4E7; Member has paid — Submit for Review';}
-      showToast('Email failed — try again','err');
-    });
-}
+
 
 function renderRep(){
   var el=document.getElementById('rep-body');if(!el)return;
@@ -3461,7 +3139,7 @@ function renderRep(){
   // ── KPI card builder ─────────────────────────────────────────────────────
   function stat(val, lbl, color, chartId){
     var chartBtn=chartId
-      ?'<button onclick="showRepChart(\''+chartId+'\')" style="margin-top:8px;background:none;border:none;padding:0;cursor:pointer;font-size:11px;font-weight:700;color:'+color+';opacity:.7;font-family:-apple-system,sans-serif;letter-spacing:.3px">View Chart ›</button>'
+      ?'<button onclick="showRepChart(\''+chartId+'\')" style="margin-top:8px;background:none;border:none;padding:0;cursor:pointer;font-size:11px;font-weight:700;color:'+color+';opacity:.7;font-family:Inter,sans-serif;letter-spacing:.3px">View Chart ›</button>'
       :'';
     return '<div class="rstat" style="--rcolor:'+color+'">'
       +'<div class="rstat-val">'+val+'</div>'
@@ -3491,37 +3169,6 @@ function renderRep(){
     +stat(todayV.reduce(function(s,v){return s+(v.guestPasses||0);},0),'Guest Passes',AM),
     4
   );
-
-  // Today's check-in list
-  if(todayV.length){
-    var todayList='<div style="display:flex;flex-direction:column;gap:6px;margin-top:4px">';
-    // Sort by check-in time descending
-    var sortedToday=todayV.slice().sort(function(a,b){return new Date(b.ts)-new Date(a.ts);});
-    sortedToday.forEach(function(v){
-      var m=members.find(function(x){return x.id===v.memberId;});
-      var mName=m?m.last+', '+m.first:'Unknown Member';
-      var mStatus=m?m.status:'';
-      var statusColor=mStatus==='paid'?'#22c55e':mStatus==='unpaid'?'#ef4444':'#f59e0b';
-      var time=new Date(v.ts).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
-      var who=[];
-      if(v.checkedAdults&&v.checkedAdults.length) who=who.concat(v.checkedAdults);
-      if(v.checkedKids&&v.checkedKids.length) who=who.concat(v.checkedKids);
-      var rosterStr=who.length?who.join(', '):(v.adults||0)+' adult'+(v.adults!==1?'s':'')+(v.children?' + '+(v.children)+' child'+(v.children!==1?'ren':''):'');
-      var tags='';
-      if(v.selfCheckin) tags+='<span style="font-size:9px;font-weight:700;background:var(--pul);color:var(--pu);border-radius:6px;padding:1px 5px;margin-left:4px">SELF</span>';
-      if(v.guestPasses) tags+='<span style="font-size:9px;font-weight:700;background:var(--aml);color:var(--am);border-radius:6px;padding:1px 5px;margin-left:4px">'+v.guestPasses+' guest'+(v.guestPasses>1?'s':'')+'</span>';
-      todayList+='<div style="background:#fff;border-radius:var(--r-sm);padding:10px 12px;display:flex;align-items:center;gap:10px;box-shadow:var(--sh)">'
-        +'<div style="width:4px;height:36px;border-radius:2px;background:'+statusColor+';flex-shrink:0"></div>'
-        +'<div style="flex:1;min-width:0">'
-        +'<div style="font-size:13px;font-weight:700;color:var(--bld)">'+mName+tags+'</div>'
-        +'<div style="font-size:11px;color:var(--mu);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+rosterStr+'</div>'
-        +'</div>'
-        +'<div style="font-size:11px;color:var(--mu);flex-shrink:0">'+time+'</div>'
-        +'</div>';
-    });
-    todayList+='</div>';
-    html+='<div class="rsec"><div class="rsec-title" style="margin-bottom:8px">Today\u2019s Check-Ins ('+todayV.length+')</div>'+todayList+'</div>';
-  }
 
   // Last 7 days
   html+=section(
@@ -3750,163 +3397,15 @@ function exportVisitsRange(range){
   });
 }
 function downloadTemplate(){var csv='Last,First,Type,Status,Adults,Children,Kids Names,Passes Used,Passes Total,Email,Phone,Street,City,State,Zip\nSmith,John,Family,paid,2,3,"Emma;Liam;Olivia",0,10,jsmith@email.com,(336) 555-0100,123 Main St,Gibsonville,NC,27249';var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='gsc-member-template.csv';a.click();showToast('Template downloaded');}
-function openCSVImport(){csvParsed=[];var _cov=document.getElementById('csv-overlay');if(_cov){_cov.style.display='flex';_cov.classList.add('open');}
-  document.getElementById('csv-body').innerHTML='<p class="fnote" style="line-height:1.6">Upload a CSV with member data. Use <strong>Download CSV Template</strong> for the correct format.</p><div class="csv-drop" onclick="document.getElementById(\'csv-file\').click()">&#x1F4C2; Tap to choose a CSV file</div><input type="file" id="csv-file" accept=".csv" style="display:none" onchange="handleCSVFile(event)"><div id="csv-preview"></div><div id="csv-actions"></div>';var _co=document.getElementById('csv-overlay');_co.style.display='flex';_co.classList.add('open');}
+function openCSVImport(){csvParsed=[];document.getElementById('csv-body').innerHTML='<p class="fnote" style="line-height:1.6">Upload a CSV with member data. Use <strong>Download CSV Template</strong> for the correct format.</p><div class="csv-drop" onclick="document.getElementById(\'csv-file\').click()">&#x1F4C2; Tap to choose a CSV file</div><input type="file" id="csv-file" accept=".csv" style="display:none" onchange="handleCSVFile(event)"><div id="csv-preview"></div><div id="csv-actions"></div>';document.getElementById('csv-overlay').classList.add('open');}
 function closeCSV(){document.getElementById('csv-overlay').classList.remove('open');}
 function handleCSVFile(e){var file=e.target.files[0];if(!file)return;var reader=new FileReader();reader.onload=function(ev){parseCSV(ev.target.result);};reader.readAsText(file);}
 function splitCSVRow(row){var result=[],cur='',inQ=false;for(var i=0;i<row.length;i++){var c=row[i];if(c==='"'){inQ=!inQ;continue;}if(c===','&&!inQ){result.push(cur.trim());cur='';continue;}cur+=c;}result.push(cur.trim());return result;}
-function parseCSV(text){
-  try{
-    // Normalize line endings
-    text=text.replace(/\r\n/g,'\n').replace(/\r/g,'\n');
-    // Robust CSV row parser handles quoted fields
-    function parseRow(line){
-      var cols=[],cur='',inQ=false;
-      for(var i=0;i<line.length;i++){
-        var ch=line[i];
-        if(ch==='"'&&!inQ){inQ=true;}
-        else if(ch==='"'&&inQ){
-          if(line[i+1]==='"'){cur+='"';i++;}
-          else{inQ=false;}
-        } else if(ch===','&&!inQ){cols.push(cur.trim());cur='';}
-        else{cur+=ch;}
-      }
-      cols.push(cur.trim());
-      return cols;
-    }
-    var lines=text.trim().split('\n');
-    if(lines.length<2){showToast('CSV appears empty','err');return;}
-    var headers=parseRow(lines[0]).map(function(h){return h.replace(/"/g,'').trim().toLowerCase();});
-    var idx2=function(names){
-      for(var i=0;i<names.length;i++){
-        var j=headers.indexOf(names[i].toLowerCase());
-        if(j>=0)return j;
-      }
-      return -1;
-    };
-    var col={
-      last:    idx2(['last','last name','lastname']),
-      first:   idx2(['first','first name','firstname']),
-      email:   idx2(['email','email address']),
-      phone:   idx2(['phone','phone number','primary_phone']),
-      street:  idx2(['street','street address','street address 1','address']),
-      city:    idx2(['city']),
-      state:   idx2(['state']),
-      zip:     idx2(['zip','postal code']),
-      type:    idx2(['type','membership type']),
-      status:  idx2(['status','membership status']),
-      adults:  idx2(['adults']),
-      children:idx2(['children']),
-      kids:    idx2(['kids','kids names','children names']),
-      gused:   idx2(['guestsused','guests used','passes used']),
-      gtotal:  idx2(['gueststotal','guests total','passes total','total']),
-      sfirst:  idx2(['secfirst','secondary first','secondary member name']),
-      slast:   idx2(['seclast','secondary last']),
-      sphone:  idx2(['secphone','secondary phone']),
-      semail:  idx2(['secemail','secondary email']),
-      notes:   idx2(['notes','memo']),
-    };
-    // Check we have at minimum first+last
-    if(col.first<0||col.last<0){
-      document.getElementById('csv-preview').innerHTML='<p style="color:var(--re);font-weight:700">Could not find First Name / Last Name columns.<br>Headers found: '+headers.join(', ')+'</p>';
-      return;
-    }
-    var GP={'Family':10,'Individual':5,'Couples':7,'Board':20,'Comp':0};
-    var parsed=[];
-    for(var r=1;r<lines.length;r++){
-      if(!lines[r].trim())continue;
-      var row=parseRow(lines[r]);
-      var get=function(c){return c>=0&&c<row.length?row[c].replace(/^"|"$/g,'').trim():'';};
-      var mtype=get(col.type)||'Family';
-      var nm={
-        id:uid(),
-        first:get(col.first), last:get(col.last),
-        email:get(col.email), phone:get(col.phone),
-        street:get(col.street), city:get(col.city),
-        state:get(col.state)||'NC', zip:get(col.zip),
-        type:mtype,
-        status:get(col.status)||'paid',
-        adults:parseInt(get(col.adults))||1,
-        children:(function(){var raw=get(col.kids);var kArr=raw?raw.split('|').filter(function(k){return k.trim().length>0;}):[];return kArr.length||parseInt(get(col.children))||0;})(),
-        kids:(function(){var raw=get(col.kids);return raw?raw.split('|').map(function(k){return k.trim();}).filter(function(k){return k.length>0;}):[]; })(),
-        secFirst:get(col.sfirst), secLast:get(col.slast),
-        secPhone:get(col.sphone), secEmail:get(col.semail),
-        guestsUsed:parseInt(get(col.gused))||0,
-        guestsTotal:parseInt(get(col.gtotal))||(GP[mtype]||10),
-        notes:get(col.notes),
-        rosterConfirmed:false,
-      };
-      if(!nm.first&&!nm.last)continue;
-      parsed.push(nm);
-    }
-    csvParsed=parsed;
-    // Show preview
-    var prev=document.getElementById('csv-preview');
-    if(prev){
-      var sample=parsed.slice(0,5).map(function(m){
-        return '<div style="padding:6px 0;border-bottom:1px solid var(--sand2);font-size:13px">'
-          +'<b>'+m.first+' '+m.last+'</b> — '+m.type+' — <span style="color:'+(m.status==='paid'?'var(--gr)':'var(--re)')+'">'+m.status+'</span>'
-          +(m.kids?' | Kids: '+m.kids:'')+'</div>';
-      }).join('');
-      prev.innerHTML='<div style="background:var(--sand);border-radius:8px;padding:10px;margin:10px 0">'+sample+'</div>';
-    }
-    var act=document.getElementById('csv-actions');
-    if(act){
-      act.innerHTML='<p style="font-size:13px;color:var(--mu);margin-top:4px"><b>'+parsed.length+'</b> members ready to import.</p>'
-        +'<div style="display:flex;flex-direction:column;gap:8px;margin-top:10px">'
-        +'<button class="btn-p" onclick="importCSVMerge()">＋ Merge with Existing</button>'
-        +'<button class="btn-o" onclick="importCSVReplace()">🔄 Replace All Members</button>'
-        +'</div>';
-    }
-  }catch(err){
-    console.error('CSV parse error:',err);
-    showToast('CSV parse error: '+err.message,'err');
-    var prev2=document.getElementById('csv-preview');
-    if(prev2) prev2.innerHTML='<p style="color:var(--re);font-weight:700">Error: '+err.message+'</p>';
-  }
-}
-function importCSVMerge(){
-  if(!csvParsed.length){showToast('No data to import','warn');return;}
-  var added=0,updated=0;
-  csvParsed.forEach(function(nm){
-    var ex=members.find(function(m){
-      return m.last&&nm.last&&m.last.toLowerCase()===nm.last.toLowerCase()
-          && m.first&&nm.first&&m.first.toLowerCase()===nm.first.toLowerCase();
-    });
-    if(ex){
-      var merged=Object.assign({},ex,nm,{id:ex.id});
-      saveMember(merged);
-      var i=members.findIndex(function(m){return m.id===ex.id;});
-      if(i>=0) members[i]=merged;
-      updated++;
-    } else {
-      nm.id=nm.id||uid();
-      saveMember(nm);
-      members.push(nm);
-      added++;
-    }
-  });
-  renderAll();
-  closeCSV();
-  showToast('Imported: '+added+' added, '+updated+' updated','ok');
-}
-function importCSVReplace(){
-  if(!csvParsed.length){showToast('No data to import','warn');return;}
-  if(!confirm('This will REPLACE all '+members.length+' members with '+csvParsed.length+' imported members. Are you sure?'))return;
-  // Delete all existing members from Firebase
-  if(fbReady&&db){
-    members.forEach(function(m){db.collection('members').doc(m.id).delete().catch(function(e){console.error(e);});});
-  }
-  members=[];
-  csvParsed.forEach(function(nm){
-    nm.id=nm.id||uid();
-    saveMember(nm);
-    members.push(nm);
-  });
-  renderAll();
-  closeCSV();
-  showToast('Replaced: '+csvParsed.length+' members imported','ok');
-}
+function parseCSV(text){var lines=text.trim().split('\n');if(lines.length<2){showToast('CSV appears empty','err');return;}var headers=lines[0].split(',').map(function(h){return h.replace(/"/g,'').trim().toLowerCase();});var idx=function(names){for(var i=0;i<names.length;i++){var j=headers.indexOf(names[i]);if(j>=0)return j;}return -1;};var col={last:idx(['last','last name']),first:idx(['first','first name']),type:idx(['type','membership type']),status:idx(['status']),adults:idx(['adults']),kids:idx(['kids names','kids']),gused:idx(['passes used','used']),gtotal:idx(['passes total','total']),email:idx(['email']),phone:idx(['phone']),street:idx(['street','street address']),city:idx(['city']),state:idx(['state']),zip:idx(['zip','zip code'])};if(col.last<0||col.first<0){showToast('CSV must have Last and First columns','err');return;}var parsed=[];for(var i=1;i<lines.length;i++){var row=splitCSVRow(lines[i]);if(!row.length||!row[col.last])continue;var type=col.type>=0?row[col.type]:'Family';if(!GUEST_PASSES.hasOwnProperty(type))type='Family';var status=col.status>=0?row[col.status].toLowerCase():'paid';if(['paid','pending','unpaid'].indexOf(status)<0)status='paid';var gtotal=col.gtotal>=0?parseInt(row[col.gtotal]):GUEST_PASSES[type];if(isNaN(gtotal))gtotal=GUEST_PASSES[type];var kidsRaw=col.kids>=0?row[col.kids]:'';var kids=kidsRaw?kidsRaw.split(';').map(function(k){return k.trim();}).filter(Boolean):[];parsed.push({id:uid(),last:(col.last>=0?row[col.last]:'').trim(),first:(col.first>=0?row[col.first]:'').trim(),type:type,status:status,adults:col.adults>=0?(parseInt(row[col.adults])||1):1,kids:kids,children:kids.length,guestsUsed:col.gused>=0?(parseInt(row[col.gused])||0):0,guestsTotal:gtotal,email:(col.email>=0?row[col.email]:'').trim(),phone:(col.phone>=0?row[col.phone]:'').trim(),street:(col.street>=0?row[col.street]:'').trim(),city:(col.city>=0?row[col.city]:'').trim(),state:(col.state>=0?row[col.state]:'NC').trim(),zip:(col.zip>=0?row[col.zip]:'').trim()});}csvParsed=parsed;var prev='<div class="csv-preview"><table><tr><th>Last</th><th>First</th><th>Type</th><th>Status</th><th>Adults</th><th>Kids</th></tr>'+parsed.slice(0,10).map(function(m){return'<tr><td>'+m.last+'</td><td>'+m.first+'</td><td>'+m.type+'</td><td>'+m.status+'</td><td>'+m.adults+'</td><td>'+m.kids.join(', ')+'</td></tr>';}).join('')+(parsed.length>10?'<tr><td colspan="6" style="color:var(--mu);text-align:center">...and '+(parsed.length-10)+' more</td></tr>':'')+'</table></div>';document.getElementById('csv-preview').innerHTML=prev;document.getElementById('csv-actions').innerHTML='<p style="font-size:13px;color:var(--mu);margin-top:8px">'+parsed.length+' members found.</p><div style="display:flex;flex-direction:column;gap:8px;margin-top:10px"><button class="btn-p" onclick="importCSVMerge()">&#xFF0B; Merge with Existing</button><button class="btn-o" onclick="importCSVReplace()">&#x1F504; Replace All Members</button></div>';}
+function importCSVMerge(){if(!csvParsed.length){showToast('No data','warn');return;}var added=0,updated=0;csvParsed.forEach(function(nm){var ex=members.find(function(m){return m.last.toLowerCase()===nm.last.toLowerCase()&&m.first.toLowerCase()===nm.first.toLowerCase();});if(ex){var merged=Object.assign({},ex,nm,{id:ex.id});saveMember(merged);updated++;}else{saveMember(nm);added++;}});if(!fbReady){lSet('gsc_members',members);renderAll();}closeCSV();showToast('Imported: '+added+' added, '+updated+' updated','ok');}
+function importCSVReplace(){if(!csvParsed.length){showToast('No data','warn');return;}if(!confirm('Replace all existing members? Visit history is kept.'))return;// Delete existing members from Firebase first
+if(fbReady&&window._delMemberFB){members.forEach(function(m){window._delMemberFB(m.id);});}// Save new ones
+csvParsed.forEach(function(m){saveMember(m);});if(!fbReady){members=csvParsed;lSet('gsc_members',members);renderAll();}closeCSV();showToast('Replaced with '+csvParsed.length+' members','ok');}
 
 function openSettings(){
   if(!can('canAccessSettings')){showToast('Admin login required','warn');openLogin();return;}
@@ -4002,16 +3501,6 @@ function openSettings(){
     try{var msg=localStorage.getItem('gsc_announcement')||'';var inp=document.getElementById('st-announce');if(inp)inp.value=msg;}catch(e){}
   }
   })();
-
-  // Show find duplicates button in settings
-  var stBody = document.getElementById('st-body');
-  if(stBody && isMasterAdmin()){
-    var dedupBtn = document.createElement('div');
-    dedupBtn.className = 'st-section';
-    dedupBtn.innerHTML = '<div class="st-sec-hdr">&#x1F50D; Data Tools</div>'
-      + '<button onclick="closeSettings();openDedupModal()" style="width:100%;padding:13px;background:var(--bll);border:1.5px solid var(--bl);border-radius:var(--r);font-size:14px;font-weight:700;color:var(--bld);font-family:-apple-system,sans-serif;cursor:pointer">&#x1F50D; Find Duplicate Members</button>';
-    stBody.appendChild(dedupBtn);
-  }
 }
 
 function saveAllConfig(){
@@ -4225,14 +3714,14 @@ function renderIncidents(){
 function openNewIncident(){
   document.getElementById('inc-modal-title').textContent='New Incident';
   document.getElementById('inc-modal-body').innerHTML=buildIncidentForm(null);
-  var _io=document.getElementById('inc-overlay');_io.style.display='flex';_io.classList.add('open');
+  document.getElementById('inc-overlay').style.display='flex';
 }
 
 function viewIncident(id){
   var inc=incidents.find(function(x){return x.id===id;}); if(!inc) return;
   document.getElementById('inc-modal-title').textContent='Incident Report';
   document.getElementById('inc-modal-body').innerHTML=buildIncidentForm(inc);
-  var _io=document.getElementById('inc-overlay');_io.style.display='flex';_io.classList.add('open');
+  document.getElementById('inc-overlay').style.display='flex';
 }
 
 function buildIncidentForm(inc){
@@ -4313,7 +3802,7 @@ function saveFollowupNote(id){
 }
 
 function closeIncident(){
-  var _ic=document.getElementById('inc-overlay');_ic.style.display='none';_ic.classList.remove('open');
+  document.getElementById('inc-overlay').style.display='none';
 }
 
 function saveTimeoutSetting(){
@@ -4362,13 +3851,13 @@ function showUserManagementUI(users){
         +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">'
         +'<div><div style="font-weight:700;font-size:14px">'+u.displayName+'</div>'
         +'<div style="font-size:11px;color:var(--mu)">@'+u.username+' &middot; '+u.roleLabel+'</div></div>'
-        +'<button onclick="deleteStaffUser(&quot;'+u.id+'&quot;)" style="background:var(--rel);border:none;color:var(--re);padding:6px 10px;border-radius:8px;font-size:12px;font-weight:700;font-family:-apple-system,sans-serif;cursor:pointer">Remove</button>'
+        +'<button onclick="deleteStaffUser(&quot;'+u.id+'&quot;)" style="background:var(--rel);border:none;color:var(--re);padding:6px 10px;border-radius:8px;font-size:12px;font-weight:700;font-family:Inter,sans-serif;cursor:pointer">Remove</button>'
         +'</div>'
         +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px">'+PERMS.map(function(p){
           return'<label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--tx);cursor:pointer">'
             +'<input type="checkbox" data-uid="'+u.id+'" data-perm="'+p.key+'" onchange="updateUserPerm(this)"'+(perms[p.key]?' checked':'')+' style="accent-color:var(--or)"> '+p.label+'</label>';
         }).join('')+'</div>'
-        +'<button data-uid="'+u.id+'" data-name="'+u.displayName+'" onclick="resetUserPassword(this.dataset.uid,this.dataset.name)" style="margin-top:8px;background:var(--bll);border:none;color:var(--bl);padding:7px 12px;border-radius:8px;font-size:12px;font-weight:700;font-family:-apple-system,sans-serif;cursor:pointer;width:100%">Reset Password</button>'
+        +'<button data-uid="'+u.id+'" data-name="'+u.displayName+'" onclick="resetUserPassword(this.dataset.uid,this.dataset.name)" style="margin-top:8px;background:var(--bll);border:none;color:var(--bl);padding:7px 12px;border-radius:8px;font-size:12px;font-weight:700;font-family:Inter,sans-serif;cursor:pointer;width:100%">Reset Password</button>'
         +'</div>';
     });
   } else {
@@ -4386,7 +3875,7 @@ function showUserManagementUI(users){
       return'<label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer">'
         +'<input type="checkbox" class="nu-perm" data-perm="'+p.key+'" style="accent-color:var(--or)"'+(DEFAULT_PERMISSIONS.board[p.key]?' checked':'')+'>'+p.label+'</label>';
     }).join('')+'</div>'
-    +'<button onclick="addStaffUser()" style="width:100%;padding:12px;background:var(--or);border:none;color:#fff;border-radius:10px;font-size:14px;font-weight:700;font-family:-apple-system,sans-serif;cursor:pointer">Add User</button>'
+    +'<button onclick="addStaffUser()" style="width:100%;padding:12px;background:var(--or);border:none;color:#fff;border-radius:10px;font-size:14px;font-weight:700;font-family:Inter,sans-serif;cursor:pointer">Add User</button>'
     +'</div>';
   html+='</div>';
   // Show in a modal
@@ -4487,7 +3976,7 @@ function sciShowSetup(){
     +'</div>'
     +'<div class="fg"><label class="fl">Setup Code (from attendant)</label>'
     +'<input class="fi" id="sci-setup-code" type="tel" maxlength="6" placeholder="______" style="font-size:24px;text-align:center;letter-spacing:8px"></div>'
-    +'<button onclick="verifySciSetupCode()" style="width:100%;padding:16px;background:var(--or);border:none;color:#fff;border-radius:11px;font-size:17px;font-weight:700;font-family:-apple-system,sans-serif;cursor:pointer">Continue</button>'
+    +'<button onclick="verifySciSetupCode()" style="width:100%;padding:16px;background:var(--or);border:none;color:#fff;border-radius:11px;font-size:17px;font-weight:700;font-family:Inter,sans-serif;cursor:pointer">Continue</button>'
     +'<div id="sci-setup-err" style="color:var(--re);font-size:13px;font-weight:600;text-align:center;min-height:18px"></div>';
   document.getElementById('sci-body').innerHTML=html;
 }
@@ -4585,7 +4074,7 @@ function renderSciPinEntry(){
     }).join('')
     +'</div>'
     +'<div id="sci-pin-err" style="color:var(--re);font-size:13px;font-weight:600;text-align:center;min-height:18px"></div>'
-    +'<button onclick="sciForgetDevice()" style="margin-top:12px;background:none;border:none;color:var(--mu);font-size:12px;cursor:pointer;font-family:-apple-system,sans-serif">Not '+m.first+'? Tap here</button>';
+    +'<button onclick="sciForgetDevice()" style="margin-top:12px;background:none;border:none;color:var(--mu);font-size:12px;cursor:pointer;font-family:Inter,sans-serif">Not '+m.first+'? Tap here</button>';
   document.getElementById('sci-body').innerHTML=html;
 }
 
@@ -4664,15 +4153,15 @@ function sciShowCheckin(){
       +'<div><div style="font-size:13px;font-weight:700;color:var(--bld)">🎟 Guest Passes</div>'
       +'<div style="font-size:11px;color:var(--mu)">'+rem+' of '+m.guestsTotal+' remaining</div></div>'
       +'<div style="display:flex;align-items:center;gap:12px">'
-      +'<button onclick="sciAdjGuests(-1)" style="width:44px;height:44px;border-radius:50%;background:var(--or);border:none;color:#fff;font-size:22px;font-weight:700;cursor:pointer;font-family:-apple-system,sans-serif">−</button>'
+      +'<button onclick="sciAdjGuests(-1)" style="width:44px;height:44px;border-radius:50%;background:var(--or);border:none;color:#fff;font-size:22px;font-weight:700;cursor:pointer;font-family:Inter,sans-serif">−</button>'
       +'<div style="font-size:22px;font-weight:800;color:var(--bld);min-width:24px;text-align:center" id="sci-guests-count">0</div>'
-      +'<button onclick="sciAdjGuests(1)" style="width:44px;height:44px;border-radius:50%;background:var(--or);border:none;color:#fff;font-size:22px;font-weight:700;cursor:pointer;font-family:-apple-system,sans-serif">+</button>'
+      +'<button onclick="sciAdjGuests(1)" style="width:44px;height:44px;border-radius:50%;background:var(--or);border:none;color:#fff;font-size:22px;font-weight:700;cursor:pointer;font-family:Inter,sans-serif">+</button>'
       +'</div></div>'
       +'<div id="sci-gp-status"></div>'
       +'</div>';
   }
 
-  html+='<button onclick="sciSubmitCheckin(&quot;'+m.id+'&quot;)" style="width:100%;padding:18px;background:var(--or);border:none;color:#fff;border-radius:12px;font-size:18px;font-weight:800;font-family:-apple-system,sans-serif;cursor:pointer;margin-top:4px">✅ Check In</button>';
+  html+='<button onclick="sciSubmitCheckin(&quot;'+m.id+'&quot;)" style="width:100%;padding:18px;background:var(--or);border:none;color:#fff;border-radius:12px;font-size:18px;font-weight:800;font-family:Inter,sans-serif;cursor:pointer;margin-top:4px">✅ Check In</button>';
 
   document.getElementById('sci-body').innerHTML=html;
   window._sciGuests=0;
@@ -4783,30 +4272,6 @@ function resetMigrationFlag(){
 }
 
 function doSeasonReset(){if(!confirm('Reset all guest pass counts for the new season?'))return;members=members.map(function(m){return Object.assign({},m,{guestsUsed:0,guestsTotal:GUEST_PASSES[m.type]!==undefined?GUEST_PASSES[m.type]:m.guestsTotal});});lSet('gsc_members',members);renderAll();closeSettings();showToast('Season reset complete');}
-
-
-// ── BOOT ──────────────────────────────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', function(){
-  // Set topbar date
-  var d = new Date();
-  var dateEl = document.getElementById('topbar-date');
-  if(dateEl) dateEl.textContent = d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'}).toUpperCase();
-
-  // Early hide for special modes
-  if(window.location.search.indexOf('selfcheckin=true') >= 0){
-    var app = document.getElementById('app');
-    var shell = document.getElementById('sci-shell');
-    if(app) app.style.display = 'none';
-    if(shell) shell.classList.add('on');
-  }
-  if(window.location.search.indexOf('apply=true') >= 0){
-    var app2 = document.getElementById('app');
-    if(app2) app2.style.display = 'none';
-  }
-
-  initLayout();
-  tryInitFirebase();
-});
 
 
 </script>
