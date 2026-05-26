@@ -316,7 +316,7 @@ body.layout-laptop .rstat-grid{grid-template-columns:repeat(6,1fr)}
       <div>
         <div class="topbar-title">Gibsonville Swim Club</div>
         <div class="topbar-date" id="topbar-date"></div>
-        <div style="font-size:9px;color:rgba(255,255,255,.35)">v2.2.7</div>
+        <div style="font-size:9px;color:rgba(255,255,255,.35)">v2.2.8</div>
       </div>
     </div>
     <div class="topbar-right">
@@ -516,6 +516,7 @@ body.layout-laptop .rstat-grid{grid-template-columns:repeat(6,1fr)}
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
 
 <script>
+
 
 
 
@@ -1413,6 +1414,8 @@ var inactivityTimer=null;
 var INACTIVITY_MINUTES=5; // configurable
 
 function can(permission){
+  // Master admin bypasses ALL permission checks
+  if(isMasterAdmin()) return true;
   if(!currentUser) return DEFAULT_PERMISSIONS.attendant[permission]||false;
   var perms=currentUser.permissions||DEFAULT_PERMISSIONS[currentUser.roleType]||DEFAULT_PERMISSIONS.attendant;
   return perms[permission]||false;
@@ -3083,7 +3086,7 @@ document.getElementById('ed-body').innerHTML=
   +(id?'<button class="btn-d" onclick="confirmDelete(\''+id+'\')">&#x1F5D1; Delete Member</button>':'');
 document.getElementById('ed-overlay').classList.add('open');updateSecVisibility();}
 
-function changePaymentStatus(){requireAdminPin(function(){var cur=document.getElementById('ef-status').value;var opts=['paid','pending','unpaid'];var labels={paid:'Paid',pending:'Pending',unpaid:'Unpaid'};var next=opts[(opts.indexOf(cur)+1)%opts.length];document.getElementById('ef-status').value=next;document.getElementById('status-display').textContent=labels[next];showToast('Status changed to '+labels[next],'ok');});}
+function changePaymentStatus(){requireAdminPin(function(){var cur=document.getElementById('ef-status').value;var opts=['paid','pending','unpaid','inactive','terminated'];var labels={paid:'Paid',pending:'Pending',unpaid:'Unpaid',inactive:'Inactive',terminated:'Terminated'};var next=opts[(opts.indexOf(cur)+1)%opts.length];document.getElementById('ef-status').value=next;var _sd=document.getElementById('status-display');if(_sd)_sd.textContent=labels[next];showToast('Status changed to '+labels[next],'ok');});}
 function getTypeConfig(key){
   return CONFIG.membershipTypes.find(function(t){return t.key===key;})||{adults:1,maxAdults:1,guestPasses:0,requireSecond:false,allowChildren:false};
 }
@@ -4325,6 +4328,7 @@ document.addEventListener('DOMContentLoaded', function(){
   if(_pill){_pill.style.display='flex';_pill.innerHTML='<div style="width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.4)"></div>...';}
   tryInitFirebase();
 });
+
 
 
 </script>
