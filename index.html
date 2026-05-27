@@ -81,7 +81,7 @@ body{background:var(--sand);color:var(--tx)}
 .ilbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--mu);min-width:72px;padding-top:2px}
 .ival{font-size:13px;color:var(--tx);flex:1}
 .sec-lbl{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--mu)}
-.ci-panel{background:var(--wh);border-radius:var(--r-lg);padding:16px;display:flex;flex-direction:column;gap:12px;box-shadow:var(--sh-lg)}
+.ci-panel{background:#fff;border-radius:var(--r-lg);padding:16px;display:flex;flex-direction:column;gap:10px;border:1.5px solid var(--sand2)}
 .ci-title{font-size:17px;font-weight:800;color:var(--bld)}
 .ci-row{display:flex;align-items:center;gap:12px;background:var(--sand);border-radius:var(--r-sm);padding:12px 14px;cursor:pointer;-webkit-appearance:none;border:none;width:100%;text-align:left;font-family:-apple-system,'SF Pro Display','Inter',sans-serif}
 .ci-row.checked{background:var(--bll)}
@@ -222,11 +222,12 @@ body.layout-laptop .rstat-grid{grid-template-columns:repeat(6,1fr)}
 /* ── MEMBER CHECK-IN PANEL ──────────────────────────────────────── */
 .ci-section-lbl{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--mu);padding:4px 0 8px;margin-top:2px}
 .ci-checklist{display:flex;flex-direction:column;gap:6px;margin-bottom:4px}
-.ci-check-item{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--sand);border-radius:var(--r-sm);cursor:pointer;transition:background .1s;-webkit-appearance:none;border:none;width:100%;text-align:left;font-family:-apple-system,sans-serif}
+.ci-check-item.checked{background:var(--grl)!important;border-color:var(--gr)!important}
+.ci-check-item{display:flex;align-items:center;gap:12px;padding:13px 14px;background:var(--sand);border-radius:var(--r-sm);cursor:pointer;transition:all .1s;-webkit-appearance:none;border:2px solid transparent;width:100%;text-align:left;font-family:-apple-system,sans-serif}
 .ci-check-item:active{background:var(--sand2)}
 .ci-check-item input[type=checkbox]{width:22px;height:22px;accent-color:var(--or);flex-shrink:0;cursor:pointer}
-.ci-check-item label{font-size:15px;font-weight:600;color:var(--bld);cursor:pointer;flex:1;line-height:1.3}
-.ci-add-btn{display:flex;align-items:center;gap:8px;padding:10px 14px;background:transparent;border:1.5px dashed var(--sand2);border-radius:var(--r-sm);cursor:pointer;color:var(--mu);font-size:13px;font-weight:600;font-family:-apple-system,sans-serif;width:100%;text-align:left;transition:background .1s}
+.ci-check-item label{font-size:16px;font-weight:700;color:var(--bld);cursor:pointer;flex:1;line-height:1.3}
+.ci-add-btn{display:flex;align-items:center;gap:8px;padding:10px 14px;background:transparent;border:2px dashed var(--bl);border-radius:var(--r-sm);cursor:pointer;color:var(--bl);font-size:13px;font-weight:600;font-family:-apple-system,sans-serif;width:100%;text-align:left;transition:background .1s}
 .ci-add-btn:active{background:var(--sand)}
 /* Guest passes row */
 .gp-counter-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
@@ -316,7 +317,7 @@ body.layout-laptop .rstat-grid{grid-template-columns:repeat(6,1fr)}
       <div>
         <div class="topbar-title">Gibsonville Swim Club</div>
         <div class="topbar-date" id="topbar-date"></div>
-        <div style="font-size:9px;color:rgba(255,255,255,.35)">v2.3.0</div>
+        <div style="font-size:9px;color:rgba(255,255,255,.35)">v2.3.7</div>
       </div>
     </div>
     <div class="topbar-right">
@@ -471,7 +472,7 @@ body.layout-laptop .rstat-grid{grid-template-columns:repeat(6,1fr)}
   </div>
 
   <!-- APPLICATION REVIEW MODAL -->
-  <div class="overlay" id="appreview-overlay" style="display:none;z-index:9985">
+  <div class="overlay" id="appreview-overlay" style="display:none;z-index:9985" onclick="if(event.target===this)closeAppReview()">
     <div class="sheet" style="max-height:90vh;overflow-y:auto">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
         <div style="font-size:18px;font-weight:800;color:var(--bld)" id="appreview-title">Application</div>
@@ -507,6 +508,15 @@ body.layout-laptop .rstat-grid{grid-template-columns:repeat(6,1fr)}
     </div>
   </div>
 
+
+  <!-- GUEST PASS OVERLAY -->
+  <div class="overlay" id="gp-overlay" onclick="if(event.target===this)closeGP()">
+    <div class="sheet" style="max-height:70vh">
+      <div class="sheet-handle"></div>
+      <div id="gp-body"></div>
+    </div>
+  </div>
+
 </div><!-- end #app -->
 
 <!-- Firebase SDK -->
@@ -516,6 +526,26 @@ body.layout-laptop .rstat-grid{grid-template-columns:repeat(6,1fr)}
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
 
 <script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -986,8 +1016,8 @@ function quickCheckIn(memberId, event){
     guestPasses:0,passesPurchased:0,whileUnpaid:false};
   saveVisit(v);
   showSuccessFlash(m.first+' '+m.last, adults.concat(kidNames).join(', '));
-  // Play chime
   playChime();
+  setTimeout(function(){ciLastAlpha='';ciFirstAlpha='';ciGuests=0;closeMM();switchTab('ci');renderCI();},1800);
 }
 
 function showSuccessFlash(name, members){
@@ -1043,17 +1073,33 @@ function hasCriticalMissing(m){
 
 function openMissingInfo(memberId){
   var m=members.find(function(x){return x.id===memberId;}); if(!m) return;
-  // Inject the missing info form directly into the ci-panel
   var panel=document.querySelector('.ci-panel');
-  if(!panel) return;
-  panel.innerHTML=buildInlineMissingForm(m);
+  if(panel){
+    panel.innerHTML=buildInlineMissingForm(m);
+  } else {
+    // Panel not yet open - open member first with form mode
+    openMemberPanel(memberId,true,true);
+  }
+}
+
+function openMemberPanel(id,ciMode,missingMode){
+  // Open mm-overlay then inject form
+  var ov=document.getElementById('mm-overlay');
+  if(ov){ov.style.display='flex';ov.classList.add('open');}
+  var m=members.find(function(x){return x.id===id;}); if(!m) return;
+  // Build a minimal panel container
+  var body=document.getElementById('mm-body');
+  if(!body) return;
+  if(missingMode){
+    body.innerHTML='<div class="ci-panel">'+buildInlineMissingForm(m)+'</div>';
+  }
 }
 
 function buildInlineMissingForm(m){
   var tc=getTypeConfig(m.type);
   var html='<div style="display:flex;flex-direction:column;gap:12px">';
-  html+='<div style="font-size:16px;font-weight:800;color:#fff">&#x26A0;&#xFE0F; Complete Member Info</div>';
-  html+='<div style="font-size:12px;color:rgba(255,255,255,.7)">This information is required before checking in. It will be saved permanently.</div>';
+  html+='<div style="font-size:16px;font-weight:800;color:var(--bld)">&#x26A0;&#xFE0F; Complete Member Info</div>';
+  html+='<div style="font-size:12px;color:var(--mu)">This information is required before checking in. It will be saved permanently.</div>';
 
   // Contact fields
   var needsContact=!m.email||!m.phone||!m.street||!m.city||!m.state||!m.zip;
@@ -2319,11 +2365,13 @@ function openAppReview(appId){
     +'<button data-appid="'+a.id+'" onclick="saveAppNote(this.dataset.appid)" style="width:100%;padding:11px;background:var(--bl);border:none;color:#fff;border-radius:10px;font-size:13px;font-weight:700;font-family:Inter,sans-serif;cursor:pointer">Save Notes</button>';
   html+='</div>';
   body.innerHTML=html;
-  document.getElementById('appreview-overlay').style.display='flex';
+  var _aov=document.getElementById('appreview-overlay');
+  if(_aov){_aov.style.display='flex';_aov.classList.add('open');}
 }
 
 function closeAppReview(){
-  document.getElementById('appreview-overlay').style.display='none';
+  var _aoc=document.getElementById('appreview-overlay');
+  if(_aoc){_aoc.style.display='none';_aoc.classList.remove('open');}
 }
 
 function voteApplication(appId, vote){
@@ -2346,6 +2394,7 @@ function voteApplication(appId, vote){
   var i=applications.findIndex(function(x){return x.id===appId;});
   if(i>=0) applications[i]=updated;
   showToast('Vote recorded: '+vote+(newStatus!==a.status?' — Application '+newStatus:''),'ok');
+  closeAppReview();
   renderApplications();
 }
 
@@ -2455,7 +2504,7 @@ function renderDedupResults(){
         +'<button data-mid="'+m.id+'" onclick="dedupDelete(this.dataset.mid)" style="padding:6px 10px;background:var(--rel);border:1.5px solid var(--re);border-radius:8px;font-size:11px;font-weight:700;color:var(--re);cursor:pointer;font-family:-apple-system,sans-serif;flex-shrink:0">🗑 Delete</button>'
         +'</div></div>';
     });
-    html+='<button onclick="dedupMergeGroup('+JSON.stringify(grp.map(function(m){return m.id;}))+','+gi+')" style="width:100%;padding:10px;background:var(--bl);border:none;border-radius:var(--r-sm);font-size:13px;font-weight:700;color:#fff;cursor:pointer;font-family:-apple-system,sans-serif;margin-top:4px">⊕ Merge into one record</button>';
+    html+='<button data-ids=\''+grp.map(function(m){return m.id;}).join('|')+'\' onclick=\'dedupMergeByAttr(this)\' style=\'width:100%;padding:12px;background:var(--bl);border:none;border-radius:var(--r-sm);font-size:14px;font-weight:700;color:#fff;cursor:pointer;font-family:-apple-system,sans-serif;margin-top:4px\'>⊕ Merge into one record</button>';
     html+='</div>';
   });
   body.innerHTML=html;
@@ -2466,6 +2515,11 @@ function dedupDelete(id){
   members=members.filter(function(x){return x.id!==id;});
   showToast('Record deleted','ok');
   renderDedupResults(); renderDir();
+}
+function dedupMergeByAttr(btn){
+  var ids=(btn.getAttribute('data-ids')||'').split('|').filter(Boolean);
+  if(ids.length<2){showToast('Select at least 2 records','warn');return;}
+  dedupMergeGroup(ids,0);
 }
 function dedupMergeGroup(ids,gi){
   var grp=ids.map(function(id){return members.find(function(m){return m.id===id;});}).filter(Boolean);
@@ -2490,6 +2544,386 @@ function dedupMergeGroup(ids,gi){
   });
   showToast('Merged '+grp.length+' records into one','ok');
   renderDedupResults(); renderDir();
+}
+
+
+function toggleTasksDashboard(){
+  var wrap=document.getElementById('tasks-dashboard-wrap');
+  if(!wrap) return;
+  var open=wrap.style.display!=='none';
+  wrap.style.display=open?'none':'block';
+  if(!open) renderTasksDashboard();
+}
+
+
+// ── CRM HELPERS ───────────────────────────────────────────────────────────────
+function getCurrentUser(){
+  return currentUser ? (currentUser.displayName||currentUser.username||'Staff') : 'Attendant';
+}
+
+function addActivity(memberId, type, text){
+  var m=members.find(function(x){return x.id===memberId;}); if(!m) return;
+  if(!m.activity) m.activity=[];
+  m.activity.unshift({
+    id:uid(), type:type, text:text,
+    by:getCurrentUser(), at:new Date().toISOString()
+  });
+  saveMember(m);
+  return m;
+}
+
+function addTask(memberId, title, dueDate){
+  var m=members.find(function(x){return x.id===memberId;}); if(!m) return;
+  if(!m.tasks) m.tasks=[];
+  m.tasks.push({
+    id:uid(), title:title, dueDate:dueDate||'',
+    done:false, createdBy:getCurrentUser(), createdAt:new Date().toISOString()
+  });
+  saveMember(m);
+  return m;
+}
+
+function toggleTask(memberId, taskId){
+  var m=members.find(function(x){return x.id===memberId;}); if(!m) return;
+  if(!m.tasks) return;
+  var t=m.tasks.find(function(t){return t.id===taskId;}); if(!t) return;
+  t.done=!t.done;
+  if(t.done){t.doneAt=new Date().toISOString();t.doneBy=getCurrentUser();}
+  else{delete t.doneAt;delete t.doneBy;}
+  saveMember(m);
+}
+
+function deleteTask(memberId, taskId){
+  var m=members.find(function(x){return x.id===memberId;}); if(!m) return;
+  m.tasks=(m.tasks||[]).filter(function(t){return t.id!==taskId;});
+  saveMember(m);
+}
+
+function fmtActivityDate(iso){
+  if(!iso) return '';
+  var d=new Date(iso);
+  return d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})
+    +' at '+d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+}
+
+function fmtDueDate(ds){
+  if(!ds) return '';
+  var d=new Date(ds+'T00:00:00');
+  var now=new Date(); now.setHours(0,0,0,0);
+  var diff=Math.round((d-now)/(1000*60*60*24));
+  if(diff<0) return '<span style="color:var(--re);font-weight:700">Overdue '+Math.abs(diff)+'d</span>';
+  if(diff===0) return '<span style="color:var(--or);font-weight:700">Due today</span>';
+  if(diff<=3) return '<span style="color:var(--am);font-weight:700">Due in '+diff+'d</span>';
+  return '<span style="color:var(--mu)">Due '+d.toLocaleDateString('en-US',{month:'short',day:'numeric'})+'</span>';
+}
+
+function getAllOpenTasks(){
+  var result=[];
+  members.forEach(function(m){
+    (m.tasks||[]).forEach(function(t){
+      if(!t.done) result.push({task:t,member:m});
+    });
+  });
+  result.sort(function(a,b){
+    if(!a.task.dueDate&&!b.task.dueDate) return 0;
+    if(!a.task.dueDate) return 1;
+    if(!b.task.dueDate) return -1;
+    return new Date(a.task.dueDate)-new Date(b.task.dueDate);
+  });
+  return result;
+}
+
+function buildCrmSection(m){
+  var mid=m.id;
+  var tasks=(m.tasks||[]);
+  var activity=(m.activity||[]);
+  var openTasks=tasks.filter(function(t){return !t.done;});
+  var doneTasks=tasks.filter(function(t){return t.done;});
+  var now=new Date(); now.setHours(0,0,0,0);
+
+  var html='<div id="crm-section">';
+
+  // Tasks
+  html+='<div class="sec-lbl" style="display:flex;align-items:center;justify-content:space-between">'
+    +'<span>Tasks'+(openTasks.length?' <span style="background:var(--or);color:#fff;border-radius:10px;padding:1px 7px;font-size:10px;font-weight:700">'+openTasks.length+'</span>':'')+'</span>'
+    +'<button onclick="showAddTaskForm(\''+mid+'\')" style="padding:4px 10px;background:var(--bl);border:none;color:#fff;border-radius:8px;font-size:11px;font-weight:700;font-family:-apple-system,sans-serif;cursor:pointer">+ Add Task</button>'
+    +'</div>';
+
+  html+='<div id="task-form-'+mid+'" style="display:none;flex-direction:column;gap:8px;background:var(--sand);border-radius:var(--r-sm);padding:12px;margin-bottom:8px;border:1.5px solid var(--sand2)">'
+    +'<input id="task-title-'+mid+'" class="fi" placeholder="Task title...">'
+    +'<div style="display:flex;gap:8px;align-items:center">'
+    +'<label class="fl" style="margin:0;white-space:nowrap;flex-shrink:0">Due:</label>'
+    +'<input type="date" id="task-due-'+mid+'" class="fi" style="flex:1">'
+    +'<button onclick="submitAddTask(\''+mid+'\')" style="padding:9px 14px;background:var(--bl);border:none;color:#fff;border-radius:9px;font-size:13px;font-weight:700;font-family:-apple-system,sans-serif;cursor:pointer">Save</button>'
+    +'<button onclick="document.getElementById(\'task-form-'+mid+'\').style.display=\'none\'" style="padding:9px 10px;background:var(--sand2);border:none;color:var(--mu);border-radius:9px;font-size:13px;cursor:pointer">✕</button>'
+    +'</div></div>';
+
+  if(openTasks.length){
+    html+='<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px">';
+    openTasks.forEach(function(t){
+      var overdue=t.dueDate&&new Date(t.dueDate+'T00:00:00')<now;
+      html+='<div style="background:'+(overdue?'var(--rel)':'#fff')+';border:1.5px solid '+(overdue?'var(--re)':'var(--sand2)')+';border-radius:var(--r-sm);padding:10px 12px;display:flex;align-items:flex-start;gap:10px">'
+        +'<input type="checkbox" style="width:18px;height:18px;accent-color:var(--bl);flex-shrink:0;margin-top:2px;cursor:pointer" onchange="crmToggleTask(\''+mid+'\',\''+t.id+'\')">'
+        +'<div style="flex:1;min-width:0">'
+        +'<div style="font-size:13px;font-weight:600;color:var(--bld)">'+t.title+'</div>'
+        +(t.dueDate?'<div style="font-size:11px;margin-top:2px">'+fmtDueDate(t.dueDate)+'</div>':'')
+        +'<div style="font-size:10px;color:var(--mu);margin-top:2px">Added by '+t.createdBy+'</div>'
+        +'</div>'
+        +'<button onclick="crmDeleteTask(\''+mid+'\',\''+t.id+'\')" style="background:none;border:none;color:var(--mu);font-size:18px;cursor:pointer;padding:0 4px;flex-shrink:0;line-height:1">×</button>'
+        +'</div>';
+    });
+    html+='</div>';
+  } else {
+    html+='<div style="font-size:12px;color:var(--mu);padding:4px 0 10px;font-style:italic">No open tasks</div>';
+  }
+
+  if(doneTasks.length){
+    html+='<details style="margin-bottom:8px"><summary style="font-size:11px;color:var(--mu);cursor:pointer;font-weight:600">'+doneTasks.length+' completed task'+(doneTasks.length>1?'s':'')+'</summary>'
+      +'<div style="display:flex;flex-direction:column;gap:4px;margin-top:6px">';
+    doneTasks.forEach(function(t){
+      html+='<div style="background:var(--sand);border-radius:var(--r-sm);padding:8px 12px;display:flex;align-items:center;gap:8px;opacity:.7">'
+        +'<input type="checkbox" checked disabled style="width:16px;height:16px">'
+        +'<div style="flex:1"><div style="font-size:12px;font-weight:600;color:var(--mu);text-decoration:line-through">'+t.title+'</div>'
+        +(t.doneAt?'<div style="font-size:10px;color:var(--mu)">Done '+fmtActivityDate(t.doneAt)+' by '+t.doneBy+'</div>':'')
+        +'</div></div>';
+    });
+    html+='</div></details>';
+  }
+
+  // Activity Log
+  html+='<div class="sec-lbl" style="display:flex;align-items:center;justify-content:space-between;margin-top:4px">'
+    +'<span>Activity Log</span>'
+    +'<button onclick="showAddCommentForm(\''+mid+'\')" style="padding:4px 10px;background:var(--bl);border:none;color:#fff;border-radius:8px;font-size:11px;font-weight:700;font-family:-apple-system,sans-serif;cursor:pointer">+ Comment</button>'
+    +'</div>';
+
+  html+='<div id="comment-form-'+mid+'" style="display:none;flex-direction:column;gap:8px;background:var(--sand);border-radius:var(--r-sm);padding:12px;margin-bottom:8px;border:1.5px solid var(--sand2)">'
+    +'<textarea id="comment-text-'+mid+'" class="fi" rows="3" placeholder="Add a note or comment..." style="resize:vertical"></textarea>'
+    +'<div style="display:flex;gap:8px;justify-content:flex-end">'
+    +'<button onclick="document.getElementById(\'comment-form-'+mid+'\').style.display=\'none\'" style="padding:8px 12px;background:var(--sand2);border:none;color:var(--mu);border-radius:9px;font-size:13px;font-weight:700;font-family:-apple-system,sans-serif;cursor:pointer">Cancel</button>'
+    +'<button onclick="submitAddComment(\''+mid+'\')" style="padding:8px 14px;background:var(--bl);border:none;color:#fff;border-radius:9px;font-size:13px;font-weight:700;font-family:-apple-system,sans-serif;cursor:pointer">Save</button>'
+    +'</div></div>';
+
+  if(activity.length){
+    html+='<div style="display:flex;flex-direction:column;gap:6px">';
+    var show=activity.slice(0,15);
+    show.forEach(function(a){
+      var color=a.type==='comment'?'var(--bl)':a.type==='status'?'var(--or)':'var(--mu)';
+      var icon=a.type==='comment'?'💬':a.type==='status'?'🔄':a.type==='task'?'✅':'📝';
+      html+='<div style="background:#fff;border-radius:var(--r-sm);padding:10px 12px;border-left:3px solid '+color+'">'
+        +'<div style="font-size:13px;color:var(--bld);line-height:1.4">'+icon+' '+a.text+'</div>'
+        +'<div style="font-size:10px;color:var(--mu);margin-top:4px">'+a.by+' · '+fmtActivityDate(a.at)+'</div>'
+        +'</div>';
+    });
+    if(activity.length>15){
+      html+='<div style="font-size:11px;color:var(--mu);text-align:center;padding:4px;font-style:italic">+'+( activity.length-15)+' older entries</div>';
+    }
+    html+='</div>';
+  } else {
+    html+='<div style="font-size:12px;color:var(--mu);padding:6px 0;font-style:italic">No activity yet</div>';
+  }
+
+  html+='</div>';
+  return html;
+}
+
+function showAddTaskForm(mid){
+  var f=document.getElementById('task-form-'+mid);
+  if(f){f.style.display=f.style.display==='none'||f.style.display===''?'flex':'none';}
+}
+function showAddCommentForm(mid){
+  var f=document.getElementById('comment-form-'+mid);
+  if(f){f.style.display=f.style.display==='none'||f.style.display===''?'flex':'none';}
+}
+
+function submitAddTask(mid){
+  var titleEl=document.getElementById('task-title-'+mid);
+  var dueEl=document.getElementById('task-due-'+mid);
+  if(!titleEl||!titleEl.value.trim()){showToast('Enter a task title','warn');return;}
+  var m=addTask(mid,titleEl.value.trim(),dueEl?dueEl.value:'');
+  var idx2=members.findIndex(function(x){return x.id===mid;});
+  if(idx2>=0)members[idx2]=m;
+  var crm=document.getElementById('crm-section');
+  if(crm&&m){crm.outerHTML=buildCrmSection(m);}
+  showToast('Task added','ok');
+  renderTasksDashboard();
+}
+
+function submitAddComment(mid){
+  var textEl=document.getElementById('comment-text-'+mid);
+  if(!textEl||!textEl.value.trim()){showToast('Enter a comment','warn');return;}
+  var m=addActivity(mid,'comment',textEl.value.trim());
+  var idx2=members.findIndex(function(x){return x.id===mid;});
+  if(idx2>=0)members[idx2]=m;
+  var crm=document.getElementById('crm-section');
+  if(crm&&m){crm.outerHTML=buildCrmSection(m);}
+  showToast('Comment saved','ok');
+}
+
+function crmToggleTask(mid,tid){
+  toggleTask(mid,tid);
+  var m=members.find(function(x){return x.id===mid;});
+  var crm=document.getElementById('crm-section');
+  if(crm&&m){crm.outerHTML=buildCrmSection(m);}
+  renderTasksDashboard();
+}
+
+function crmDeleteTask(mid,tid){
+  if(!confirm('Delete this task?')) return;
+  deleteTask(mid,tid);
+  var m=members.find(function(x){return x.id===mid;});
+  var crm=document.getElementById('crm-section');
+  if(crm&&m){crm.outerHTML=buildCrmSection(m);}
+  renderTasksDashboard();
+}
+
+function logStatusChange(memberId, oldStatus, newStatus){
+  if(oldStatus===newStatus) return;
+  addActivity(memberId,'status','Status changed: '+oldStatus+' \u2192 '+newStatus);
+}
+
+function renderTasksDashboard(){
+  var el=document.getElementById('tasks-dashboard'); if(!el) return;
+  var all=getAllOpenTasks();
+  var now=new Date(); now.setHours(0,0,0,0);
+  if(!all.length){
+    el.innerHTML='<div style="text-align:center;padding:30px">'
+      +'<div style="font-size:36px">✅</div>'
+      +'<div style="font-size:16px;font-weight:700;color:var(--gr);margin-top:8px">All caught up!</div>'
+      +'<div style="font-size:13px;color:var(--mu);margin-top:4px">No open tasks across any members.</div>'
+      +'</div>';
+    return;
+  }
+  var overdue=[],today=[],upcoming=[];
+  all.forEach(function(item){
+    if(!item.task.dueDate){upcoming.push(item);return;}
+    var d=new Date(item.task.dueDate+'T00:00:00');
+    if(d<now) overdue.push(item);
+    else if(d.getTime()===now.getTime()) today.push(item);
+    else upcoming.push(item);
+  });
+  function taskRow(item){
+    var m=item.member, t=item.task;
+    return '<div style="background:#fff;border-radius:var(--r-sm);padding:12px 14px;display:flex;align-items:flex-start;gap:10px;box-shadow:var(--sh);cursor:pointer" onclick="openEditFromTask(\''+m.id+'\')">'
+      +'<input type="checkbox" style="width:18px;height:18px;accent-color:var(--bl);flex-shrink:0;margin-top:2px;cursor:pointer" onclick="event.stopPropagation()" onchange="crmToggleTask(\''+m.id+'\',\''+t.id+'\')">'
+      +'<div style="flex:1;min-width:0">'
+      +'<div style="font-size:13px;font-weight:700;color:var(--bld)">'+t.title+'</div>'
+      +'<div style="font-size:12px;color:var(--mu);margin-top:2px">'+m.last+', '+m.first+' · '+m.type+' · '+m.status+'</div>'
+      +(t.dueDate?'<div style="font-size:11px;margin-top:3px">'+fmtDueDate(t.dueDate)+'</div>':'')
+      +'</div>'
+      +'<div style="font-size:11px;color:var(--bl);font-weight:600;flex-shrink:0">Edit →</div>'
+      +'</div>';
+  }
+  function grpSection(title,items,color){
+    if(!items.length) return '';
+    var h='<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:'+color+';padding:8px 0 6px">'+title+' ('+items.length+')</div>';
+    h+='<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px">';
+    items.forEach(function(i){h+=taskRow(i);});
+    h+='</div>';
+    return h;
+  }
+  el.innerHTML=grpSection('🔴 Overdue',overdue,'var(--re)')
+    +grpSection('🟡 Due Today',today,'var(--am)')
+    +grpSection('📋 Upcoming',upcoming,'var(--bl)');
+}
+
+function openEditFromTask(memberId){
+  switchTab('dir');
+  setTimeout(function(){openEdit(memberId);},120);
+}
+
+
+function processCheckin(){
+  var m=members.find(function(x){return x.id===ciMemberId;}); if(!m) return;
+  // Save inline missing info fields
+  var changed=false;
+  var map={email:'inline-email',phone:'inline-phone',street:'inline-street',city:'inline-city',zip:'inline-zip'};
+  Object.keys(map).forEach(function(field){
+    var el=document.getElementById(map[field]);
+    if(el&&el.value.trim()){m[field]=field==='phone'?formatPhone(el.value):el.value.trim();changed=true;}
+  });
+  var sf=document.getElementById('inline-sec-first');
+  var sl=document.getElementById('inline-sec-last');
+  if(sf&&sf.value.trim()){m.secFirst=sf.value.trim();m.secLast=(sl&&sl.value.trim())||m.secLast||'';m.adults=2;changed=true;}
+  document.querySelectorAll('.inline-kid-input').forEach(function(inp){
+    var v=inp.value.trim();
+    if(v){if(!m.kids)m.kids=[];if(m.kids.indexOf(v)<0){m.kids.push(v);m.children=m.kids.length;changed=true;}}
+  });
+  if(changed){var mi=members.findIndex(function(x){return x.id===m.id;});if(mi>=0)members[mi]=m;saveMember(m);}
+  var stillMissing=getMissingSteps(m);
+  if(stillMissing.length){showToast('Fill in: '+stillMissing.map(function(s){return s.label;}).join(', '),'warn');return;}
+
+  // Read checked adults from ci-adult-list
+  var checkedAdults=[];
+  var aList=document.getElementById('ci-adult-list');
+  if(aList){
+    aList.querySelectorAll('input[type=checkbox]').forEach(function(chk,i){
+      if(!chk.checked) return;
+      var lbl=document.querySelector('label[for="'+chk.id+'"]');
+      var raw=lbl ? lbl.textContent.replace(/\(primary\)|\(secondary\)/gi,'').trim() : '';
+      if(!raw){
+        if(i===0) raw=m.first+' '+m.last;
+        else if(m.secFirst) raw=((m.secFirst||'')+' '+(m.secLast||'')).trim();
+      }
+      if(raw) checkedAdults.push(raw);
+    });
+  }
+  if(checkedAdults.length===0) checkedAdults.push(m.first+' '+m.last);
+
+  // Read checked kids from ci-kid-list
+  var checkedKids=[];
+  var kList=document.getElementById('ci-kids-list');
+  if(kList){
+    kList.querySelectorAll('input[type=checkbox]').forEach(function(chk){
+      if(!chk.checked) return;
+      var lbl=document.querySelector('label[for="'+chk.id+'"]');
+      var name=lbl ? lbl.textContent.trim() : '';
+      if(name) checkedKids.push(name);
+    });
+  }
+
+  // Collect new kids added at gate
+  var newKids=[];
+  document.querySelectorAll('.ci-new-kid-input').forEach(function(inp){
+    var v=inp.value.trim(); if(v) newKids.push(v);
+  });
+
+  // Guest passes
+  var passesUsed=ciGuests||0;
+  var rem=(m.guestsTotal||0)-(m.guestsUsed||0);
+  if(passesUsed>rem){showToast('Not enough guest passes remaining','warn');return;}
+
+  commitCheckin(m,checkedAdults,checkedKids,newKids,passesUsed,false);
+}
+
+
+function selectAllAdults(){
+  var list=document.getElementById('ci-adult-list');
+  if(!list) return;
+  list.querySelectorAll('.ci-check-item').forEach(function(item){
+    var chk=item.querySelector('input[type=checkbox]');
+    if(chk&&!chk.checked){chk.checked=true;item.classList.add('checked');}
+  });
+}
+
+function selectAllKids(){
+  var list=document.getElementById('ci-kids-list');
+  if(!list) return;
+  list.querySelectorAll('.ci-check-item').forEach(function(item){
+    var chk=item.querySelector('input[type=checkbox]');
+    if(chk&&!chk.checked){chk.checked=true;item.classList.add('checked');}
+  });
+}
+
+function addInlineKidField(btn){
+  var container=btn.parentElement;
+  var wrap=document.createElement('div');
+  wrap.style.cssText='display:flex;align-items:center;gap:8px;margin-top:4px';
+  var inp=document.createElement('input');
+  inp.className='fi inline-kid-input';
+  inp.placeholder='Child name';
+  inp.style.cssText='flex:1;padding:8px 10px;font-size:13px';
+  wrap.appendChild(inp);
+  container.parentElement.insertBefore(wrap, container.nextSibling);
 }
 
 function renderAll(){renderCI();renderDir();renderRep();renderAnnouncement();}
@@ -2837,12 +3271,34 @@ function renderCI(){
 
 function rebuildFilterBtns(){
   var el=document.getElementById('dir-filter-btns'); if(!el) return;
-  var current=dirFilter;
-  el.innerHTML='<button class="fbtn'+(current==='all'?' on':'')+'" onclick="setFilter(this,&quot;all&quot;)">All</button>'
-    +CONFIG.membershipTypes.map(function(t){
-      return '<button class="fbtn'+(current===t.key?' on':'')+'" onclick="setFilter(this,&quot;'+t.key+'&quot;)">'+t.label+'</button>';
-    }).join('')
-    +'<button class="fbtn'+(current==='unpaid'?' on':'')+'" onclick="setFilter(this,&quot;unpaid&quot;)">Unpaid</button>';
+  var cur=dirFilter||'all';
+  var hasFormer=members.some(function(m){return m.status==='inactive'||m.status==='terminated';});
+
+  // Status row
+  var statusBtns='<div class="filter-group-label">Status</div><div class="filter-row">';
+  var statusFilters2=[
+    {k:'all',     lbl:'All',      cls:''},
+    {k:'paid',    lbl:'✓ Paid',   cls:'on-paid'},
+    {k:'unpaid',  lbl:'⚠ Unpaid', cls:'on-unpaid'},
+    {k:'pending', lbl:'Pending',  cls:'on-pending'},
+  ];
+  if(hasFormer) statusFilters2.push({k:'former',lbl:'Former',cls:''});
+  statusFilters2.forEach(function(f){
+    var isOn=cur===f.k;
+    var cls=isOn?(f.cls||'on'):'';
+    statusBtns+='<button class="fbtn '+cls+'" onclick="setFilter(this,&quot;'+f.k+'&quot;)">'+f.lbl+'</button>';
+  });
+  statusBtns+='</div>';
+
+  // Type row
+  var typeBtns='<div class="filter-group-label" style="margin-top:6px">Type</div><div class="filter-row">';
+  CONFIG.membershipTypes.forEach(function(t){
+    var isOn=cur===t.key;
+    typeBtns+='<button class="fbtn '+(isOn?'on':'')+'" onclick="setFilter(this,&quot;'+t.key+'&quot;)">'+t.label+'</button>';
+  });
+  typeBtns+='</div>';
+
+  el.innerHTML='<div class="filter-group">'+statusBtns+typeBtns+'</div>';
 }
 
 function setAlpha(letter){
@@ -2852,16 +3308,26 @@ function setAlpha(letter){
 
 function renderDir(){
   if(!dirFilter) dirFilter='all';
-  var list=members.slice();
-  if(dirFilter==='unpaid') list=list.filter(function(m){return m.status!=='paid';});
-  else if(dirFilter!=='all') list=list.filter(function(m){return m.type===dirFilter;});
+  var statusKeys=['paid','unpaid','pending','inactive','former'];
+  var list;
+  if(dirFilter==='former'){
+    list=members.filter(function(m){return m.status==='inactive'||m.status==='terminated';});
+  } else if(dirFilter==='unpaid'){
+    list=members.filter(function(m){return m.status==='unpaid'||m.status==='pending';});
+  } else if(statusKeys.indexOf(dirFilter)>=0&&dirFilter!=='all'){
+    list=members.filter(function(m){return m.status===dirFilter;});
+  } else if(dirFilter!=='all'){
+    // type filter - hide former members
+    list=members.filter(function(m){return m.status!=='inactive'&&m.status!=='terminated'&&m.type===dirFilter;});
+  } else {
+    // all - hide inactive/terminated by default
+    list=members.filter(function(m){return m.status!=='inactive'&&m.status!=='terminated';});
+  }
   if(dirAlpha) list=list.filter(function(m){return (m.last||'').toUpperCase().startsWith(dirAlpha);});
   list.sort(function(a,b){return a.last.localeCompare(b.last)||a.first.localeCompare(b.first);});
 
   // Build alpha strip from available letters in current filtered list (pre-alpha filter)
-  var baseList=members.slice();
-  if(dirFilter==='unpaid') baseList=baseList.filter(function(m){return m.status!=='paid';});
-  else if(dirFilter!=='all') baseList=baseList.filter(function(m){return m.type===dirFilter;});
+  var baseList=list.slice();
   var availLetters={};
   baseList.forEach(function(m){if(m.last) availLetters[m.last[0].toUpperCase()]=true;});
   var activeLetters=Object.keys(availLetters).sort();
@@ -2941,7 +3407,7 @@ function openMember(id,ciMode){
       // ── Build checklist ──────────────────────────────────────
       var needsSecondName=getTypeConfig(m.type).requireSecond&&!(m.secFirst||m.secLast);
       var canAddSec=getTypeConfig(m.type).maxAdults>1&&!getTypeConfig(m.type).requireSecond&&!(m.secFirst||m.secLast);
-      var adultsSection='<div class="ci-section-lbl">Adults</div><div class="ci-checklist" id="ci-adult-list">';
+      var adultsSection='<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0 10px;border-bottom:2px solid rgba(255,255,255,.15)">'+'<div><div style="font-size:15px;font-weight:800;color:var(--bld)">Adults</div>'+'<div style="font-size:11px;color:var(--mu);margin-top:1px">Tap each adult who is here today</div></div>'+'<button onclick="selectAllAdults()" style="padding:8px 16px;background:var(--bl);border:none;border-radius:9px;font-size:12px;font-weight:700;color:#fff;font-family:-apple-system,sans-serif;cursor:pointer">Select All Adults</button></div>'+'<div class="ci-checklist" id="ci-adult-list">';
       // Primary adult
       adultsSection+='<div class="ci-check-item" id="ci-a0" onclick="ciToggle(\'ci-a0\')"><input type="checkbox" id="chk-a0" onchange="ciToggle(\'ci-a0\')"><label for="chk-a0">'+m.first+' '+m.last+' <span style="opacity:.5;font-size:11px">(primary)</span></label></div>';
       // Secondary adult
@@ -2956,7 +3422,7 @@ function openMember(id,ciMode){
       // Children checklist
       var kidsSection='';
       if(kidNames.length||m.type==='Family'||m.type==='Board'||m.type==='Comp'){
-        kidsSection='<div class="ci-section-lbl" style="margin-top:4px">Children</div><div class="ci-checklist" id="ci-kids-list">';
+        kidsSection='<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0 10px;border-bottom:2px solid rgba(255,255,255,.15);margin-top:10px">'+'<div><div style="font-size:15px;font-weight:800;color:var(--bld)">Children</div>'+'<div style="font-size:11px;color:var(--mu);margin-top:1px">Tap each child who is here today</div></div>'+'<button onclick="selectAllKids()" style="padding:8px 16px;background:var(--bl);border:none;border-radius:9px;font-size:12px;font-weight:700;color:#fff;font-family:-apple-system,sans-serif;cursor:pointer">Select All Children</button></div>'+'<div class="ci-checklist" id="ci-kids-list">';
         kidNames.forEach(function(k,i){
           kidsSection+='<div class="ci-check-item" id="ci-k'+i+'" onclick="ciToggle(\'ci-k'+i+'\')">'
             +'<input type="checkbox" id="chk-k'+i+'" onchange="ciToggle(\'ci-k'+i+'\')">'
@@ -2976,34 +3442,46 @@ function openMember(id,ciMode){
         (function(){
     var ms=getMissingSteps(m);
     if(!ms.length){missingBanner='';return;}
-    var items=ms.map(function(s){return '<li style=\"margin:3px 0;\">'+s.label+'</li>';}).join('');
-    missingBanner='<div style=\"background:var(--rel);border:2px solid var(--re);border-radius:var(--r-sm);padding:12px 14px\">';
-    missingBanner+='<div style=\"font-size:14px;font-weight:800;color:var(--re);margin-bottom:6px\">&#x1F6AB; Required Info Missing &mdash; Cannot Check In</div>';
-    missingBanner+='<ul style=\"margin:0 0 10px 16px;padding:0;font-size:12px;color:var(--re);font-weight:600\">'+items+'</ul>';
-    missingBanner+='<button onclick=\"openMissingInfo(&quot;'+m.id+'&quot;)\" style=\"width:100%;padding:11px;background:var(--re);border:none;color:#fff;border-radius:9px;font-size:14px;font-weight:800;font-family:-apple-system,sans-serif;cursor:pointer\">&#x270F;&#xFE0F; Complete Required Info Now</button>';
-    missingBanner+='</div>';
+    var fields='';
+    ms.forEach(function(step){
+      var k=step.key;
+      var row='<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">';
+      if(k==='email')       row+='<span style="font-size:11px;font-weight:700;color:var(--re);width:80px;flex-shrink:0">EMAIL</span><input id="inline-email" class="fi" type="email" placeholder="email@example.com" style="flex:1;padding:8px 10px;font-size:13px"></div>';
+      else if(k==='phone')  row+='<span style="font-size:11px;font-weight:700;color:var(--re);width:80px;flex-shrink:0">PHONE</span><input id="inline-phone" class="fi" type="tel" placeholder="(336) 555-0000" style="flex:1;padding:8px 10px;font-size:13px"></div>';
+      else if(k==='address')row+='<span style="font-size:11px;font-weight:700;color:var(--re);width:80px;flex-shrink:0">STREET</span><input id="inline-street" class="fi" placeholder="123 Main St" style="flex:1;padding:8px 10px;font-size:13px"></div>';
+      else if(k==='city')   row+='<span style="font-size:11px;font-weight:700;color:var(--re);width:80px;flex-shrink:0">CITY</span><input id="inline-city" class="fi" placeholder="Gibsonville" style="flex:1;padding:8px 10px;font-size:13px"></div>';
+      else if(k==='zip')    row+='<span style="font-size:11px;font-weight:700;color:var(--re);width:80px;flex-shrink:0">ZIP</span><input id="inline-zip" class="fi" placeholder="27249" style="flex:1;padding:8px 10px;font-size:13px;max-width:120px"></div>';
+      else if(k==='second-adult') row+='<span style="font-size:11px;font-weight:700;color:var(--re);width:80px;flex-shrink:0">2ND ADULT</span><input id="inline-sec-first" class="fi" placeholder="First" style="flex:1;padding:8px;font-size:13px"><input id="inline-sec-last" class="fi" placeholder="Last" style="flex:1;padding:8px;font-size:13px"></div>';
+      else if(k==='kids')   row+='<span style="font-size:11px;font-weight:700;color:var(--re);width:80px;flex-shrink:0">CHILD</span><input class="fi inline-kid-input" placeholder="Child name" style="flex:1;padding:8px 10px;font-size:13px"><button onclick="addInlineKidField(this)" style="padding:8px 10px;background:var(--sand2);border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:-apple-system,sans-serif">+</button></div>';
+      else row='';
+      fields+=row;
+    });
+    missingBanner='<div style="background:var(--aml);border:1.5px solid var(--am);border-radius:var(--r-sm);padding:10px 14px;margin-bottom:8px">'
+      +'<div style="font-size:12px;font-weight:700;color:var(--am);margin-bottom:8px">&#x26A0; Required info — fill in before checking in:</div>'
+      +fields
+      +'</div>';
   })()
       }
-      var panelBg=m.status==='paid'
-        ?'linear-gradient(135deg,#064e3b,#065f46)'
-        :(m.status==='unpaid'?'linear-gradient(135deg,#7f1d1d,#991b1b)':'linear-gradient(135deg,#78350f,#92400e)');
+      var panelBg='#ffffff';
+      // Status bar
       var statusBar=m.status==='paid'
-        ?'<div style="background:rgba(134,239,172,.2);border:1.5px solid rgba(134,239,172,.4);color:#bbf7d0;font-weight:800;font-size:14px;padding:8px 12px;border-radius:9px;text-align:center">&#x2705; PAID &mdash; Good to go!</div>'
-        :(m.status==='unpaid'
-          ?'<div style="background:rgba(254,202,202,.2);border:1.5px solid rgba(254,202,202,.4);color:#fecaca;font-weight:800;font-size:14px;padding:8px 12px;border-radius:9px;text-align:center">&#x1F6AB; UNPAID &mdash; Payment required</div>'
-          :'<div style="background:rgba(253,230,138,.2);border:1.5px solid rgba(253,230,138,.4);color:#fde68a;font-weight:800;font-size:14px;padding:8px 12px;border-radius:9px;text-align:center">&#x23F3; PENDING &mdash; Follow up on payment</div>');
+        ?'<div style="background:#dcfce7;border:2px solid #22c55e;border-radius:var(--r-sm);padding:12px 14px;text-align:center;font-size:15px;font-weight:800;color:#166534">&#x2705; PAID &mdash; Good to go!</div>'
+        :m.status==='unpaid'
+          ?'<div style="background:var(--rel);border:2px solid var(--re);border-radius:var(--r-sm);padding:12px 14px;text-align:center;font-size:14px;font-weight:800;color:var(--re)">&#x26A0;&#xFE0F; UNPAID &mdash; Collect payment</div>'
+          :m.status==='pending'
+            ?'<div style="background:var(--aml);border:2px solid var(--am);border-radius:var(--r-sm);padding:12px 14px;text-align:center;font-size:14px;font-weight:800;color:var(--am)">&#x23F3; PENDING &mdash; Follow up on payment</div>'
+            :'';
+      // Assemble the ci-panel
       html+='<div class="ci-panel" style="background:'+panelBg+'">'
         +'<div class="ci-title">&#x1F40A; Today\'s Visit</div>'
-        +missingBanner
         +statusBar
-        +(checkedToday?'<div class="ci-already">&#x2713; Already checked in today</div>':'')
-        +unpaidWarn
+        +missingBanner
         +adultsSection
         +kidsSection
         +gpSection
         +'<div id="ci-over-note"></div>'
-        +(canQuickCheckIn(m)?'<button class="quick-ci-btn" style="border-radius:9px;margin-bottom:4px;font-size:15px;padding:13px" onclick="quickCheckIn(\''+m.id+'\',event)">&#x26A1; Quick Check In All &nbsp;&mdash;&nbsp; one tap</button>':'')
-        +'<button class="ci-checkin-btn" onclick="doCheckin(\''+m.id+'\')">&#x2705; Check In'+(checkedToday?' Again':'')+'</button></div>';
+        +'<button class="ci-checkin-btn" onclick="processCheckin()">&#x2705; Check In'+(checkedToday?' Again':'')+'</button>'
+        +'</div>';
     }
   }
   if(mv.length){html+='<div><div class="sec-lbl" style="margin-bottom:6px">Recent Visits</div><div class="vlog">'+mv.slice(0,15).map(function(v){var p=[];if(v.adults>0)p.push(v.adults+'A');if(v.children>0)p.push(v.children+'C');if(v.guestPasses>0)p.push('&#x1F3AB;&times;'+v.guestPasses);return'<div class="vitem"><span>'+fmtDate(v.ts)+' '+fmtTime(v.ts)+'</span><span style="color:var(--mu)">'+(p.join(' &middot; ')||'member only')+'</span></div>';}).join('')+'</button></div>';}
@@ -3011,17 +3489,7 @@ function openMember(id,ciMode){
     html+='<button class="btn-s" onclick="openEdit(\''+m.id+'\')">&#x270F;&#xFE0F; Edit Member</button>';
   document.getElementById('mm-body').innerHTML=html;
   document.getElementById('mm-overlay').classList.add('open');
-  // Swipe right to quick check-in (ciMode only)
-  if(ciMode){
-    var sheet=document.querySelector('#mm-overlay .sheet');
-    var swipeStartX=0,swipeStartY=0;
-    sheet.ontouchstart=function(e){swipeStartX=e.touches[0].clientX;swipeStartY=e.touches[0].clientY;};
-    sheet.ontouchend=function(e){
-      var dx=e.changedTouches[0].clientX-swipeStartX;
-      var dy=Math.abs(e.changedTouches[0].clientY-swipeStartY);
-      if(dx>80&&dy<40&&canQuickCheckIn(m)){quickCheckIn(m.id,null);}
-    };
-  }
+
 }
 function closeMM(){document.getElementById('mm-overlay').classList.remove('open');}
 
@@ -3136,10 +3604,11 @@ function commitCheckin(m,checkedAdults,checkedKids,newKids,passesUsed,purchased)
   playChime();
   // Reset check-in tab after flash
   setTimeout(function(){
-    ciLastAlpha=''; ciFirstAlpha=''; _ilfAdults=0;
+    ciLastAlpha=''; ciFirstAlpha=''; _ilfAdults=0; ciGuests=0;
+    closeMM();
     switchTab('ci');
     renderCI();
-  }, 2100);
+  }, 1800);
 }
 
 function showGPModal(m,requested,rem,mode){gpMember=m;gpOver=requested;var toPurchase=mode==='purchase'?requested:requested-rem;var fromBal=mode==='purchase'?0:rem;var bd='<div class="gp-breakdown">';if(fromBal>0)bd+='<div class="gp-line"><span>From pass balance</span><span>'+fromBal+' pass'+(fromBal>1?'es':'')+'</span></div>';if(toPurchase>0)bd+='<div class="gp-line"><span>Purchase @ $'+GUEST_PRICE+' each</span><span>'+toPurchase+' pass'+(toPurchase>1?'es':'')+'</span></div>';bd+='<div class="gp-total"><span>Total</span><span>'+requested+' guests &middot; '+(toPurchase>0?'$'+(toPurchase*GUEST_PRICE)+' due':'no charge')+'</span></div></div>';var inner='<div class="gp-body"><div class="gp-icon">&#x1F3AB;</div>';if(mode==='purchase'){inner+='<div class="gp-headline">No Passes Remaining</div><div class="gp-detail">Purchase '+requested+' pass'+(requested>1?'es':'')+' at $'+GUEST_PRICE+' each?</div>'+bd+'<div class="gp-btns"><button class="gp-buy" onclick="gpPurchase('+requested+')">&#x1F4B3; Purchase &middot; $'+(toPurchase*GUEST_PRICE)+'</button><button class="gp-skip" onclick="gpSkip()">Check In Without Passes</button></div>';}else{inner+='<div class="gp-headline">Not Enough Passes</div><div class="gp-detail">'+rem+' remaining &mdash; use all + purchase '+toPurchase+' more?</div>'+bd+'<div class="gp-btns"><button class="gp-buy" onclick="gpBuyPartial('+fromBal+','+toPurchase+')">Use '+fromBal+' + Buy '+toPurchase+' &middot; $'+(toPurchase*GUEST_PRICE)+'</button><button class="gp-skip" onclick="gpSkip()">Check In Without Passes</button></div>';}inner+='</div>';document.getElementById('gp-inner').innerHTML=inner;document.getElementById('gp-overlay').classList.add('open');}
@@ -3178,11 +3647,31 @@ document.getElementById('ed-body').innerHTML=
   +'<div class="fg"><label class="fl">Zip Code</label><input class="fi" id="ef-nanny-zip" value="'+(m.nannyZip||'')+'" placeholder="27249" style="max-width:140px"></div>'
   +'<div class="fg"><label class="fl">Date of Birth</label><input class="fi" id="ef-nanny-dob" type="date" value="'+(m.nannyDob||'')+'"></div>'
   +'</div>'
+  +'<div id="crm-section-placeholder"></div>'
   +'<button class="btn-p" onclick="commitEdit()">&#x1F4BE; Save Member</button>'
   +(id?'<button class="btn-d" onclick="confirmDelete(\''+id+'\')">&#x1F5D1; Delete Member</button>':'');
-document.getElementById('ed-overlay').classList.add('open');updateSecVisibility();}
+document.getElementById('ed-overlay').classList.add('open');
+  updateSecVisibility();
+  // Inject CRM section if editing existing member
+  if(id){
+    var m2=members.find(function(x){return x.id===id;});
+    if(m2){
+      var ph=document.getElementById('crm-section-placeholder');
+      if(ph) ph.outerHTML=buildCrmSection(m2);
+    }
+  }
+}
 
-function changePaymentStatus(){requireAdminPin(function(){var cur=document.getElementById('ef-status').value;var opts=['paid','pending','unpaid','inactive','terminated'];var labels={paid:'Paid',pending:'Pending',unpaid:'Unpaid',inactive:'Inactive',terminated:'Terminated'};var next=opts[(opts.indexOf(cur)+1)%opts.length];document.getElementById('ef-status').value=next;var _sd=document.getElementById('status-display');if(_sd)_sd.textContent=labels[next];showToast('Status changed to '+labels[next],'ok');});}
+function changePaymentStatus(){requireAdminPin(function(){var cur=document.getElementById('ef-status').value;var opts=['paid','pending','unpaid','inactive','terminated'];var labels={paid:'Paid',pending:'Pending',unpaid:'Unpaid',inactive:'Inactive',terminated:'Terminated'};var next=opts[(opts.indexOf(cur)+1)%opts.length];document.getElementById('ef-status').value=next;var _sd=document.getElementById('status-display');if(_sd)_sd.textContent=labels[next];
+    // Log status change to activity
+    if(editingId){
+      var _oldStatus=cur;
+      logStatusChange(editingId,labels[_oldStatus]||_oldStatus,labels[next]);
+      // Refresh CRM section
+      var _m2=members.find(function(x){return x.id===editingId;});
+      var _crm=document.getElementById('crm-section');
+      if(_crm&&_m2){_crm.outerHTML=buildCrmSection(_m2);}
+    }showToast('Status changed to '+labels[next],'ok');});}
 function getTypeConfig(key){
   return CONFIG.membershipTypes.find(function(t){return t.key===key;})||{adults:1,maxAdults:1,guestPasses:0,requireSecond:false,allowChildren:false};
 }
@@ -3194,7 +3683,10 @@ function toggleSecondary(){}
 function addKid(){var list=document.getElementById('kids-list');if(!list)return;var row=document.createElement('div');row.style.cssText='display:flex;gap:6px;align-items:center';row.innerHTML='<input class="fi kid-input" placeholder="Child first name" style="flex:1"><button onclick="removeKid(this)" style="background:var(--rel);border:none;color:var(--re);width:32px;height:32px;border-radius:8px;font-size:16px;cursor:pointer;flex-shrink:0">&#x2715;</button>';list.appendChild(row);row.querySelector('input').focus();}
 function removeKid(btn){var row=btn.parentElement;row.parentElement.removeChild(row);}
 function closeEdit(){document.getElementById('ed-overlay').classList.remove('open');}
-function commitEdit(){var first=document.getElementById('ef-first').value.trim();var last=document.getElementById('ef-last').value.trim();if(!first||!last){showToast('Name required','warn');return;}var type=document.getElementById('ef-type').value;var gtotal=parseInt(document.getElementById('ef-gtotal').value);if(isNaN(gtotal))gtotal=GUEST_PASSES[type];var secRow=document.getElementById('sec-name-row');var secOk=secRow&&secRow.style.display!=='none';var kids=(function(){var inputs=document.querySelectorAll('.kid-input'),arr=[];inputs.forEach(function(i){var v=i.value.trim();if(v)arr.push(v);});return arr;})();var m={id:editingId||uid(),first:first,last:last,type:type,status:document.getElementById('ef-status').value,email:document.getElementById('ef-email').value.trim(),phone:formatPhone(document.getElementById('ef-phone').value),street:document.getElementById('ef-street').value.trim(),city:document.getElementById('ef-city').value.trim(),state:document.getElementById('ef-state').value.trim(),zip:document.getElementById('ef-zip').value.trim(),adults:parseInt(document.getElementById('ef-adults').value)||1,kids:kids,children:kids.length,guestsUsed:parseInt(document.getElementById('ef-gused').value)||0,guestsTotal:gtotal,secFirst:secOk&&document.getElementById('ef-sec-first')?document.getElementById('ef-sec-first').value.trim():'',secLast:secOk&&document.getElementById('ef-sec-last')?document.getElementById('ef-sec-last').value.trim():'',secPhone:secOk&&document.getElementById('ef-sec-phone')?formatPhone(document.getElementById('ef-sec-phone').value):'',secEmail:secOk&&document.getElementById('ef-sec-email')?document.getElementById('ef-sec-email').value.trim():'',notes:document.getElementById('ef-notes').value.trim(),nannyEnabled:document.getElementById('ef-nanny-enabled').checked,nannyName:document.getElementById('ef-nanny-name')?document.getElementById('ef-nanny-name').value.trim():'',nannyPhone:document.getElementById('ef-nanny-phone')?formatPhone(document.getElementById('ef-nanny-phone').value):'',nannyStreet:document.getElementById('ef-nanny-street')?document.getElementById('ef-nanny-street').value.trim():'',nannyCity:document.getElementById('ef-nanny-city')?document.getElementById('ef-nanny-city').value.trim():'',nannyState:document.getElementById('ef-nanny-state')?document.getElementById('ef-nanny-state').value.trim():'',nannyZip:document.getElementById('ef-nanny-zip')?document.getElementById('ef-nanny-zip').value.trim():'',nannyDob:document.getElementById('ef-nanny-dob')?document.getElementById('ef-nanny-dob').value:''};saveMember(m);closeEdit();showToast(m.first+' '+m.last+' '+(editingId?'updated':'added'),'ok');}
+function commitEdit(){var _existingMember=editingId?members.find(function(x){return x.id===editingId;}):null;var first=document.getElementById('ef-first').value.trim();var last=document.getElementById('ef-last').value.trim();if(!first||!last){showToast('Name required','warn');return;}var type=document.getElementById('ef-type').value;var gtotal=parseInt(document.getElementById('ef-gtotal').value);if(isNaN(gtotal))gtotal=GUEST_PASSES[type];var secRow=document.getElementById('sec-name-row');var secOk=secRow&&secRow.style.display!=='none';var kids=(function(){var inputs=document.querySelectorAll('.kid-input'),arr=[];inputs.forEach(function(i){var v=i.value.trim();if(v)arr.push(v);});return arr;})();var _existingM=editingId?members.find(function(x){return x.id===editingId;}):null;
+  var m={id:editingId||uid(),tasks:(_existingMember&&_existingMember.tasks)||[],activity:(_existingMember&&_existingMember.activity)||[],
+    tasks:(_existingM&&_existingM.tasks)||[],
+    activity:(_existingM&&_existingM.activity)||[],first:first,last:last,type:type,status:document.getElementById('ef-status').value,email:document.getElementById('ef-email').value.trim(),phone:formatPhone(document.getElementById('ef-phone').value),street:document.getElementById('ef-street').value.trim(),city:document.getElementById('ef-city').value.trim(),state:document.getElementById('ef-state').value.trim(),zip:document.getElementById('ef-zip').value.trim(),adults:parseInt(document.getElementById('ef-adults').value)||1,kids:kids,children:kids.length,guestsUsed:parseInt(document.getElementById('ef-gused').value)||0,guestsTotal:gtotal,secFirst:secOk&&document.getElementById('ef-sec-first')?document.getElementById('ef-sec-first').value.trim():'',secLast:secOk&&document.getElementById('ef-sec-last')?document.getElementById('ef-sec-last').value.trim():'',secPhone:secOk&&document.getElementById('ef-sec-phone')?formatPhone(document.getElementById('ef-sec-phone').value):'',secEmail:secOk&&document.getElementById('ef-sec-email')?document.getElementById('ef-sec-email').value.trim():'',notes:document.getElementById('ef-notes').value.trim(),nannyEnabled:document.getElementById('ef-nanny-enabled').checked,nannyName:document.getElementById('ef-nanny-name')?document.getElementById('ef-nanny-name').value.trim():'',nannyPhone:document.getElementById('ef-nanny-phone')?formatPhone(document.getElementById('ef-nanny-phone').value):'',nannyStreet:document.getElementById('ef-nanny-street')?document.getElementById('ef-nanny-street').value.trim():'',nannyCity:document.getElementById('ef-nanny-city')?document.getElementById('ef-nanny-city').value.trim():'',nannyState:document.getElementById('ef-nanny-state')?document.getElementById('ef-nanny-state').value.trim():'',nannyZip:document.getElementById('ef-nanny-zip')?document.getElementById('ef-nanny-zip').value.trim():'',nannyDob:document.getElementById('ef-nanny-dob')?document.getElementById('ef-nanny-dob').value:''};saveMember(m);closeEdit();showToast(m.first+' '+m.last+' '+(editingId?'updated':'added'),'ok');}
 function confirmDelete(id){requireAdminPin(function(){delMember(id);closeEdit();showToast('Member deleted','warn');});}
 
 
@@ -3346,8 +3838,17 @@ function renderRep(){
     +'<button class="exp-btn" onclick="requireAdminPin(function(){downloadTemplate();})">Download CSV Template</button>'
     +'</div></div>';
 
+  // Tasks dashboard button
+  var _oc=getAllOpenTasks().length;
+  var _badge=_oc>0?(' <span style="background:var(--or);color:#fff;border-radius:10px;padding:1px 8px;font-size:11px;font-weight:700">'+_oc+' open</span>'):'';
+  var _tw='<div style="margin-bottom:14px">'
+    +'<button onclick="toggleTasksDashboard()" style="width:100%;padding:13px;background:var(--bld);border:none;color:#fff;border-radius:var(--r);font-size:14px;font-weight:700;font-family:-apple-system,sans-serif;cursor:pointer">\uD83D\uDCCB Member Tasks'+_badge+'</button>'
+    +'<div id="tasks-dashboard-wrap" style="display:none;margin-top:8px;padding:8px;background:var(--sand);border-radius:var(--r)">'
+    +'<div id="tasks-dashboard"></div></div></div>';
+  html=_tw+html;
   el.innerHTML=html;
 }
+
 
 function showRepChart(chartId){
   var now=new Date();
@@ -4449,6 +4950,26 @@ document.addEventListener('DOMContentLoaded', function(){
   if(_pill){_pill.style.display='flex';_pill.innerHTML='<div style="width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.4)"></div>...';}
   tryInitFirebase();
 });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
