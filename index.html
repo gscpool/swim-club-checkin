@@ -331,7 +331,7 @@ body.layout-laptop .rstat-grid{grid-template-columns:repeat(6,1fr)}
       <div>
         <div class="topbar-title">Gibsonville Swim Club</div>
         <div class="topbar-date" id="topbar-date"></div>
-        <div style="font-size:9px;color:rgba(255,255,255,.35)">v2.4.3</div>
+        <div style="font-size:9px;color:rgba(255,255,255,.35)">v2.4.4</div>
       </div>
     </div>
     <div class="topbar-right">
@@ -540,6 +540,7 @@ body.layout-laptop .rstat-grid{grid-template-columns:repeat(6,1fr)}
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
 
 <script>
+
 
 
 
@@ -2995,6 +2996,64 @@ function cycleLayout(){
   applyLayout(next);
 }
 
+
+function exportIncidentPDF(id){
+  var inc=incidents.find(function(x){return x.id===id;}); if(!inc) return;
+  var sev=inc.severity||'';
+  var sevColor=sev==='High'?'#dc2626':sev==='Medium'?'#d97706':'#16a34a';
+  var dt=new Date(inc.ts);
+  var dtStr=dt.toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'})
+    +' at '+dt.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+  function row(label,val){
+    if(!val) return '';
+    return '<div style="margin-bottom:14px">'
+      +'<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#6b7280;margin-bottom:4px">'+label+'</div>'
+      +'<div style="font-size:13px;color:#111;background:#f9fafb;padding:10px 12px;border-radius:6px;line-height:1.6;white-space:pre-wrap">'+val+'</div>'
+      +'</div>';
+  }
+  var followHtml='';
+  if(inc.followupNotes&&inc.followupNotes.length){
+    followHtml='<div style="margin-top:16px;padding-top:14px;border-top:1px solid #e5e7eb">'
+      +'<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#6b7280;margin-bottom:8px">Follow-up Notes</div>';
+    inc.followupNotes.forEach(function(n){
+      var nd=new Date(n.at);
+      followHtml+='<div style="background:#eff6ff;border-left:3px solid #003087;padding:8px 12px;margin-bottom:6px;border-radius:0 6px 6px 0">'
+        +'<div style="font-size:12px;color:#1e3a5f;line-height:1.5">'+n.note+'</div>'
+        +'<div style="font-size:10px;color:#9ca3af;margin-top:3px">'+n.by+' &middot; '+nd.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})+'</div>'
+        +'</div>';
+    });
+    followHtml+='</div>';
+  }
+  var html='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Incident Report</title>'
+    +'<style>body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;margin:0;padding:28px 32px;max-width:680px;margin:0 auto;color:#111}'
+    +'@media print{.noprint{display:none!important}@page{margin:18mm}}</style></head><body>'
+    +'<div style="display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:14px;border-bottom:4px solid #FA4616;margin-bottom:18px">'
+    +'<div><div style="font-size:20px;font-weight:800;color:#003087;letter-spacing:-.3px">Gibsonville Swim Club</div>'
+    +'<div style="font-size:12px;color:#6b7280;margin-top:2px;font-weight:600;text-transform:uppercase;letter-spacing:.4px">Incident Report</div></div>'
+    +'<div style="text-align:right"><div style="font-size:10px;color:#9ca3af">ID: '+inc.id.slice(-8).toUpperCase()+'</div>'
+    +'<div style="font-size:11px;font-weight:700;color:#374151;margin-top:2px">'+dt.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})+'</div></div>'
+    +'</div>'
+    +'<div style="display:flex;gap:8px;margin-bottom:18px">'
+    +'<span style="background:'+sevColor+';color:#fff;padding:4px 10px;border-radius:10px;font-size:11px;font-weight:700">'+sev+' Severity</span>'
+    +'<span style="background:#dbeafe;color:#1e40af;padding:4px 10px;border-radius:10px;font-size:11px;font-weight:700">'+inc.type+'</span>'
+    +'</div>'
+    +'<div style="font-size:12px;color:#374151;margin-bottom:18px;font-weight:600">'+dtStr+'</div>'
+    +row('Description',inc.description)
+    +row('People Involved',inc.membersInvolved)
+    +row('Action Taken',inc.actionTaken)
+    +row('Reported By',inc.reportedBy||'On-duty staff')
+    +followHtml
+    +'<div style="margin-top:24px;padding-top:12px;border-top:1px solid #e5e7eb;display:flex;justify-content:space-between">'
+    +'<div style="font-size:10px;color:#9ca3af">PO Box 426, Gibsonville, NC 27249 &middot; gibsonvilleswim.club</div>'
+    +'<div style="font-size:10px;color:#9ca3af">Confidential</div></div>'
+    +'<div class="noprint" style="text-align:center;margin-top:20px">'
+    +'<button onclick="window.print()" style="padding:10px 24px;background:#003087;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">&#x1F5A8; Print / Save as PDF</button>'
+    +'</div></body></html>';
+  var w=window.open('','_blank','width=780,height=900');
+  if(w){w.document.write(html);w.document.close();}
+  else showToast('Allow pop-ups to export PDF','warn');
+}
+
 function renderAll(){renderCI();renderDir();renderRep();renderAnnouncement();}
 
 function renderAnnouncement(){
@@ -4459,7 +4518,9 @@ function viewIncident(id){
   var inc=incidents.find(function(x){return x.id===id;}); if(!inc) return;
   document.getElementById('inc-modal-title').textContent='Incident Report';
   document.getElementById('inc-modal-body').innerHTML=buildIncidentForm(inc);
-  document.getElementById('inc-overlay').style.display='flex';
+  var _io=document.getElementById('inc-overlay');
+  if(_io){_io.style.display='flex';_io.classList.add('open');}
+  window._viewingIncidentId=id;
 }
 
 function buildIncidentForm(inc){
@@ -4487,7 +4548,10 @@ function buildIncidentForm(inc){
   // Admin follow-up notes field (only when viewing existing incident)
   if(inc){
     html+='<div class="fg"><label class="fl">Add Follow-up Note (Admin)</label><textarea class="fi" id="inc-followup-note" rows="2" style="resize:vertical" placeholder="Admin notes..."></textarea></div>';
-    html+='<button class="btn-p" onclick="saveFollowupNote(&quot;'+inc.id+'&quot;)">Save Follow-up Note</button>';
+    html+='<div style="display:flex;gap:8px;margin-top:4px">';
+    html+='<button class="btn-p" style="flex:1" onclick="saveFollowupNote(&quot;'+inc.id+'&quot;)">Save Note</button>';
+    html+='<button style="flex:1;padding:11px;background:var(--bl);border:none;color:#fff;border-radius:9px;font-size:13px;font-weight:700;font-family:-apple-system,sans-serif;cursor:pointer" onclick="exportIncidentPDF(&quot;'+inc.id+'&quot;)">&#x1F4C4; Export PDF</button>';
+    html+='</div>';
   } else {
     html+='<button class="btn-p" onclick="submitIncident()">&#x26A0;&#xFE0F; Submit Incident Report</button>';
   }
@@ -4540,7 +4604,9 @@ function saveFollowupNote(id){
 }
 
 function closeIncident(){
-  document.getElementById('inc-overlay').style.display='none';
+  var _io2=document.getElementById('inc-overlay');
+  if(_io2){_io2.style.display='none';_io2.classList.remove('open');}
+  window._viewingIncidentId=null;
 }
 
 function saveTimeoutSetting(){
@@ -5039,6 +5105,7 @@ document.addEventListener('DOMContentLoaded', function(){
     }
   }, 8000);
 });
+
 
 
 
