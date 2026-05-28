@@ -331,7 +331,7 @@ body.layout-laptop .rstat-grid{grid-template-columns:repeat(6,1fr)}
       <div>
         <div class="topbar-title">Gibsonville Swim Club</div>
         <div class="topbar-date" id="topbar-date"></div>
-        <div style="font-size:9px;color:rgba(255,255,255,.35)">v2.4.2</div>
+        <div style="font-size:9px;color:rgba(255,255,255,.35)">v2.4.3</div>
       </div>
     </div>
     <div class="topbar-right">
@@ -546,6 +546,7 @@ body.layout-laptop .rstat-grid{grid-template-columns:repeat(6,1fr)}
 
 
 
+
 var _APP_VERSION="v1.9.1";
 
 // ── SELF CHECK-IN MODE ────────────────────────────────────────────────────────
@@ -655,6 +656,7 @@ var db=null,fbReady=false;
       // Set up real-time listeners after boot
       _db.collection('members').orderBy('last').onSnapshot(function(snap){
         members=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
+        setSyncPill('online');
         renderAll();
       },function(e){console.error(e);setSyncPill('offline');});
       _db.collection('visits').orderBy('ts','desc').onSnapshot(function(snap){
@@ -732,9 +734,10 @@ function setSyncPill(state){
     if(dot) dot.style.background='#f87171';
     if(txt){txt.textContent='Offline';txt.style.color='#fca5a5';}
   } else {
-    p.style.background='rgba(255,255,255,0.1)';
+    // connecting/unknown state
+    p.style.background='rgba(255,255,255,0.08)';
     if(dot) dot.style.background='rgba(255,255,255,0.3)';
-    if(txt){txt.textContent='...';txt.style.color='rgba(255,255,255,0.6)';}
+    if(txt){txt.textContent='...';txt.style.color='rgba(255,255,255,0.5)';}
   }
 }
 
@@ -5027,17 +5030,16 @@ document.addEventListener('DOMContentLoaded', function(){
 
   initLayout();
   // Show connecting state immediately
-  setSyncPill('connecting');
-  tryInitFirebase();
-  // Watchdog: if still showing ••• after 8s, retry once
+  tryInitFirebase(); // pill starts at ••• from HTML, setSyncPill('online') fires on connect
+  // Watchdog: if Firebase hasn't connected after 8s, retry once
   setTimeout(function(){
-    var pill=document.getElementById('sync-pill');
-    if(pill&&pill.textContent.indexOf('Live')<0&&pill.textContent.indexOf('Offline')<0){
+    if(!fbReady){
       console.log('Firebase watchdog: retrying connection');
-      tryInitFirebase();
+      tryInitFirebase(0);
     }
   }, 8000);
 });
+
 
 
 
