@@ -331,7 +331,7 @@ body.layout-laptop .rstat-grid{grid-template-columns:repeat(6,1fr)}
       <div>
         <div class="topbar-title">Gibsonville Swim Club</div>
         <div class="topbar-date" id="topbar-date"></div>
-        <div style="font-size:9px;color:rgba(255,255,255,.35)">v2.4.0</div>
+        <div style="font-size:9px;color:rgba(255,255,255,.35)">v2.4.1</div>
       </div>
     </div>
     <div class="topbar-right">
@@ -541,6 +541,10 @@ body.layout-laptop .rstat-grid{grid-template-columns:repeat(6,1fr)}
 
 <script>
 
+
+
+
+
 var _APP_VERSION="v1.9.1";
 
 // ── SELF CHECK-IN MODE ────────────────────────────────────────────────────────
@@ -614,7 +618,13 @@ var db=null,fbReady=false;
     return;
   }
   try{
-    firebase.initializeApp(FIREBASE_CONFIG);
+    // Check if already initialized (can happen on cache reload)
+    var _app;
+    try {
+      _app = firebase.app();
+    } catch(notFound) {
+      _app = firebase.initializeApp(FIREBASE_CONFIG);
+    }
     var _db = firebase.firestore();
     window._saveMemberFB=function(m){var c=Object.assign({},m);var id=c.id;delete c.id;_db.collection('members').doc(id).set(c).catch(function(e){console.error(e);});};
     window._delMemberFB=function(id){_db.collection('members').doc(id).delete().catch(function(e){console.error(e);});};
@@ -673,7 +683,25 @@ var db=null,fbReady=false;
     // Save/delete wired
     db=_db;
   }catch(e){
-    console.error('Firebase init failed:',e);
+    console.error('Firebase init error:',e);
+    // If app already exists, try to get it
+    if(e.code==='app/duplicate-app'){
+      try{
+        var _db2=firebase.app().firestore();
+        db=_db2;
+        fbReady=true;
+        setSyncPill('online');
+        _db2.collection('members').orderBy('last').onSnapshot(function(snap){
+          members=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
+          renderAll();
+        },function(err){console.error(err);setSyncPill('offline');});
+        _db2.collection('visits').orderBy('ts','desc').onSnapshot(function(snap){
+          visits=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
+          renderRep();renderCI();
+        });
+        return;
+      }catch(e2){console.error(e2);}
+    }
     bootLocal();
   }
 })();
@@ -685,7 +713,7 @@ function bootLocal(){
   rebuildFromConfig();
   members=lGet('gsc_members')||[];visits=lGet('gsc_visits')||[];
   if(!members.length)seedDemo();
-  renderAll();initPin();
+  updateUIForRole();renderAll();initPin();
 }
 
 function setSyncPill(state){
@@ -4993,7 +5021,19 @@ document.addEventListener('DOMContentLoaded', function(){
   var _pill=document.getElementById('sync-pill');
   if(_pill){_pill.style.display='flex';_pill.innerHTML='<div style="width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.4)"></div>...';}
   tryInitFirebase();
+  // Watchdog: if still showing ••• after 8s, retry once
+  setTimeout(function(){
+    var pill=document.getElementById('sync-pill');
+    if(pill&&pill.textContent.indexOf('Live')<0&&pill.textContent.indexOf('Offline')<0){
+      console.log('Firebase watchdog: retrying connection');
+      tryInitFirebase();
+    }
+  }, 8000);
 });
+
+
+
+
 
 
 
