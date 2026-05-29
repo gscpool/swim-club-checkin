@@ -331,7 +331,7 @@ body.layout-laptop .rstat-grid{grid-template-columns:repeat(6,1fr)}
       <div>
         <div class="topbar-title">Gibsonville Swim Club</div>
         <div class="topbar-date" id="topbar-date"></div>
-        <div style="font-size:9px;color:rgba(255,255,255,.35)">v2.4.4</div>
+        <div style="font-size:9px;color:rgba(255,255,255,.35)">v2.4.5</div>
       </div>
     </div>
     <div class="topbar-right">
@@ -354,7 +354,29 @@ body.layout-laptop .rstat-grid{grid-template-columns:repeat(6,1fr)}
 
   <!-- CHECK-IN PANE -->
   <div id="pane-ci" class="pane on">
+    <!-- HEADCOUNT BAR -->
+    <div id="ci-headcount-bar" style="padding:8px 13px;background:var(--sand);border-bottom:1px solid var(--sand2);flex-shrink:0">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
+        <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--mu)">Today's Headcount</span>
+        <span id="ci-headcount-num" style="font-size:13px;font-weight:800;color:var(--bld)">0 <span style="font-size:10px;font-weight:500;color:var(--mu)">/ 150</span></span>
+      </div>
+      <div style="height:8px;background:var(--sand2);border-radius:4px;overflow:hidden">
+        <div id="ci-headcount-fill" style="height:100%;width:0%;border-radius:4px;background:var(--gr);transition:width .4s ease"></div>
+      </div>
+    </div>
     <div id="ci-breadcrumb" style="display:none;padding:6px 13px;background:var(--bld);display:flex;align-items:center;gap:8px;flex-shrink:0"></div>
+
+    <!-- Headcount progress bar -->
+    <div id="ci-headcount-bar" style="padding:8px 13px 6px;background:var(--sand);border-bottom:1px solid var(--sand2);flex-shrink:0">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
+        <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--mu)">Today's Headcount</span>
+        <span id="ci-headcount-num" style="font-size:13px;font-weight:800;color:var(--bld)">0 <span style="font-size:10px;font-weight:500;color:var(--mu)">/ 150</span></span>
+      </div>
+      <div style="height:8px;background:var(--sand2);border-radius:4px;overflow:hidden">
+        <div id="ci-headcount-fill" style="height:100%;width:0%;border-radius:4px;background:var(--gr);transition:width .4s ease"></div>
+      </div>
+    </div>
+
     <div class="ci-section-title" id="ci-ln-label">Tap last name initial</div>
     <div class="ci-alpha-row" id="ci-ln-strip"></div>
     <div id="ci-fn-section" style="display:none">
@@ -540,6 +562,9 @@ body.layout-laptop .rstat-grid{grid-template-columns:repeat(6,1fr)}
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
 
 <script>
+
+
+
 
 
 
@@ -1044,6 +1069,7 @@ function quickCheckIn(memberId, event){
     checkedAdults:adults,checkedKids:kidNames,
     guestPasses:0,passesPurchased:0,whileUnpaid:false};
   saveVisit(v);
+  updateHeadcountBar();
   showSuccessFlash(m.first+' '+m.last, adults.concat(kidNames).join(', '));
   playChime();
   setTimeout(function(){ciLastAlpha='';ciFirstAlpha='';ciGuests=0;closeMM();switchTab('ci');renderCI();},1800);
@@ -3054,7 +3080,48 @@ function exportIncidentPDF(id){
   else showToast('Allow pop-ups to export PDF','warn');
 }
 
-function renderAll(){renderCI();renderDir();renderRep();renderAnnouncement();}
+
+function updateHeadcountBar(){
+  var todayStr=new Date().toDateString();
+  var headcount=0;
+  visits.filter(function(v){
+    return new Date(v.ts).toDateString()===todayStr;
+  }).forEach(function(v){
+    headcount+=(v.adults||0)+(v.children||0)+(v.guestPasses||0);
+  });
+  var MAX=150;
+  var pct=Math.min(100,Math.round(headcount/MAX*100));
+  // Color: green → amber → red as capacity fills
+  var color=pct<60?'var(--gr)':pct<85?'var(--am)':'var(--re)';
+  var numEl=document.getElementById('ci-headcount-num');
+  var fillEl=document.getElementById('ci-headcount-fill');
+  if(numEl) numEl.innerHTML=headcount+' <span style="font-size:10px;font-weight:500;color:var(--mu)">/ '+MAX+'</span>';
+  if(fillEl){fillEl.style.width=pct+'%';fillEl.style.background=color;}
+}
+
+
+function updateHeadcountBar(){
+  var todayStr=new Date().toDateString();
+  // Count total headcount: adults + children for each visit today
+  var total=0;
+  visits.forEach(function(v){
+    if(new Date(v.ts).toDateString()!==todayStr) return;
+    total+=(v.adults||0)+(v.children||0);
+    // Count guest passes too
+    total+=(v.guestPasses||0);
+  });
+  var MAX=150;
+  var pct=Math.min(100,Math.round((total/MAX)*100));
+  // Color: green under 100, amber 100-130, red over 130
+  var color=total>=130?'var(--re)':total>=100?'var(--am)':'var(--gr)';
+  var numEl=document.getElementById('ci-headcount-num');
+  var fillEl=document.getElementById('ci-headcount-fill');
+  if(numEl) numEl.innerHTML=total+' <span style="font-size:10px;font-weight:500;color:var(--mu)">/ '+MAX+'</span>';
+  if(fillEl){fillEl.style.width=pct+'%';fillEl.style.background=color;}
+}
+
+function renderAll(){renderCI();renderDir();renderRep();renderAnnouncement();  updateHeadcountBar();
+}
 
 function renderAnnouncement(){
   var bar=document.getElementById('announce-bar');
@@ -3343,6 +3410,7 @@ function setCiFirstAlpha(l){
 
 function renderCI(){
   var el=document.getElementById('ci-list'); if(!el) return;
+  updateHeadcountBar();
   buildCiAlphaStrips();
   var todayStr=new Date().toDateString();
   var checkedToday={};
@@ -3716,6 +3784,8 @@ function commitCheckin(m,checkedAdults,checkedKids,newKids,passesUsed,purchased)
   if(checkedAdults.length) p.push(checkedAdults.join(', '));
   if(checkedKids.length||newKids.length) p.push((checkedKids.concat(newKids)).join(', '));
   if(passesUsed>0) p.push(passesUsed+' guest pass'+(passesUsed>1?'es':'')+(purchased?' purchased':''));
+  updateHeadcountBar();
+  updateHeadcountBar();
   showSuccessFlash(m.first+' '+m.last, p.join(' · '));
   playChime();
   // Reset check-in tab after flash
@@ -5105,6 +5175,9 @@ document.addEventListener('DOMContentLoaded', function(){
     }
   }, 8000);
 });
+
+
+
 
 
 
