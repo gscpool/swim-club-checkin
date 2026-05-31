@@ -346,7 +346,7 @@ body.layout-laptop #dir-filter-btns > div::-webkit-scrollbar-thumb { background:
       <div>
         <div class="topbar-title">Gibsonville Swim Club</div>
         <div class="topbar-date" id="topbar-date"></div>
-        <div style="font-size:9px;color:rgba(255,255,255,.35)">v2.4.7</div>
+        <div style="font-size:9px;color:rgba(255,255,255,.35)">v2.4.9</div>
       </div>
     </div>
     <div class="topbar-right">
@@ -569,6 +569,10 @@ body.layout-laptop #dir-filter-btns > div::-webkit-scrollbar-thumb { background:
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
 
 <script>
+
+
+
+
 
 
 
@@ -3182,6 +3186,44 @@ function nextRepDay(){
   renderRep();
 }
 
+
+function notifyGroupMeIncident(inc){
+  var dt=new Date(inc.ts);
+  var dtStr=dt.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})
+    +' at '+dt.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+  var sev=inc.severity||'Low';
+  var sevTag=sev==='High'?'🔴':sev==='Medium'?'🟡':'🟢';
+
+  var msg='🏊 GSC INCIDENT REPORT\n'
+    +'━━━━━━━━━━━━━━━━━━━━\n'
+    +sevTag+' Severity: '+sev+'\n'
+    +'📋 Type: '+(inc.type||'Other')+'\n'
+    +'📅 '+dtStr+'\n'
+    +'━━━━━━━━━━━━━━━━━━━━\n'
+    +'📝 '+inc.description+'\n';
+
+  if(inc.membersInvolved){
+    msg+='👤 People: '+inc.membersInvolved+'\n';
+  }
+  if(inc.actionTaken){
+    msg+='✅ Action: '+inc.actionTaken+'\n';
+  }
+  msg+='━━━━━━━━━━━━━━━━━━━━\n'
+    +'Reported by: '+(inc.reportedBy||'Staff');
+
+  if(inc.followupRequired){
+    msg+='\n⚠️ Follow-up required';
+  }
+
+  notifyGroupMe(msg);
+}
+
+
+
+
+
+
+
 function renderAll(){renderCI();renderDir();renderRep();renderAnnouncement();  updateHeadcountBar();
 }
 
@@ -3984,11 +4026,11 @@ function renderRep(){
   var pendingCount=members.filter(function(m){return m.status==='pending';}).length;
   var totalPurchased=seasonV.reduce(function(s,v){return s+(v.passesPurchased||0);},0);
   var totalGPUsed=seasonV.reduce(function(s,v){return s+(v.guestPasses||0);},0);
-  var todayHeads=todayV.reduce(function(s,v){return s+(v.adults||0)+(v.children||0);},0);
+  var todayHeads=todayV.reduce(function(s,v){return s+(v.adults||0)+(v.children||0)+(v.guestPasses||0);},0);
   var todayHH=new Set(todayV.map(function(v){return v.memberId;})).size;
-  var sevenHeads=last7V.reduce(function(s,v){return s+(v.adults||0)+(v.children||0);},0);
+  var sevenHeads=last7V.reduce(function(s,v){return s+(v.adults||0)+(v.children||0)+(v.guestPasses||0);},0);
   var avgPerDay=Math.round(last7V.length/7*10)/10;
-  var seasonHeads=seasonV.reduce(function(s,v){return s+(v.adults||0)+(v.children||0);},0);
+  var seasonHeads=seasonV.reduce(function(s,v){return s+(v.adults||0)+(v.children||0)+(v.guestPasses||0);},0);
   var paidPct=members.length?Math.round(paid/members.length*100):0;
 
   // Peak hour
@@ -4729,6 +4771,8 @@ function submitIncident(){
   closeIncident();
   renderIncidents();
   showToast('Incident logged','ok');
+  // Notify GroupMe
+  notifyGroupMeIncident(inc);
 }
 
 function saveFollowupNote(id){
@@ -5250,6 +5294,10 @@ document.addEventListener('DOMContentLoaded', function(){
     }
   }, 8000);
 });
+
+
+
+
 
 
 
