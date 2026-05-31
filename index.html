@@ -290,6 +290,21 @@ body.layout-laptop .rstat-grid{grid-template-columns:repeat(6,1fr)}
 #dir-alpha-strip .alpha-btn{min-width:34px;width:34px;height:34px;border-radius:8px;border:1.5px solid var(--sand2);background:#fff;font-size:12px;font-weight:700;color:var(--bl);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;padding:0;font-family:-apple-system,sans-serif;transition:all .12s}
 #dir-alpha-strip .alpha-btn.on{background:var(--or);border-color:var(--or);color:#fff}
 
+
+/* Laptop mode: scrollbars for mouse users on overflow rows */
+body.layout-laptop .ci-alpha-row,
+body.layout-laptop #dir-alpha-strip,
+body.layout-laptop #dir-filter-btns > div {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0,48,135,.3) transparent;
+}
+body.layout-laptop .ci-alpha-row::-webkit-scrollbar,
+body.layout-laptop #dir-alpha-strip::-webkit-scrollbar,
+body.layout-laptop #dir-filter-btns > div::-webkit-scrollbar { display:block; height:4px; }
+body.layout-laptop .ci-alpha-row::-webkit-scrollbar-thumb,
+body.layout-laptop #dir-alpha-strip::-webkit-scrollbar-thumb,
+body.layout-laptop #dir-filter-btns > div::-webkit-scrollbar-thumb { background:rgba(0,48,135,.25); border-radius:4px; }
+
 </style>
 </head>
 <body>
@@ -331,7 +346,7 @@ body.layout-laptop .rstat-grid{grid-template-columns:repeat(6,1fr)}
       <div>
         <div class="topbar-title">Gibsonville Swim Club</div>
         <div class="topbar-date" id="topbar-date"></div>
-        <div style="font-size:9px;color:rgba(255,255,255,.35)">v2.4.5</div>
+        <div style="font-size:9px;color:rgba(255,255,255,.35)">v2.4.6</div>
       </div>
     </div>
     <div class="topbar-right">
@@ -355,15 +370,7 @@ body.layout-laptop .rstat-grid{grid-template-columns:repeat(6,1fr)}
   <!-- CHECK-IN PANE -->
   <div id="pane-ci" class="pane on">
     <!-- HEADCOUNT BAR -->
-    <div id="ci-headcount-bar" style="padding:8px 13px;background:var(--sand);border-bottom:1px solid var(--sand2);flex-shrink:0">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
-        <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--mu)">Today's Headcount</span>
-        <span id="ci-headcount-num" style="font-size:13px;font-weight:800;color:var(--bld)">0 <span style="font-size:10px;font-weight:500;color:var(--mu)">/ 150</span></span>
-      </div>
-      <div style="height:8px;background:var(--sand2);border-radius:4px;overflow:hidden">
-        <div id="ci-headcount-fill" style="height:100%;width:0%;border-radius:4px;background:var(--gr);transition:width .4s ease"></div>
-      </div>
-    </div>
+    
     <div id="ci-breadcrumb" style="display:none;padding:6px 13px;background:var(--bld);display:flex;align-items:center;gap:8px;flex-shrink:0"></div>
 
     <!-- Headcount progress bar -->
